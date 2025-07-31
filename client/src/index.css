@@ -1,0 +1,15 @@
+@import './styles/variables.css';
+@import './styles/global.css';
+
+body {
+  margin: 0;
+  font-family: var(--font-family-base);
+  background-color: var(--bg-light);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  color: var(--text-primary);
+}
+
+code {
+  font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New', monospace;
+}

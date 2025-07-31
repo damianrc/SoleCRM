@@ -1,0 +1,106 @@
+:root {
+  /* Colors */
+  --color-primary: #3498db;
+  --color-primary-hover: #2980b9;
+  --color-primary-light: #e0f2f7;
+  --color-secondary: #2c3e50;
+  --color-secondary-hover: #34495e;
+  --color-success: #2ecc71;
+  --color-success-hover: #27ae60;
+  --color-warning: #f39c12;
+  --color-warning-hover: #e67e22;
+  --color-danger: #e74c3c;
+  --color-danger-hover: #c0392b;
+  --color-info: #17a2b8;
+  --color-light: #ecf0f1;
+  --color-dark: #2c3e50;
+  
+  /* Text Colors */
+  --text-primary: #333;
+  --text-secondary: #7f8c8d;
+  --text-light: #ecf0f1;
+  --text-muted: #555;
+  
+  /* Background Colors */
+  --bg-white: #ffffff;
+  --bg-light: #f8f9fa;
+  --bg-lighter: #ecf0f1;
+  --bg-card: #ffffff;
+  --bg-sidebar: #2c3e50;
+  --bg-hover: #f8f9fa;
+  
+  /* Status Colors */
+  --status-blue-bg: #e0f2f7;
+  --status-blue-text: #2a6592;
+  --status-yellow-bg: #fffbe0;
+  --status-yellow-text: #8a6c00;
+  --status-green-bg: #e6ffe6;
+  --status-green-text: #2a8a2a;
+  --status-purple-bg: #f3e6ff;
+  --status-purple-text: #6a008a;
+  --status-orange-bg: #fff0e6;
+  --status-orange-text: #8a4d00;
+  --status-emerald-bg: #e0fff2;
+  --status-emerald-text: #008a6a;
+  --status-red-bg: #ffe6e6;
+  --status-red-text: #8a0000;
+  
+  /* Border Colors */
+  --border-color: #ddd;
+  --border-light: #eee;
+  --border-dark: #ccc;
+  
+  /* Spacing */
+  --spacing-xs: 5px;
+  --spacing-sm: 8px;
+  --spacing-md: 12px;
+  --spacing-lg: 15px;
+  --spacing-xl: 20px;
+  --spacing-2xl: 25px;
+  --spacing-3xl: 30px;
+  
+  /* Border Radius */
+  --radius-sm: 4px;
+  --radius-md: 6px;
+  --radius-lg: 8px;
+  --radius-xl: 10px;
+  --radius-2xl: 12px;
+  --radius-full: 50%;
+  
+  /* Shadows */
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.08);
+  --shadow-md: 0 2px 5px rgba(0, 0, 0, 0.1);
+  --shadow-lg: 0 2px 10px rgba(0, 0, 0, 0.08);
+  --shadow-xl: 0 5px 20px rgba(0, 0, 0, 0.2);
+  --shadow-inset: inset 0 1px 3px rgba(0, 0, 0, 0.05);
+  --shadow-focus: 0 0 0 2px rgba(52, 152, 219, 0.2);
+  
+  /* Transitions */
+  --transition-fast: 0.15s ease;
+  --transition-normal: 0.2s ease;
+  --transition-slow: 0.3s ease;
+  
+  /* Typography */
+  --font-family-base: 'Inter', sans-serif;
+  --font-size-xs: 0.8em;
+  --font-size-sm: 0.85em;
+  --font-size-base: 1em;
+  --font-size-lg: 1.1em;
+  --font-size-xl: 1.4em;
+  --font-size-2xl: 1.8em;
+  --font-size-3xl: 2.5em;
+  --font-weight-normal: 400;
+  --font-weight-medium: 500;
+  --font-weight-semibold: 600;
+  --font-weight-bold: 700;
+  
+  /* Layout */
+  --sidebar-width: 250px;
+  --sidebar-collapsed-width: 60px;
+  --container-max-width: 1200px;
+  
+  /* Z-index */
+  --z-sidebar: 100;
+  --z-modal: 1000;
+  --z-tooltip: 1010;
+}

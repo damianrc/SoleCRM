@@ -1,0 +1,355 @@
+.contacts-table {
+  width: 100%;
+  border-collapse: collapse;
+  background: var(--bg-white); /* Using variable */
+  box-shadow: var(--shadow-sm); /* Using variable */
+  border-radius: var(--radius-lg); /* Using variable */
+  overflow: hidden;
+  table-layout: fixed; /* Force fixed table layout to prevent auto-sizing */
+}
+
+.contacts-table th {
+  background: var(--bg-light); /* Using variable */
+  padding: var(--spacing-md) var(--spacing-xl); /* Using variable */
+  font-weight: var(--font-weight-semibold); /* Using variable */
+  color: var(--text-primary); /* Using variable */
+  text-align: left;
+  border-bottom: 1px solid var(--border-light); /* Using variable */
+  cursor: pointer;
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  user-select: none;
+  border-right: 1px solid var(--border-light); /* Using variable */
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Ensure header cells can contain absolutely positioned children */
+.contacts-table th > * {
+  position: relative;
+}
+
+.contacts-table th:hover {
+  background: var(--bg-hover); /* Using variable */
+}
+
+.contacts-table td {
+  padding: var(--spacing-md) var(--spacing-xl); /* Using variable */
+  border-bottom: 1px solid var(--border-light); /* Using variable */
+  border-right: 1px solid var(--border-light); /* Using variable */
+  transition: background-color var(--transition-normal); /* Using variable */
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.contacts-table tr:hover {
+  background: var(--bg-hover); /* Using variable */
+}
+
+.contacts-table tr.selected {
+  background: var(--color-primary-light); /* Using variable */
+}
+
+.contacts-table tr.selected:hover {
+  background: var(--color-primary-light); /* Could be a slightly darker variant */
+}
+
+.table-header-actions {
+  display: flex;
+  gap: var(--spacing-sm); /* Using variable */
+  margin-bottom: var(--spacing-lg); /* Using variable */
+  align-items: center;
+}
+
+.table-header-actions button {
+  padding: var(--spacing-sm) var(--spacing-xl); /* Using variable */
+  border: none;
+  border-radius: var(--radius-md); /* Using variable */
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-xs); /* Using variable */
+  transition: background-color var(--transition-normal); /* Using variable */
+}
+
+.table-header-actions button:hover {
+  background: var(--bg-hover); /* Using variable */
+}
+
+.table-header-actions input {
+  padding: var(--spacing-sm) var(--spacing-md); /* Using variable */
+  border: 1px solid var(--border-light); /* Using variable */
+  border-radius: var(--radius-md); /* Using variable */
+  width: 200px;
+}
+
+.table-header-actions .search-input:focus {
+  outline: none;
+  border-color: var(--color-primary); /* Using variable */
+  box-shadow: var(--shadow-focus); /* Using variable */
+}
+
+.column-selector {
+  position: absolute;
+  top: 40px;
+  right: 20px;
+  background: var(--bg-white); /* Using variable */
+  border: 1px solid var(--border-light); /* Using variable */
+  border-radius: var(--radius-md); /* Using variable */
+  padding: var(--spacing-sm); /* Using variable */
+  box-shadow: var(--shadow-md); /* Using variable */
+  z-index: var(--z-tooltip); /* Using variable */
+}
+
+.column-selector label {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm); /* Using variable */
+  margin-bottom: var(--spacing-sm); /* Using variable */
+  cursor: pointer;
+}
+
+.column-selector input[type="checkbox"] {
+  margin: 0;
+}
+
+/* Column drag and drop styles */
+.draggable-header {
+  position: relative;
+  transition: background-color var(--transition-normal); /* Using variable */
+}
+
+.draggable-header.dragging {
+  opacity: 0.5;
+}
+
+.column-header-content {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm); /* Using variable */
+  width: 100%;
+}
+
+.drag-handle {
+  color: var(--text-secondary); /* Using variable */
+  cursor: grab;
+  flex-shrink: 0;
+}
+
+.drag-handle:hover {
+  color: var(--text-muted); /* Using variable */
+}
+
+.drag-handle:active {
+  cursor: grabbing;
+}
+
+/* Column resizer styles */
+.column-resizer {
+  position: absolute;
+  right: -6px;
+  top: 0;
+  height: 100%;
+  width: 12px;
+  cursor: col-resize;
+  background: rgba(255, 0, 0, 0.1); /* Temporary red background for debugging */
+  z-index: 100;
+  border-radius: var(--radius-xs); /* Using variable */
+}
+
+.column-resizer:hover {
+  background: rgba(59, 130, 246, 0.4); /* More visible hover state */
+  border-left: 2px solid rgba(59, 130, 246, 0.8);
+}
+
+.column-resizer:active {
+  background: rgba(59, 130, 246, 0.6); /* More visible active state */
+  border-left: 2px solid rgba(59, 130, 246, 1);
+}
+
+/* Drag over effects */
+.draggable-header[style*="background-color"] {
+  border-left: 3px solid var(--color-primary); /* Using variable */
+  border-right: 3px solid var(--color-primary); /* Using variable */
+}
+
+/* Table container improvements */
+.contacts-table-container {
+  position: relative;
+  overflow-x: auto;
+  border-radius: var(--radius-lg); /* Using variable */
+  box-shadow: var(--shadow-sm); /* Using variable */
+}
+
+/* Prevent text selection during drag operations */
+.contacts-table.dragging {
+  user-select: none;
+}
+
+.bulk-actions {
+  display: flex;
+  gap: var(--spacing-sm); /* Using variable */
+  padding: var(--spacing-sm) var(--spacing-xl); /* Using variable */
+  background: var(--bg-light); /* Using variable */
+  border-bottom: 1px solid var(--border-light); /* Using variable */
+}
+
+.bulk-actions button {
+  background: var(--color-danger); /* Using variable */
+  color: var(--bg-white); /* Using variable */
+  border: none;
+  padding: var(--spacing-xs) var(--spacing-sm); /* Using variable */
+  border-radius: var(--radius-sm); /* Using variable */
+  cursor: pointer;
+}
+
+.bulk-actions button:hover {
+  background: var(--color-danger-hover); /* Using variable */
+}
+
+.editable-cell {
+  position: relative;
+}
+
+.editable-cell input,
+.editable-cell select {
+  width: 100%;
+  padding: var(--spacing-xs) var(--spacing-sm); /* Using variable */
+  border: 1px solid var(--border-light); /* Using variable */
+  border-radius: var(--radius-sm); /* Using variable */
+  background: var(--bg-white); /* Using variable */
+}
+
+.editable-cell input:focus,
+.editable-cell select:focus {
+  outline: none;
+  border-color: var(--color-primary); /* Using variable */
+  box-shadow: var(--shadow-focus); /* Using variable */
+}
+
+.custom-field-input {
+  width: 100%;
+  padding: var(--spacing-sm); /* Using variable */
+  border: 1px solid var(--border-light); /* Using variable */
+  border-radius: var(--radius-md); /* Using variable */
+  margin-bottom: var(--spacing-sm); /* Using variable */
+}
+
+.custom-field-input:focus {
+  outline: none;
+  border-color: var(--color-primary); /* Using variable */
+  box-shadow: var(--shadow-focus); /* Using variable */
+}
+
+/* Selection column styles */
+.selection-column {
+  background: var(--bg-light) !important;
+  cursor: default !important;
+  user-select: none;
+}
+
+.selection-column:hover {
+  background: var(--bg-light) !important;
+}
+
+.selection-column input[type="checkbox"] {
+  cursor: pointer;
+  transform: scale(1.3);
+}
+
+.selection-cell {
+  background: transparent;
+  cursor: default;
+}
+
+.selection-cell input[type="checkbox"] {
+  cursor: pointer;
+  transform: scale(1.3);
+}
+
+/* Non-draggable header styles */
+.non-draggable-header {
+  cursor: default !important;
+}
+
+.non-draggable-header:hover {
+  background: var(--bg-hover);
+}
+
+.non-draggable-header .column-header-content {
+  padding-left: var(--spacing-sm);
+}
+
+/* Delete selected button styling */
+.delete-selected-button {
+  background: var(--color-danger) !important;
+  color: var(--bg-white) !important;
+  border: none !important;
+  padding: var(--spacing-sm) var(--spacing-xl) !important;
+  border-radius: var(--radius-md) !important;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+  transition: background-color var(--transition-normal);
+}
+
+.delete-selected-button:hover {
+  background: var(--color-danger-hover) !important;
+}
+
+/* Name cell with hover view button styles */
+.name-cell {
+  position: relative !important;
+  /* Keep overflow hidden for the cell itself to maintain fixed width */
+  overflow: hidden !important;
+}
+
+.name-cell-content {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  position: relative;
+  height: 100%;
+}
+
+.name-text {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  transition: all 0.2s ease;
+}
+
+.name-text.truncated {
+  /* When button is visible, leave space for it */
+  padding-right: 50px;
+}
+
+.hover-view-button {
+  position: absolute;
+  right: 4px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: rgba(59, 130, 246, 0.5);
+  color: white;
+  border: none;
+  padding: 2px 6px;
+  border-radius: 3px;
+  font-size: 11px;
+  cursor: pointer;
+  opacity: 0.5;
+  transition: opacity 0.2s ease, background-color 0.2s ease;
+  z-index: 10;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.hover-view-button:hover {
+  opacity: 1;
+  background: rgba(59, 130, 246, 0.8);
+}
