@@ -8,35 +8,37 @@ const ContactsPage = () => {
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const navigate = useNavigate();
 
+  // Load contacts from localStorage on component mount
   useEffect(() => {
-    const fetchContacts = async () => {
-      const token = localStorage.getItem('token');
-      if (!token) {
-        navigate('/login');
-        return;
-      }
+    const loadContacts = () => {
       try {
-        const response = await fetch('http://localhost:4000/leads', {
-          headers: {
-            'Authorization': `Bearer ${token}`
-          }
-        });
-        if (response.ok) {
-          const data = await response.json();
-          setContacts(data.contacts || []);
+        const savedContacts = localStorage.getItem('crm_contacts');
+        if (savedContacts) {
+          const parsedContacts = JSON.parse(savedContacts);
+          setContacts(parsedContacts);
+          console.log('Loaded contacts from localStorage:', parsedContacts);
         } else {
-          localStorage.removeItem('token');
-          navigate('/login');
+          console.log('No contacts found in localStorage');
         }
       } catch (error) {
-        console.error('Failed to fetch contacts:', error);
-        localStorage.removeItem('token');
-        navigate('/login');
+        console.error('Error loading contacts from localStorage:', error);
       }
     };
 
-    fetchContacts();
-  }, [navigate]);
+    loadContacts();
+  }, []);
+
+  // Save contacts to localStorage whenever contacts change
+  useEffect(() => {
+    if (contacts.length > 0) {
+      try {
+        localStorage.setItem('crm_contacts', JSON.stringify(contacts));
+        console.log('Saved contacts to localStorage:', contacts);
+      } catch (error) {
+        console.error('Error saving contacts to localStorage:', error);
+      }
+    }
+  }, [contacts]);
 
   const handleContactUpdate = async (contactId, field, value) => {
     console.log(`Updating contact ${contactId}, field ${field} with value ${value}`);
@@ -44,11 +46,15 @@ const ContactsPage = () => {
     // Update local state
     setContacts(prevContacts =>
       prevContacts.map(contact =>
-        contact.id === contactId ? { ...contact, [field]: value } : contact
+        contact.id === contactId ? { 
+          ...contact, 
+          [field]: value,
+          updatedAt: new Date().toISOString()
+        } : contact
       )
     );
 
-    // TODO: Send update to backend
+    // TODO: Send update to backend when ready
     // const token = localStorage.getItem('token');
     // try {
     //   await fetch(`http://localhost:4000/leads/${contactId}`, {
@@ -75,12 +81,21 @@ const ContactsPage = () => {
         ...newContact,
         id: Date.now(), // Temporary ID generation
         createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString()
+        updatedAt: new Date().toISOString(),
+        // Initialize arrays if they don't exist
+        customFields: newContact.customFields || [],
+        tasks: newContact.tasks || [],
+        notes: newContact.notes || [],
+        activities: newContact.activities || []
       };
 
-      setContacts(prevContacts => [...prevContacts, contactWithId]);
+      setContacts(prevContacts => {
+        const updatedContacts = [...prevContacts, contactWithId];
+        console.log('Adding new contact:', contactWithId);
+        return updatedContacts;
+      });
 
-      // TODO: Send to backend
+      // TODO: Send to backend when ready
       // const token = localStorage.getItem('token');
       // const response = await fetch('http://localhost:4000/leads', {
       //   method: 'POST',
@@ -96,7 +111,7 @@ const ContactsPage = () => {
       //   setContacts(prevContacts => [...prevContacts, createdContact]);
       // }
 
-      console.log('Contact added:', contactWithId);
+      console.log('Contact added successfully:', contactWithId);
     } catch (error) {
       console.error('Failed to add contact:', error);
       throw error; // Re-throw to let modal handle the error
@@ -111,9 +126,13 @@ const ContactsPage = () => {
     console.log('Bulk delete contacts:', contactIds);
     
     // Update local state
-    setContacts(prevContacts => prevContacts.filter(contact => !contactIds.includes(contact.id)));
+    setContacts(prevContacts => {
+      const updatedContacts = prevContacts.filter(contact => !contactIds.includes(contact.id));
+      console.log('Contacts after bulk delete:', updatedContacts);
+      return updatedContacts;
+    });
 
-    // TODO: Send to backend
+    // TODO: Send to backend when ready
     // const token = localStorage.getItem('token');
     // try {
     //   await fetch('http://localhost:4000/leads/bulk-delete', {

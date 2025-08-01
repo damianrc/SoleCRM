@@ -41,13 +41,18 @@ const Protected = () => {
       <div 
         style={{ 
           flexGrow: 1, 
-          padding: '20px', 
+          padding: '0', // Remove padding to eliminate gap
           overflowY: 'auto',
           marginLeft: isSidebarCollapsed ? '64px' : '260px',
           transition: 'margin-left 0.3s cubic-bezier(0.4, 0, 0.2, 1)'
         }}
       >
-        <Outlet /> {/* This will render the nested routes (ContactsPage, TasksPage, ContactDetailView) */}
+        <div style={{ 
+          padding: '20px', // Add padding back but only to the inner content
+          minHeight: '100%'
+        }}>
+          <Outlet /> {/* This will render the nested routes (ContactsPage, TasksPage, ContactDetailView) */}
+        </div>
       </div>
     </div>
   );

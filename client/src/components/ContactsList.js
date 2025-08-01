@@ -53,10 +53,14 @@ const ContactsList = ({
   });
   const [draggedColumn, setDraggedColumn] = useState(null);
   const [dragOverColumn, setDragOverColumn] = useState(null);
+  
+  // Column resizing states
   const [isResizing, setIsResizing] = useState(false);
   const [resizingColumn, setResizingColumn] = useState(null);
-  const [startX, setStartX] = useState(0);
-  const [startWidth, setStartWidth] = useState(0);
+  const [resizeData, setResizeData] = useState({
+    startX: 0,
+    startWidth: 0
+  });
   
   // Refs for drag and drop
   const tableRef = useRef(null);
@@ -114,45 +118,54 @@ const ContactsList = ({
   }, [columnOrder, columnWidths, visibleColumns]);
 
   /**
-   * Handle column resizing
+   * Handle mouse move during column resizing
    */
-  const handleResize = useCallback((e) => {
+  const handleMouseMove = useCallback((e) => {
     if (!isResizing || !resizingColumn) return;
     
-    const diff = e.clientX - startX;
-    const newWidth = Math.max(80, startWidth + diff); // Minimum width of 80px
-    
-    console.log('Resizing column:', resizingColumn, 'to width:', newWidth);
+    const diff = e.clientX - resizeData.startX;
+    const newWidth = Math.max(80, resizeData.startWidth + diff); // Minimum width of 80px
     
     setColumnWidths(prev => ({
       ...prev,
       [resizingColumn]: newWidth
     }));
-  }, [isResizing, resizingColumn, startX, startWidth]);
+  }, [isResizing, resizingColumn, resizeData]);
 
   /**
-   * Stop column resizing
+   * Handle mouse up - stop resizing
    */
-  const stopResize = useCallback(() => {
-    console.log('Stopping resize');
-    setIsResizing(false);
-    setResizingColumn(null);
-    setStartX(0);
-    setStartWidth(0);
-    
-    document.removeEventListener('mousemove', handleResize);
-    document.removeEventListener('mouseup', stopResize);
-  }, [handleResize]);
+  const handleMouseUp = useCallback(() => {
+    if (isResizing) {
+      setIsResizing(false);
+      setResizingColumn(null);
+      setResizeData({ startX: 0, startWidth: 0 });
+    }
+  }, [isResizing]);
 
   /**
-   * Cleanup event listeners on component unmount
+   * Set up global mouse event listeners for resizing
    */
   useEffect(() => {
+    if (isResizing) {
+      document.addEventListener('mousemove', handleMouseMove);
+      document.addEventListener('mouseup', handleMouseUp);
+      document.body.style.cursor = 'col-resize';
+      document.body.style.userSelect = 'none';
+    } else {
+      document.removeEventListener('mousemove', handleMouseMove);
+      document.removeEventListener('mouseup', handleMouseUp);
+      document.body.style.cursor = '';
+      document.body.style.userSelect = '';
+    }
+
     return () => {
-      document.removeEventListener('mousemove', handleResize);
-      document.removeEventListener('mouseup', stopResize);
+      document.removeEventListener('mousemove', handleMouseMove);
+      document.removeEventListener('mouseup', handleMouseUp);
+      document.body.style.cursor = '';
+      document.body.style.userSelect = '';
     };
-  }, [handleResize, stopResize]);
+  }, [isResizing, handleMouseMove, handleMouseUp]);
 
   /**
    * Handle column drag start - prevent dragging selection and name columns
@@ -178,7 +191,7 @@ const ContactsList = ({
   };
 
   /**
-   * Handle column drop - prevent dropping on name column and maintain name as second column
+   * Handle column drop - prevent dropping on name column and maintain name as first column
    */
   const handleColumnDrop = (e, targetColumn) => {
     e.preventDefault();
@@ -199,7 +212,7 @@ const ContactsList = ({
       newOrder.splice(draggedIndex, 1);
       newOrder.splice(targetIndex, 0, draggedColumn);
       
-      // Ensure name column is always first in the order (after selection)
+      // Ensure name column is always first in the order
       const nameIndex = newOrder.indexOf('name');
       if (nameIndex !== 0) {
         newOrder.splice(nameIndex, 1);
@@ -225,17 +238,15 @@ const ContactsList = ({
    * Start column resizing
    */
   const startResize = (e, column) => {
-    console.log('Starting resize for column:', column);
     e.preventDefault();
     e.stopPropagation();
     
     setIsResizing(true);
     setResizingColumn(column);
-    setStartX(e.clientX);
-    setStartWidth(columnWidths[column]);
-    
-    document.addEventListener('mousemove', handleResize);
-    document.addEventListener('mouseup', stopResize);
+    setResizeData({
+      startX: e.clientX,
+      startWidth: columnWidths[column]
+    });
   };
 
   /**
@@ -244,8 +255,8 @@ const ContactsList = ({
   const filteredContacts = contacts.filter(contact => {
     // Check if contact matches search term (name, email, or phone)
     const matchesSearch = contact.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         contact.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         contact.phone.includes(searchTerm);
+                         (contact.email || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         (contact.phone || '').includes(searchTerm);
     
     // Check if contact matches status filter (if any)
     const matchesStatus = !statusFilter || contact.status === statusFilter;
@@ -482,8 +493,6 @@ const ContactsList = ({
           )}
         </div>
 
-
-
         {/* Add Contact Button */}
         <div>
           <button onClick={onAddContact}>
@@ -501,8 +510,6 @@ const ContactsList = ({
         )}
       </div>
 
-
-
       {/* Contacts Table */}
       <div className="contacts-table-container">
         <table 
@@ -512,7 +519,7 @@ const ContactsList = ({
           <thead>
             <tr>
               {/* Selection Column Header - Always visible and non-draggable */}
-              <th style={{ width: '15px', minWidth: '15px', textAlign: 'center' }} className="selection-column">
+              <th style={{ width: '50px', minWidth: '50px', textAlign: 'center' }} className="selection-column">
                 <input
                   type="checkbox"
                   checked={selectedRows.length === filteredContacts.length && filteredContacts.length > 0}
@@ -573,7 +580,7 @@ const ContactsList = ({
                   className={selectedRows.includes(contact.id) ? 'selected' : ''}
                 >
                   {/* Selection Checkbox Cell - Always visible */}
-                  <td style={{ width: '15px', padding: '4px', textAlign: 'center' }} className="selection-cell">
+                  <td style={{ width: '50px', padding: '8px', textAlign: 'center' }} className="selection-cell">
                     <input
                       type="checkbox"
                       checked={selectedRows.includes(contact.id)}
