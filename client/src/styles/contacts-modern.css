@@ -1,0 +1,1099 @@
+/* =================================================================
+   MODERN HUBSPOT-STYLE CONTACTS PAGE STYLING
+   ================================================================= */
+
+/* Updated CSS Variables for HubSpot-like design */
+:root {
+  /* Modern HubSpot-inspired color palette */
+  --hubspot-primary: #0091ae;
+  --hubspot-primary-hover: #006a7f;
+  --hubspot-primary-light: #e8f4f6;
+  --hubspot-secondary: #6c757d;
+  --hubspot-secondary-light: #f8f9fa;
+  
+  /* Text colors */
+  --hubspot-text-primary: #2d3748;
+  --hubspot-text-secondary: #718096;
+  --hubspot-text-muted: #a0aec0;
+  --hubspot-text-light: #e2e8f0;
+  
+  /* Background colors */
+  --hubspot-bg-white: #ffffff;
+  --hubspot-bg-light: #f7fafc;
+  --hubspot-bg-lighter: #edf2f7;
+  --hubspot-bg-hover: #f1f5f9;
+  --hubspot-bg-selected: #e6fffa;
+  
+  /* Border colors */
+  --hubspot-border: #e2e8f0;
+  --hubspot-border-light: #f1f5f9;
+  --hubspot-border-hover: #cbd5e0;
+  
+  /* Status colors */
+  --status-new-bg: #10b981;
+  --status-new-text: #ffffff;
+  --status-lead-bg: #3b82f6;
+  --status-lead-text: #ffffff;
+  --status-warm-bg: #f59e0b;
+  --status-warm-text: #ffffff;
+  --status-cold-bg: #ef4444;
+  --status-cold-text: #ffffff;
+  
+  /* Spacing system (8px grid) */
+  --space-1: 0.25rem;  /* 4px */
+  --space-2: 0.5rem;   /* 8px */
+  --space-3: 0.75rem;  /* 12px */
+  --space-4: 1rem;     /* 16px */
+  --space-5: 1.25rem;  /* 20px */
+  --space-6: 1.5rem;   /* 24px */
+  --space-8: 2rem;     /* 32px */
+  --space-10: 2.5rem;  /* 40px */
+  --space-12: 3rem;    /* 48px */
+  --space-16: 4rem;    /* 64px */
+  
+  /* Border radius */
+  --radius-sm: 0.25rem;  /* 4px */
+  --radius-md: 0.375rem; /* 6px */
+  --radius-lg: 0.5rem;   /* 8px */
+  --radius-xl: 0.75rem;  /* 12px */
+  --radius-2xl: 1rem;    /* 16px */
+  --radius-full: 50%;
+  
+  /* Typography */
+  --font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Inter', 'Roboto', sans-serif;
+  --font-size-xs: 0.75rem;   /* 12px */
+  --font-size-sm: 0.875rem;  /* 14px */
+  --font-size-base: 1rem;    /* 16px */
+  --font-size-lg: 1.125rem;  /* 18px */
+  --font-size-xl: 1.25rem;   /* 20px */
+  --font-size-2xl: 1.5rem;   /* 24px */
+  --font-size-3xl: 1.875rem; /* 30px */
+  
+  /* Font weights */
+  --font-weight-normal: 400;
+  --font-weight-medium: 500;
+  --font-weight-semibold: 600;
+  --font-weight-bold: 700;
+  
+  /* Shadows */
+  --shadow-xs: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  --shadow-sm: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+  
+  /* Transitions */
+  --transition-fast: 150ms ease-in-out;
+  --transition-normal: 200ms ease-in-out;
+  --transition-slow: 300ms ease-in-out;
+}
+
+/* =================================================================
+   MAIN CONTAINER AND LAYOUT
+   ================================================================= */
+
+.contacts-page-container {
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background-color: var(--hubspot-bg-light);
+  font-family: var(--font-family);
+  color: var(--hubspot-text-primary);
+  /* Remove any margin/padding that might interfere with sidebar layout */
+  margin: 0;
+  padding: 0;
+}
+
+/* =================================================================
+   HEADER SECTION
+   ================================================================= */
+
+.contacts-header {
+  flex-shrink: 0;
+  background: var(--hubspot-bg-white);
+  border-bottom: 1px solid var(--hubspot-border);
+  padding: var(--space-8) var(--space-8) 0;
+}
+
+.contacts-header-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: var(--space-6);
+}
+
+.contacts-title-section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.contacts-title {
+  font-size: var(--font-size-3xl);
+  font-weight: var(--font-weight-semibold);
+  color: var(--hubspot-text-primary);
+  margin: 0;
+  line-height: 1.2;
+}
+
+.contacts-count {
+  font-size: var(--font-size-sm);
+  color: var(--hubspot-text-secondary);
+  font-weight: var(--font-weight-normal);
+}
+
+.refresh-indicator {
+  font-size: var(--font-size-xs);
+  color: var(--hubspot-primary);
+  font-weight: var(--font-weight-medium);
+  margin-left: var(--space-2);
+}
+
+.contacts-actions {
+  display: flex;
+  gap: var(--space-3);
+  align-items: center;
+  pointer-events: auto;
+  z-index: 10;
+  position: relative;
+}
+
+/* =================================================================
+   BUTTON STYLES
+   ================================================================= */
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  padding: var(--space-3) var(--space-5);
+  border-radius: var(--radius-md);
+  font-family: var(--font-family);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+  line-height: 1;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  border: 1px solid transparent;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.btn-primary {
+  background-color: var(--hubspot-primary);
+  color: var(--hubspot-bg-white);
+  border-color: var(--hubspot-primary);
+}
+
+.btn-primary:hover:not(:disabled) {
+  background-color: var(--hubspot-primary-hover);
+  border-color: var(--hubspot-primary-hover);
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-sm);
+}
+
+.btn-outline-primary {
+  background-color: transparent;
+  color: var(--hubspot-primary);
+  border-color: var(--hubspot-border);
+}
+
+.btn-outline-primary:hover:not(:disabled) {
+  background-color: var(--hubspot-primary-light);
+  border-color: var(--hubspot-primary);
+}
+
+.btn-outline-secondary {
+  background-color: var(--hubspot-bg-white);
+  color: var(--hubspot-text-secondary);
+  border-color: var(--hubspot-border);
+}
+
+.btn-outline-secondary:hover:not(:disabled) {
+  background-color: var(--hubspot-bg-hover);
+  border-color: var(--hubspot-border-hover);
+  color: var(--hubspot-text-primary);
+}
+
+.btn-danger {
+  background-color: var(--status-cold-bg);
+  color: var(--status-cold-text);
+  border-color: var(--status-cold-bg);
+}
+
+.btn-danger:hover:not(:disabled) {
+  background-color: #dc2626;
+  border-color: #dc2626;
+}
+
+.btn-sm {
+  padding: var(--space-2) var(--space-3);
+  font-size: var(--font-size-xs);
+}
+
+.btn-link {
+  background: none;
+  color: var(--hubspot-primary);
+  border: none;
+  padding: 0;
+  text-decoration: underline;
+}
+
+.btn-link:hover:not(:disabled) {
+  color: var(--hubspot-primary-hover);
+}
+
+/* Dropdown toggle styling */
+.dropdown-toggle {
+  position: relative;
+}
+
+.dropdown-toggle:after {
+  content: '';
+  margin-left: var(--space-2);
+}
+
+/* =================================================================
+   CONTROLS SECTION
+   ================================================================= */
+
+.contacts-controls {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--space-6) 0;
+  gap: var(--space-4);
+}
+
+.controls-left {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  flex-wrap: wrap;
+}
+
+.controls-right {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+}
+
+/* =================================================================
+   DROPDOWN MENUS
+   ================================================================= */
+
+.views-dropdown,
+.filters-dropdown,
+.column-controls {
+  position: relative;
+}
+
+.dropdown-menu {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  z-index: 1000;
+  min-width: 200px;
+  background: var(--hubspot-bg-white);
+  border: 1px solid var(--hubspot-border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-lg);
+  padding: var(--space-2);
+  margin-top: var(--space-1);
+}
+
+.dropdown-menu.show {
+  display: block;
+}
+
+.dropdown-item {
+  display: block;
+  width: 100%;
+  padding: var(--space-3) var(--space-4);
+  border: none;
+  background: none;
+  color: var(--hubspot-text-primary);
+  text-align: left;
+  border-radius: var(--radius-sm);
+  transition: background-color var(--transition-fast);
+  font-size: var(--font-size-sm);
+  cursor: pointer;
+}
+
+.dropdown-item:hover {
+  background-color: var(--hubspot-bg-hover);
+}
+
+.dropdown-item.active {
+  background-color: var(--hubspot-primary-light);
+  color: var(--hubspot-primary);
+  font-weight: var(--font-weight-medium);
+}
+
+/* Filter menu specific styles */
+.filters-menu {
+  min-width: 280px;
+  padding: var(--space-4);
+}
+
+.filter-section {
+  margin-bottom: var(--space-4);
+}
+
+.filter-section:last-child {
+  margin-bottom: 0;
+}
+
+.filter-section label {
+  display: block;
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+  color: var(--hubspot-text-primary);
+  margin-bottom: var(--space-2);
+}
+
+.form-select {
+  width: 100%;
+  padding: var(--space-3);
+  border: 1px solid var(--hubspot-border);
+  border-radius: var(--radius-md);
+  background: var(--hubspot-bg-white);
+  font-size: var(--font-size-sm);
+  color: var(--hubspot-text-primary);
+  transition: border-color var(--transition-fast);
+}
+
+.form-select:focus {
+  outline: none;
+  border-color: var(--hubspot-primary);
+  box-shadow: 0 0 0 3px rgba(0, 145, 174, 0.1);
+}
+
+.filter-actions {
+  border-top: 1px solid var(--hubspot-border-light);
+  padding-top: var(--space-4);
+  margin-top: var(--space-4);
+}
+
+.filter-badge {
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  background-color: var(--hubspot-primary);
+  border-radius: var(--radius-full);
+  margin-left: var(--space-1);
+}
+
+/* Column controls menu */
+.columns-menu {
+  min-width: 250px;
+  max-height: 400px;
+  overflow-y: auto;
+  padding: var(--space-4);
+}
+
+.column-toggle-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-bottom: var(--space-3);
+  margin-bottom: var(--space-3);
+  border-bottom: 1px solid var(--hubspot-border-light);
+  font-weight: var(--font-weight-medium);
+  font-size: var(--font-size-sm);
+}
+
+.column-toggle-item {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-2) 0;
+  cursor: pointer;
+  font-size: var(--font-size-sm);
+}
+
+.column-toggle-item input[type="checkbox"] {
+  cursor: pointer;
+  width: 16px;
+  height: 16px;
+}
+
+/* =================================================================
+   SEARCH SECTION
+   ================================================================= */
+
+.search-section {
+  flex: 1;
+  max-width: 400px;
+}
+
+.search-input-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.search-input {
+  width: 100%;
+  padding: var(--space-3) var(--space-4);
+  border: 1px solid var(--hubspot-border);
+  border-radius: var(--radius-lg);
+  background: var(--hubspot-bg-white);
+  font-size: var(--font-size-sm);
+  color: var(--hubspot-text-primary);
+  transition: all var(--transition-fast);
+}
+
+.search-input::placeholder {
+  color: var(--hubspot-text-muted);
+}
+
+.search-input:focus {
+  outline: none;
+  border-color: var(--hubspot-primary);
+  box-shadow: 0 0 0 3px rgba(0, 145, 174, 0.1);
+}
+
+.search-clear {
+  position: absolute;
+  right: var(--space-3);
+  background: none;
+  border: none;
+  color: var(--hubspot-text-muted);
+  cursor: pointer;
+  padding: var(--space-1);
+  border-radius: var(--radius-sm);
+  transition: color var(--transition-fast);
+}
+
+.search-clear:hover {
+  color: var(--hubspot-text-secondary);
+  background-color: var(--hubspot-bg-hover);
+}
+
+/* =================================================================
+   BULK ACTIONS
+   ================================================================= */
+
+.bulk-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+  padding: var(--space-4) var(--space-8);
+  background: var(--hubspot-primary-light);
+  border-bottom: 1px solid var(--hubspot-border);
+}
+
+.bulk-selection-count {
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+  color: var(--hubspot-primary);
+}
+
+/* =================================================================
+   TABLE SECTION
+   ================================================================= */
+
+.contacts-table-container {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background: var(--hubspot-bg-white);
+  margin: 0 var(--space-8);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+  border: 1px solid var(--hubspot-border);
+}
+
+.table-wrapper {
+  flex: 1;
+  overflow: auto;
+}
+
+.contacts-table {
+  width: 100%;
+  min-width: 1000px;
+  border-collapse: collapse;
+  background: var(--hubspot-bg-white);
+  font-family: var(--font-family);
+  font-size: var(--font-size-sm);
+}
+
+/* Table header */
+.contacts-table thead {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+.contacts-table-header-cell {
+  background: var(--hubspot-bg-lighter);
+  padding: var(--space-4) var(--space-5);
+  font-weight: var(--font-weight-semibold);
+  color: var(--hubspot-text-primary);
+  text-align: left;
+  border-bottom: 1px solid var(--hubspot-border);
+  border-right: 1px solid var(--hubspot-border-light);
+  font-size: var(--font-size-sm);
+  height: 48px;
+  vertical-align: middle;
+  white-space: nowrap;
+}
+
+.contacts-table-header-cell:last-child {
+  border-right: none;
+}
+
+.contacts-table-header-cell.sortable {
+  cursor: pointer;
+  user-select: none;
+  transition: background-color var(--transition-fast);
+}
+
+.contacts-table-header-cell.sortable:hover {
+  background: var(--hubspot-bg-hover);
+}
+
+.header-content {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+}
+
+.sort-indicator {
+  color: var(--hubspot-text-muted);
+  font-size: 12px;
+  opacity: 0.7;
+}
+
+.contacts-table-header-cell.sorted .sort-indicator {
+  color: var(--hubspot-primary);
+  opacity: 1;
+}
+
+/* Table body */
+.contacts-table-body .contacts-table-row {
+  transition: background-color var(--transition-fast);
+  border-bottom: 1px solid var(--hubspot-border-light);
+}
+
+.contacts-table-body .contacts-table-row:hover {
+  background-color: var(--hubspot-bg-hover);
+}
+
+.contacts-table-body .contacts-table-row.selected {
+  background-color: var(--hubspot-bg-selected);
+}
+
+.contacts-table-body .contacts-table-row.selected:hover {
+  background-color: var(--hubspot-bg-selected);
+}
+
+.contacts-table-cell {
+  padding: var(--space-4) var(--space-5);
+  border-right: 1px solid var(--hubspot-border-light);
+  vertical-align: middle;
+  height: 56px;
+  font-size: var(--font-size-sm);
+  color: var(--hubspot-text-primary);
+}
+
+.contacts-table-cell:last-child {
+  border-right: none;
+}
+
+/* =================================================================
+   CONTACT AVATARS AND NAME STYLING
+   ================================================================= */
+
+.contact-avatar {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: var(--radius-full);
+  background-color: var(--hubspot-primary);
+  color: var(--hubspot-bg-white);
+  font-weight: var(--font-weight-semibold);
+  font-size: var(--font-size-xs);
+  margin-right: var(--space-3);
+  flex-shrink: 0;
+}
+
+.contact-name-cell {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.contact-name {
+  font-weight: var(--font-weight-normal);
+  color: var(--hubspot-text-primary);
+  text-decoration: none;
+  font-size: 12px;
+  line-height: 1.2;
+}
+
+.contact-name:hover {
+  color: var(--hubspot-primary);
+  text-decoration: underline;
+}
+
+/* =================================================================
+   STATUS BADGES
+   ================================================================= */
+
+.status-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: var(--space-1) var(--space-3);
+  border-radius: var(--radius-full);
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-medium);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.status-badge.new {
+  background-color: var(--status-new-bg);
+  color: var(--status-new-text);
+}
+
+.status-badge.lead {
+  background-color: var(--status-lead-bg);
+  color: var(--status-lead-text);
+}
+
+.status-badge.warm {
+  background-color: var(--status-warm-bg);
+  color: var(--status-warm-text);
+}
+
+.status-badge.cold {
+  background-color: var(--status-cold-bg);
+  color: var(--status-cold-text);
+}
+
+.contact-type-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: var(--space-1) var(--space-3);
+  border-radius: var(--radius-md);
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-medium);
+  background-color: var(--hubspot-bg-lighter);
+  color: var(--hubspot-text-secondary);
+}
+
+/* =================================================================
+   LINKS AND INTERACTIVE ELEMENTS
+   ================================================================= */
+
+.email-link,
+.phone-link {
+  color: var(--hubspot-primary);
+  text-decoration: none;
+  transition: color var(--transition-fast);
+}
+
+.email-link:hover,
+.phone-link:hover {
+  color: var(--hubspot-primary-hover);
+  text-decoration: underline;
+}
+
+.address-text {
+  color: var(--hubspot-text-secondary);
+  font-size: var(--font-size-sm);
+}
+
+.text-muted {
+  color: var(--hubspot-text-muted);
+  font-style: italic;
+}
+
+/* =================================================================
+   PAGINATION FOOTER
+   ================================================================= */
+
+.contacts-pagination-footer {
+  flex-shrink: 0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--space-5) var(--space-8);
+  background: var(--hubspot-bg-white);
+  border-top: 1px solid var(--hubspot-border);
+  margin: 0 var(--space-8);
+  border-radius: 0 0 var(--radius-lg) var(--radius-lg);
+}
+
+.pagination-info {
+  color: var(--hubspot-text-secondary);
+  font-size: var(--font-size-sm);
+}
+
+.pagination-controls {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.pagination-current {
+  color: var(--hubspot-text-primary);
+  font-weight: var(--font-weight-medium);
+  font-size: var(--font-size-sm);
+  margin: 0 var(--space-3);
+}
+
+.page-size-selector {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.form-select-sm {
+  padding: var(--space-2) var(--space-3);
+  font-size: var(--font-size-sm);
+}
+
+/* =================================================================
+   EMPTY STATE
+   ================================================================= */
+
+.empty-state {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: var(--space-16) var(--space-8);
+}
+
+.empty-state-content {
+  text-align: center;
+  max-width: 400px;
+}
+
+.empty-state-content h3 {
+  font-size: var(--font-size-xl);
+  font-weight: var(--font-weight-semibold);
+  color: var(--hubspot-text-primary);
+  margin: 0 0 var(--space-4);
+}
+
+.empty-state-content p {
+  font-size: var(--font-size-base);
+  color: var(--hubspot-text-secondary);
+  margin: 0 0 var(--space-6);
+  line-height: 1.5;
+}
+
+/* =================================================================
+   LOADING AND ERROR STATES
+   ================================================================= */
+
+.loading-state,
+.error-state {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  padding: var(--space-16) var(--space-8);
+  text-align: center;
+}
+
+.loading-spinner {
+  width: 40px;
+  height: 40px;
+  border: 3px solid var(--hubspot-border-light);
+  border-top: 3px solid var(--hubspot-primary);
+  border-radius: var(--radius-full);
+  animation: spin 1s linear infinite;
+  margin-bottom: var(--space-4);
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.error-state h3 {
+  font-size: var(--font-size-xl);
+  font-weight: var(--font-weight-semibold);
+  color: var(--status-cold-bg);
+  margin: 0 0 var(--space-4);
+}
+
+.error-state p {
+  font-size: var(--font-size-base);
+  color: var(--hubspot-text-secondary);
+  margin: 0 0 var(--space-6);
+}
+
+/* =================================================================
+   RESPONSIVE DESIGN
+   ================================================================= */
+
+@media (max-width: 1024px) {
+  .contacts-header {
+    padding: var(--space-6) var(--space-4) 0;
+  }
+  
+  .contacts-table-container {
+    margin: 0 var(--space-4);
+  }
+  
+  .contacts-pagination-footer {
+    padding: var(--space-4);
+    margin: 0 var(--space-4);
+  }
+}
+
+@media (max-width: 768px) {
+  .contacts-header-top {
+    flex-direction: column;
+    gap: var(--space-4);
+    align-items: stretch;
+  }
+  
+  .contacts-actions {
+    justify-content: stretch;
+  }
+  
+  .contacts-controls {
+    flex-direction: column;
+    gap: var(--space-4);
+    align-items: stretch;
+  }
+  
+  .controls-left,
+  .controls-right {
+    flex-direction: column;
+    align-items: stretch;
+    gap: var(--space-3);
+  }
+  
+  .search-section {
+    max-width: none;
+  }
+  
+  .contacts-pagination-footer {
+    flex-direction: column;
+    gap: var(--space-4);
+    align-items: stretch;
+    text-align: center;
+  }
+}
+
+@media (max-width: 640px) {
+  .contacts-title {
+    font-size: var(--font-size-2xl);
+  }
+  
+  .contacts-table {
+    min-width: 800px;
+  }
+  
+  .contacts-table-cell,
+  .contacts-table-header-cell {
+    padding: var(--space-3);
+  }
+  
+  .dropdown-menu {
+    position: fixed;
+    top: auto !important;
+    left: var(--space-4) !important;
+    right: var(--space-4) !important;
+    width: auto !important;
+    min-width: auto !important;
+  }
+}
+
+/* =================================================================
+   CHECKBOXES AND SELECTION
+   ================================================================= */
+
+input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+  accent-color: var(--hubspot-primary);
+  cursor: pointer;
+}
+
+.selection-column {
+  width: 48px;
+  min-width: 48px;
+  max-width: 48px;
+  text-align: center;
+}
+
+.selection-cell {
+  text-align: center;
+}
+
+/* =================================================================
+   HOVER EFFECTS AND MICRO-INTERACTIONS
+   ================================================================= */
+
+.view-contact-btn {
+  opacity: 0;
+  padding: var(--space-1);
+  background: var(--hubspot-primary);
+  color: var(--hubspot-bg-white);
+  border: none;
+  border-radius: var(--radius-sm);
+  font-size: 10px;
+  font-weight: var(--font-weight-medium);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  margin-left: auto;
+  width: 28px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.contacts-table-row:hover .view-contact-btn {
+  opacity: 1;
+}
+
+.view-contact-btn:hover {
+  background: var(--hubspot-primary-hover);
+  transform: scale(1.05);
+}
+
+/* =================================================================
+   FOCUS STYLES FOR ACCESSIBILITY
+   ================================================================= */
+
+.btn:focus-visible,
+.search-input:focus-visible,
+.form-select:focus-visible {
+  outline: 2px solid var(--hubspot-primary);
+  outline-offset: 2px;
+}
+
+.dropdown-item:focus-visible {
+  outline: 2px solid var(--hubspot-primary);
+  outline-offset: -2px;
+}
+
+/* =================================================================
+   ACTION BUTTONS IN TABLE
+   ================================================================= */
+
+.actions-cell {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  opacity: 0;
+  transition: opacity var(--transition-fast);
+}
+
+.contacts-table-row:hover .actions-cell {
+  opacity: 1;
+}
+
+.action-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border: none;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  background: transparent;
+}
+
+.action-btn:hover {
+  transform: scale(1.1);
+}
+
+.view-btn {
+  color: var(--hubspot-primary);
+}
+
+.view-btn:hover {
+  background-color: var(--hubspot-primary-light);
+  color: var(--hubspot-primary-hover);
+}
+
+.edit-btn {
+  color: var(--hubspot-text-secondary);
+}
+
+.edit-btn:hover {
+  background-color: var(--hubspot-bg-hover);
+  color: var(--hubspot-text-primary);
+}
+
+.delete-btn {
+  color: var(--status-cold-bg);
+}
+
+.delete-btn:hover {
+  background-color: #fee2e2;
+  color: #dc2626;
+}
+
+/* =================================================================
+   PRINT STYLES
+   ================================================================= */
+
+@media print {
+  .contacts-header,
+  .contacts-pagination-footer,
+  .bulk-actions {
+    display: none;
+  }
+  
+  .contacts-table-container {
+    margin: 0;
+    box-shadow: none;
+    border: 1px solid #000;
+  }
+  
+  .contacts-table {
+    font-size: 12px;
+  }
+  
+  .contacts-table-cell,
+  .contacts-table-header-cell {
+    padding: 4px 8px;
+  }
+}
+
+/* =================================================================
+   SPECIFIC CONTACTS PAGE BUTTON FIXES
+   ================================================================= */
+
+/* Ensure contacts page buttons are clickable */
+.contacts-page-container .btn {
+  pointer-events: auto !important;
+  cursor: pointer !important;
+  position: relative;
+  z-index: 10;
+}
+
+.contacts-page-container .contacts-actions .btn {
+  pointer-events: auto !important;
+  cursor: pointer !important;
+}
+
+.contacts-header {
+  position: relative;
+  z-index: 20;
+}

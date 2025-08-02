@@ -26,24 +26,32 @@ async function migrateUser(user) {
   // 2. Perform the migration within a transaction for safety
   try {
     await prisma.$transaction(async (tx) => {
-      // Create a new user record with the new ID and existing data
+      // 1. Create a new user record with the new ID and a temporary email
+      // to avoid the unique constraint violation on the real email.
+      const tempEmail = `${newId}@placeholder.migration`;
       await tx.user.create({
         data: {
           id: newId,
-          email: user.email,
+          email: tempEmail,
           passwordHash: user.passwordHash,
         },
       });
 
-      // Re-link all associated contacts to the new user ID
+      // 2. Re-link all associated contacts to the new user ID
       await tx.contact.updateMany({
         where: { userId: user.id },
         data: { userId: newId },
       });
 
-      // Delete the old user record
+      // 3. Delete the old user record, which frees up the original email
       await tx.user.delete({
         where: { id: user.id },
+      });
+
+      // 4. Update the new user to use the original email
+      await tx.user.update({
+        where: { id: newId },
+        data: { email: user.email },
       });
     });
     console.log(`  ✓ Successfully migrated ${user.email}`);

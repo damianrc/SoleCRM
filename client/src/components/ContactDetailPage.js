@@ -10,39 +10,54 @@ const ContactDetailPage = () => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // First try to get contact from navigation state
-    if (location.state && location.state.contact) {
-      setContact(location.state.contact);
-      setLoading(false);
-      return;
-    }
-
-    // If not in state, try to load from localStorage
-    try {
-      const savedContacts = localStorage.getItem('crm_contacts');
-      if (savedContacts) {
-        const contacts = JSON.parse(savedContacts);
-        const foundContact = contacts.find(c => c.id === parseInt(id));
-        if (foundContact) {
-          setContact(foundContact);
-        } else {
-          console.error('Contact not found');
-          navigate('/protected/contacts');
-        }
-      } else {
-        console.error('No contacts found in localStorage');
-        navigate('/protected/contacts');
+    const fetchContact = async () => {
+      setLoading(true);
+      
+      // First try to get contact from navigation state
+      if (location.state && location.state.contact) {
+        setContact(location.state.contact);
+        setLoading(false);
+        return;
       }
-    } catch (error) {
-      console.error('Error loading contact:', error);
-      navigate('/protected/contacts');
-    }
-    
-    setLoading(false);
+
+      // If not in state, fetch from API
+      try {
+        const token = localStorage.getItem('token');
+        if (!token) {
+          navigate('/login');
+          return;
+        }
+
+        const response = await fetch(`http://localhost:4000/api/contacts/${id}`, {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+
+        if (response.ok) {
+          const contactData = await response.json();
+          setContact(contactData);
+        } else if (response.status === 401) {
+          localStorage.removeItem('token');
+          navigate('/login');
+        } else {
+          console.error('Failed to fetch contact details');
+          navigate('/dashboard/' + localStorage.getItem('userId') + '/contacts');
+        }
+      } catch (error) {
+        console.error('Error loading contact:', error);
+        navigate('/dashboard/' + localStorage.getItem('userId') + '/contacts');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchContact();
   }, [id, location.state, navigate]);
 
   const handleBack = () => {
-    navigate('/protected/contacts');
+    const userId = localStorage.getItem('userId');
+    navigate(`/dashboard/${userId}/contacts`);
   };
 
   const handleContactUpdate = (contactId, field, value) => {

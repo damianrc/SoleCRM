@@ -616,3 +616,26 @@
     gap: 8px;
   }
 }
+
+.contact-detail-container {
+  background: #ffffff;
+  height: 100vh;
+  width: 100%;
+  overflow-y: auto;
+  position: relative;
+  display: block; /* Force block display */
+}
+
+.contacts-container {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+/* Remove any transitions or animations */
+.contact-detail-container,
+.contacts-container,
+.contact-detail-view {
+  transition: none !important;
+  animation: none !important;
+}

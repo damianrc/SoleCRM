@@ -20,6 +20,9 @@ const AddContactModal = ({ isOpen, onClose, onAddContact }) => {
     email: '',
     phone: '',
     address: '',
+    suburb: '',
+    contactType: 'LEAD',
+    leadSource: '',
     status: 'NEW' // Default status for new contacts
   });
 
@@ -122,6 +125,9 @@ const AddContactModal = ({ isOpen, onClose, onAddContact }) => {
         email: formData.email.trim(),
         phone: formData.phone.trim(),
         address: formData.address.trim(),
+        suburb: formData.suburb.trim(),
+        contactType: formData.contactType,
+        leadSource: formData.leadSource.trim(),
         status: formData.status,
         customFields: [], // Initialize empty custom fields array
         tasks: [], // Initialize empty tasks array
@@ -152,6 +158,9 @@ const AddContactModal = ({ isOpen, onClose, onAddContact }) => {
       email: '',
       phone: '',
       address: '',
+      suburb: '',
+      contactType: 'LEAD',
+      leadSource: '',
       status: 'NEW'
     });
     setErrors({});
@@ -260,6 +269,48 @@ const AddContactModal = ({ isOpen, onClose, onAddContact }) => {
               value={formData.address}
               onChange={handleInputChange}
               placeholder="Enter address"
+            />
+          </div>
+
+          {/* Suburb Field - Optional */}
+          <div className="form-group">
+            <label htmlFor="suburb">Suburb</label>
+            <input
+              id="suburb"
+              name="suburb"
+              type="text"
+              value={formData.suburb}
+              onChange={handleInputChange}
+              placeholder="Enter suburb"
+            />
+          </div>
+
+          {/* Contact Type Field - Required with default */}
+          <div className="form-group">
+            <label htmlFor="contactType">Contact Type</label>
+            <select
+              id="contactType"
+              name="contactType"
+              value={formData.contactType}
+              onChange={handleInputChange}
+            >
+              <option value="LEAD">Lead</option>
+              <option value="BUYER">Buyer</option>
+              <option value="SELLER">Seller</option>
+              <option value="PAST_CLIENT">Past Client</option>
+            </select>
+          </div>
+
+          {/* Lead Source Field - Optional */}
+          <div className="form-group">
+            <label htmlFor="leadSource">Lead Source</label>
+            <input
+              id="leadSource"
+              name="leadSource"
+              type="text"
+              value={formData.leadSource}
+              onChange={handleInputChange}
+              placeholder="Enter lead source (e.g., Website, Referral, Advertisement)"
             />
           </div>
 

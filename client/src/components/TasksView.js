@@ -100,20 +100,7 @@ const TasksView = ({ contacts, onTaskUpdate }) => {
     }
   };
 
-  /**
-   * Get task status badge styling
-   * @param {string} status - Task status
-   * @returns {string} CSS classes for status badge
-   */
-  const getStatusBadgeClass = (status) => {
-    const statusStyles = {
-      PENDING: 'bg-yellow-100 text-yellow-800',
-      IN_PROGRESS: 'bg-blue-100 text-blue-800',
-      COMPLETED: 'bg-green-100 text-green-800',
-      CANCELLED: 'bg-red-100 text-red-800'
-    };
-    return `status-badge ${statusStyles[status] || 'bg-gray-100 text-gray-800'}`;
-  };
+
 
   /**
    * Handle task status update

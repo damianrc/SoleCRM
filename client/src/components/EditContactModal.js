@@ -20,6 +20,9 @@ const EditContactModal = ({ isOpen, contact, onClose, onUpdateContact }) => {
     email: '',
     phone: '',
     address: '',
+    suburb: '',
+    contactType: 'LEAD',
+    leadSource: '',
     status: 'NEW'
   });
 
@@ -38,6 +41,9 @@ const EditContactModal = ({ isOpen, contact, onClose, onUpdateContact }) => {
         email: contact.email || '',
         phone: contact.phone || '',
         address: contact.address || '',
+        suburb: contact.suburb || '',
+        contactType: contact.contactType || 'LEAD',
+        leadSource: contact.leadSource || '',
         status: contact.status || 'NEW'
       });
       // Clear any existing errors when loading new contact
@@ -128,6 +134,9 @@ const EditContactModal = ({ isOpen, contact, onClose, onUpdateContact }) => {
       formData.email !== (contact.email || '') ||
       formData.phone !== (contact.phone || '') ||
       formData.address !== (contact.address || '') ||
+      formData.suburb !== (contact.suburb || '') ||
+      formData.contactType !== (contact.contactType || 'LEAD') ||
+      formData.leadSource !== (contact.leadSource || '') ||
       formData.status !== (contact.status || 'NEW')
     );
   };
@@ -163,6 +172,9 @@ const EditContactModal = ({ isOpen, contact, onClose, onUpdateContact }) => {
         email: formData.email.trim(),
         phone: formData.phone.trim(),
         address: formData.address.trim(),
+        suburb: formData.suburb.trim(),
+        contactType: formData.contactType,
+        leadSource: formData.leadSource.trim(),
         status: formData.status
       };
 
@@ -313,6 +325,48 @@ const EditContactModal = ({ isOpen, contact, onClose, onUpdateContact }) => {
               value={formData.address}
               onChange={handleInputChange}
               placeholder="Enter address"
+            />
+          </div>
+
+          {/* Suburb Field - Optional */}
+          <div className="form-group">
+            <label htmlFor="edit-suburb">Suburb</label>
+            <input
+              id="edit-suburb"
+              name="suburb"
+              type="text"
+              value={formData.suburb}
+              onChange={handleInputChange}
+              placeholder="Enter suburb"
+            />
+          </div>
+
+          {/* Contact Type Field - Required with default */}
+          <div className="form-group">
+            <label htmlFor="edit-contactType">Contact Type</label>
+            <select
+              id="edit-contactType"
+              name="contactType"
+              value={formData.contactType}
+              onChange={handleInputChange}
+            >
+              <option value="LEAD">Lead</option>
+              <option value="BUYER">Buyer</option>
+              <option value="SELLER">Seller</option>
+              <option value="PAST_CLIENT">Past Client</option>
+            </select>
+          </div>
+
+          {/* Lead Source Field - Optional */}
+          <div className="form-group">
+            <label htmlFor="edit-leadSource">Lead Source</label>
+            <input
+              id="edit-leadSource"
+              name="leadSource"
+              type="text"
+              value={formData.leadSource}
+              onChange={handleInputChange}
+              placeholder="Enter lead source (e.g., Website, Referral, Advertisement)"
             />
           </div>
 

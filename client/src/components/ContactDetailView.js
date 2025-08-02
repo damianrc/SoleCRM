@@ -5,10 +5,6 @@ import {
   Phone,
   MapPin,
   Building,
-  Edit,
-  Save,
-  X,
-  Trash2,
   Plus
 } from 'lucide-react';
 import './ContactDetailView.css';
@@ -267,6 +263,45 @@ const ContactDetailView = ({
       >
         {statusText}
       </span>
+    );
+  };
+
+  const renderContactTypeField = () => {
+    const contactTypeMap = {
+      'BUYER': 'Buyer',
+      'SELLER': 'Seller',
+      'PAST_CLIENT': 'Past Client',
+      'LEAD': 'Lead'
+    };
+    const displayValue = contactTypeMap[contact.contactType] || 'Lead';
+
+    if (editingField === 'contactType') {
+      return (
+        <select
+          value={contact.contactType || 'LEAD'}
+          onChange={(e) => {
+            onContactUpdate(contact.id, 'contactType', e.target.value);
+            setEditingField(null);
+          }}
+          onBlur={() => setEditingField(null)}
+          className="edit-input"
+          autoFocus
+        >
+          <option value="LEAD">Lead</option>
+          <option value="BUYER">Buyer</option>
+          <option value="SELLER">Seller</option>
+          <option value="PAST_CLIENT">Past Client</option>
+        </select>
+      );
+    }
+
+    return (
+      <div
+        className={`field-value ${!contact.contactType ? 'empty' : ''}`}
+        onClick={() => setEditingField('contactType')}
+      >
+        {displayValue}
+      </div>
     );
   };
 
@@ -616,10 +651,26 @@ const ContactDetailView = ({
               </div>
 
               <div className="field-item">
+                <MapPin className="field-icon" size={16} />
+                <div className="field-content">
+                  <div className="field-label">Suburb</div>
+                  {renderEditableField('suburb', contact.suburb, 'Click to add suburb')}
+                </div>
+              </div>
+
+              <div className="field-item">
                 <Building className="field-icon" size={16} />
                 <div className="field-content">
-                  <div className="field-label">Company</div>
-                  {renderEditableField('company', contact.company, 'Click to add company')}
+                  <div className="field-label">Contact Type</div>
+                  {renderContactTypeField()}
+                </div>
+              </div>
+
+              <div className="field-item">
+                <Building className="field-icon" size={16} />
+                <div className="field-content">
+                  <div className="field-label">Lead Source</div>
+                  {renderEditableField('leadSource', contact.leadSource, 'Click to add lead source')}
                 </div>
               </div>
             </div>
