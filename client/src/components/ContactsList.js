@@ -21,29 +21,202 @@ import {
   sortableKeyboardCoordinates,
   horizontalListSortingStrategy,
 } from '@dnd-kit/sortable';
-import { Table, TableBody, TableHeader, TableRow } from './ui/Table';
-import { DraggableHeader } from './DraggableHeader';
-import { DefaultCell } from './DefaultCell';
-import { Checkbox } from './ui/Checkbox';
-import { Button } from './ui/Button';
+import { Table, TableBody, TableHeader, TableRow } from './ui/Table.js';
+import { DraggableHeader } from './DraggableHeader.js';
+import { DefaultCell } from './DefaultCell.js';
+import { EditableCell } from './EditableCell.js';
+import { Checkbox } from './ui/Checkbox.js';
+import { Button } from './ui/Button.js';
+import { BulkDeleteModal } from './ui/BulkDeleteModal.js';
 import '../styles/contacts-table.css';
 
 // Create column helper
 const columnHelper = createColumnHelper();
 
-// Modal component for bulk delete confirmation
-const BulkDeleteModal = ({ selectedCount, onConfirm, onCancel }) => (
-  <div className="modal-overlay">
-    <div className="modal-content">
-      <h3>Confirm Delete</h3>
-      <p>Are you sure you want to delete {selectedCount} selected contacts?</p>
-      <div className="modal-actions">
-        <Button onClick={onCancel} variant="outline">Cancel</Button>
-        <Button onClick={onConfirm} variant="destructive">Delete</Button>
-      </div>
+// Name cell component with integrated view button
+const NameCell = ({ info, onContactUpdate, onViewContact }) => {
+  const [isEditing, setIsEditing] = useState(false);
+  const [value, setValue] = useState(info.getValue());
+  const inputRef = useRef(null);
+
+  // Extract the current value to avoid complex expression in dependency array
+  const currentValue = info.getValue();
+
+  // Reset value when cell value changes from outside
+  useEffect(() => {
+    setValue(currentValue);
+  }, [currentValue, info]);
+
+  // Focus input when editing starts
+  useEffect(() => {
+    if (isEditing && inputRef.current) {
+      inputRef.current.focus();
+      if (inputRef.current.select && typeof inputRef.current.select === 'function') {
+        inputRef.current.select();
+      }
+    }
+  }, [isEditing]);
+
+  const handleClick = (e) => {
+    e.stopPropagation();
+    setIsEditing(true);
+  };
+
+  const handleSave = async () => {
+    setIsEditing(false);
+    
+    if (value !== info.getValue() && onContactUpdate) {
+      try {
+        await onContactUpdate(info.row.original.id, {
+          [info.column.id]: value
+        });
+      } catch (error) {
+        console.error('Failed to update contact:', error);
+        setValue(info.getValue());
+      }
+    }
+  };
+
+  const handleKeyDown = (e) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      handleSave();
+    } else if (e.key === 'Escape') {
+      setValue(info.getValue());
+      setIsEditing(false);
+    }
+  };
+
+  const handleBlur = () => {
+    handleSave();
+  };
+
+  const handleViewClick = (e) => {
+    e.stopPropagation();
+    onViewContact && onViewContact(info.row.original.id);
+  };
+
+  return (
+    <div className="name-cell-container">
+      {isEditing ? (
+        <div className="w-full h-full flex items-center px-1">
+          <input
+            ref={inputRef}
+            value={value}
+            onChange={(e) => setValue(e.target.value)}
+            onBlur={handleBlur}
+            onKeyDown={handleKeyDown}
+            className="name-cell-input"
+          />
+        </div>
+      ) : (
+        <>
+          <div 
+            className="w-full h-full flex items-center cursor-pointer hover:bg-gray-50 px-1 rounded transition-colors duration-150 min-h-[32px]"
+            onClick={handleClick}
+          >
+            <span className="name-cell-text">
+              {value || ''}
+            </span>
+          </div>
+          <Button
+            onClick={handleViewClick}
+            variant="ghost"
+            size="sm"
+            className="name-cell-view-button"
+          >
+            View
+          </Button>
+        </>
+      )}
     </div>
-  </div>
-);
+  );
+};
+
+// Generic custom cell component (same behavior as name but without view button)
+const CustomCell = ({ info, onContactUpdate }) => {
+  const [isEditing, setIsEditing] = useState(false);
+  const [value, setValue] = useState(info.getValue());
+  const inputRef = useRef(null);
+
+  // Extract the current value to avoid complex expression in dependency array
+  const currentValue = info.getValue();
+
+  // Reset value when cell value changes from outside
+  useEffect(() => {
+    setValue(currentValue);
+  }, [currentValue, info]);
+
+  // Focus input when editing starts
+  useEffect(() => {
+    if (isEditing && inputRef.current) {
+      inputRef.current.focus();
+      if (inputRef.current.select && typeof inputRef.current.select === 'function') {
+        inputRef.current.select();
+      }
+    }
+  }, [isEditing]);
+
+  const handleClick = (e) => {
+    e.stopPropagation();
+    setIsEditing(true);
+  };
+
+  const handleSave = async () => {
+    setIsEditing(false);
+    
+    if (value !== info.getValue() && onContactUpdate) {
+      try {
+        await onContactUpdate(info.row.original.id, {
+          [info.column.id]: value
+        });
+      } catch (error) {
+        console.error('Failed to update contact:', error);
+        setValue(info.getValue());
+      }
+    }
+  };
+
+  const handleKeyDown = (e) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      handleSave();
+    } else if (e.key === 'Escape') {
+      setValue(info.getValue());
+      setIsEditing(false);
+    }
+  };
+
+  const handleBlur = () => {
+    handleSave();
+  };
+
+  return (
+    <div className="custom-cell-container">
+      {isEditing ? (
+        <div className="w-full h-full flex items-center px-1">
+          <input
+            ref={inputRef}
+            value={value}
+            onChange={(e) => setValue(e.target.value)}
+            onBlur={handleBlur}
+            onKeyDown={handleKeyDown}
+            className="name-cell-input"
+          />
+        </div>
+      ) : (
+        <div 
+          className="w-full h-full flex items-center cursor-pointer hover:bg-gray-50 px-1 rounded transition-colors duration-150 min-h-[32px]"
+          onClick={handleClick}
+        >
+          <span className="name-cell-text">
+            {value || ''}
+          </span>
+        </div>
+      )}
+    </div>
+  );
+};
 
 const ContactsList = ({ 
   contacts = [], 
@@ -51,18 +224,39 @@ const ContactsList = ({
   onContactSelect, 
   onBulkDelete,
   onViewContact,
+  onSelectionChange,
+  onBulkDeleteClick,
 }) => {
   const [rowSelection, setRowSelection] = useState({});
   const [sorting, setSorting] = useState([]);
   const [showBulkDeleteModal, setShowBulkDeleteModal] = useState(false);
   const [columnOrder, setColumnOrder] = useState([
     'select', 'name', 'email', 'phone', 'address', 'suburb', 
-    'contactType', 'leadSource', 'status', 'createdAt', 'updatedAt', 'actions'
+    'contactType', 'leadSource', 'status', 'createdAt', 'updatedAt'
   ]);
   
   // Refs for virtualization
   const tableContainerRef = useRef(null);
   const outerContainerRef = useRef(null);
+
+  // Dynamic height calculation
+  const [containerHeight, setContainerHeight] = useState('calc(100vh - 280px)');
+  
+  useEffect(() => {
+    const calculateHeight = () => {
+      // Calculate available height based on actual page elements
+      const headerHeight = 180; // Increased to give more space for buttons and future additions
+      const paginationHeight = 80; // Approximate height of pagination
+      const padding = 80; // Additional padding/margins
+      const availableHeight = window.innerHeight - headerHeight - paginationHeight - padding;
+      setContainerHeight(`${Math.max(300, availableHeight)}px`); // Minimum 300px height
+    };
+
+    calculateHeight();
+    window.addEventListener('resize', calculateHeight);
+    
+    return () => window.removeEventListener('resize', calculateHeight);
+  }, []);
 
   // Drag and drop sensors
   const sensors = useSensors(
@@ -83,7 +277,9 @@ const ContactsList = ({
       suburb: contact.suburb || '',
       contactType: contact.contactType || '',
       leadSource: contact.leadSource || '',
-      status: contact.status || ''
+      status: contact.status || '',
+      createdAt: contact.createdAt,
+      updatedAt: contact.updatedAt
     }));
   }, [contacts]);
 
@@ -99,7 +295,6 @@ const ContactsList = ({
               (table.getIsSomeRowsSelected() && "indeterminate")
             }
             onCheckedChange={(value) => {
-              console.log('Select all clicked, value:', value);
               table.toggleAllRowsSelected(!!value);
             }}
             aria-label="Select all"
@@ -111,7 +306,6 @@ const ContactsList = ({
           <Checkbox
             checked={row.getIsSelected()}
             onCheckedChange={(value) => {
-              console.log('Row checkbox clicked, value:', value, 'row id:', row.id);
               row.toggleSelected(!!value);
             }}
             aria-label="Select row"
@@ -121,74 +315,118 @@ const ContactsList = ({
       enableSorting: false,
       enableHiding: false,
       enableResizing: false,
-      size: 40,
+      enableReordering: false, // Prevent dragging
+      size: 50,
     }),
     columnHelper.accessor('name', {
       header: 'Name',
-      cell: (info) => info.getValue(),
+      cell: (info) => (
+        <NameCell 
+          info={info}
+          onContactUpdate={onContactUpdate}
+          onViewContact={onViewContact}
+        />
+      ),
       size: 200,
       enableResizing: true,
+      enableReordering: false, // Prevent dragging
     }),
     columnHelper.accessor('email', {
       header: 'Email',
-      cell: (info) => info.getValue(),
+      cell: (info) => (
+        <CustomCell
+          info={info}
+          onContactUpdate={onContactUpdate}
+        />
+      ),
       size: 250,
       enableResizing: true,
     }),
     columnHelper.accessor('phone', {
       header: 'Phone',
-      cell: (info) => info.getValue(),
+      cell: (info) => (
+        <CustomCell
+          info={info}
+          onContactUpdate={onContactUpdate}
+        />
+      ),
       size: 150,
       enableResizing: true,
     }),
     columnHelper.accessor('address', {
       header: 'Address',
-      cell: (info) => info.getValue(),
+      cell: (info) => (
+        <CustomCell
+          info={info}
+          onContactUpdate={onContactUpdate}
+        />
+      ),
       size: 300,
       enableResizing: true,
     }),
     columnHelper.accessor('suburb', {
       header: 'Suburb',
-      cell: (info) => info.getValue(),
+      cell: (info) => (
+        <CustomCell
+          info={info}
+          onContactUpdate={onContactUpdate}
+        />
+      ),
       size: 150,
       enableResizing: true,
     }),
     columnHelper.accessor('contactType', {
       header: 'Type',
-      cell: ({ getValue }) => {
-        const value = getValue();
-        const displayValue = {
-          'BUYER': 'Buyer',
-          'SELLER': 'Seller', 
-          'PAST_CLIENT': 'Past Client',
-          'LEAD': 'Lead'
-        }[value] || value;
-        return displayValue;
-      },
+      cell: (cellInfo) => (
+        <EditableCell
+          cell={{
+            ...cellInfo,
+            column: {
+              ...cellInfo.column,
+              getSize: () => 150,
+              id: 'contactType'
+            }
+          }}
+          getValue={cellInfo.getValue}
+          row={cellInfo.row}
+          column={cellInfo.column}
+          table={cellInfo.table}
+          onUpdate={onContactUpdate}
+        />
+      ),
       size: 150,
       enableResizing: true,
     }),
     columnHelper.accessor('leadSource', {
       header: 'Source',
-      cell: (info) => info.getValue(),
+      cell: (info) => (
+        <CustomCell
+          info={info}
+          onContactUpdate={onContactUpdate}
+        />
+      ),
       size: 150,
       enableResizing: true,
     }),
     columnHelper.accessor('status', {
       header: 'Status',
-      cell: ({ getValue }) => {
-        const value = getValue();
-        const displayValue = {
-          'NEW': 'New',
-          'CONTACTED': 'Contacted',
-          'QUALIFIED': 'Qualified',
-          'PROPOSAL': 'Proposal',
-          'NEGOTIATION': 'Negotiation',
-          'CLOSED_WON': 'Closed Won',
-          'CLOSED_LOST': 'Closed Lost'
-        }[value] || value;
-        return displayValue;
-      },
+      cell: (cellInfo) => (
+        <EditableCell
+          cell={{
+            ...cellInfo,
+            column: {
+              ...cellInfo.column,
+              getSize: () => 150,
+              id: 'status'
+            }
+          }}
+          getValue={cellInfo.getValue}
+          row={cellInfo.row}
+          column={cellInfo.column}
+          table={cellInfo.table}
+          onUpdate={onContactUpdate}
+        />
+      ),
       size: 150,
       enableResizing: true,
     }),
@@ -210,24 +448,7 @@ const ContactsList = ({
       size: 120,
       enableResizing: true,
     }),
-    columnHelper.display({
-      id: 'actions',
-      header: 'Actions',
-      cell: ({ row }) => (
-        <Button
-          onClick={() => onViewContact && onViewContact(row.original.id)}
-          variant="ghost"
-          size="sm"
-        >
-          View
-        </Button>
-      ),
-      enableSorting: false,
-      enableHiding: false,
-      enableResizing: false,
-      size: 100,
-    }),
-  ], [onViewContact]);
+  ], [onViewContact, onContactUpdate]);
 
   // Create table instance with enhanced settings
   const table = useReactTable({
@@ -250,16 +471,8 @@ const ContactsList = ({
       sorting,
       columnOrder,
     },
-    debugTable: false, // Set to true if you want to see table debug info
+    debugTable: false,
   });
-
-  // Debug row selection - moved after table creation
-  useEffect(() => {
-    console.log('Row selection state:', rowSelection);
-    console.log('All rows selected:', table.getIsAllRowsSelected());
-    console.log('Some rows selected:', table.getIsSomeRowsSelected());
-    console.log('Selected rows count:', Object.keys(rowSelection).filter(id => rowSelection[id]).length);
-  }, [rowSelection, table]);
 
   // Calculate total table width
   const totalTableWidth = useMemo(() => {
@@ -271,7 +484,7 @@ const ContactsList = ({
   const rowVirtualizer = useVirtualizer({
     count: rows.length,
     getScrollElement: () => tableContainerRef.current,
-    estimateSize: () => 35,
+    estimateSize: () => 42, // Increased from 35 to 42 for slightly taller rows
     overscan: 10,
   });
 
@@ -282,11 +495,24 @@ const ContactsList = ({
     return Object.keys(rowSelection).filter(id => rowSelection[id]);
   }, [rowSelection]);
 
+  // Notify parent component of selection changes
+  useEffect(() => {
+    if (onSelectionChange) {
+      onSelectionChange(selectedRowIds);
+    }
+  }, [selectedRowIds, onSelectionChange]);
+
   // Handle drag end for column reordering
   const handleDragEnd = (event) => {
     const { active, over } = event;
-
-    if (active.id !== over?.id) {
+    if (!over) return;
+    if (active.id !== over.id) {
+      // Prevent moving columns that are not reorderable
+      const activeCol = columns.find(col => col.id === active.id || col.accessorKey === active.id);
+      const overCol = columns.find(col => col.id === over.id || col.accessorKey === over.id);
+      if ((activeCol && activeCol.enableReordering === false) || (overCol && overCol.enableReordering === false)) {
+        return;
+      }
       setColumnOrder((items) => {
         const oldIndex = items.indexOf(active.id);
         const newIndex = items.indexOf(over.id);
@@ -294,11 +520,6 @@ const ContactsList = ({
       });
     }
   };
-
-  // Bulk delete handlers
-  const handleBulkDeleteClick = useCallback(() => {
-    setShowBulkDeleteModal(true);
-  }, []);
 
   const handleBulkDeleteConfirm = useCallback(() => {
     if (selectedRowIds.length > 0 && onBulkDelete) {
@@ -330,19 +551,6 @@ const ContactsList = ({
         />
       )}
 
-      {selectedRowIds.length > 0 && (
-        <div className="bulk-actions-bar">
-          <span className="selected-count">{selectedRowIds.length} selected</span>
-          <Button 
-            onClick={handleBulkDeleteClick}
-            variant="destructive"
-            size="sm"
-          >
-            Delete Selected
-          </Button>
-        </div>
-      )}
-
       <DndContext
         sensors={sensors}
         collisionDetection={closestCenter}
@@ -351,8 +559,7 @@ const ContactsList = ({
         <div
           className="table-outer-wrapper"
           style={{
-            maxWidth: "100%",
-            overflow: "auto",
+            width: "100%",
           }}
           ref={outerContainerRef}
         >
@@ -387,7 +594,7 @@ const ContactsList = ({
               className="table-body-wrapper"
               style={{
                 width: Math.max(totalTableWidth + 10, 100) + "px",
-                height: `400px`,
+                height: containerHeight, // Dynamic height based on viewport
                 overflowY: "auto",
                 overflowX: "hidden",
               }}
@@ -421,9 +628,32 @@ const ContactsList = ({
                         }}
                         data-state={row.getIsSelected() && "selected"}
                       >
-                        {row.getVisibleCells().map((cell) => (
-                          <DefaultCell key={cell.id} cell={cell} />
-                        ))}
+                        {row.getVisibleCells().map((cell) => {
+                          // Use DefaultCell for non-data columns and EditableCell is handled in column definition
+                          if (cell.column.id === 'select' || cell.column.id === 'actions' || 
+                              cell.column.id === 'createdAt' || cell.column.id === 'updatedAt') {
+                            return <DefaultCell key={cell.id} cell={cell} />;
+                          }
+                          // For editable columns, the EditableCell is already defined in the column definition
+                          return (
+                            <div key={cell.id} style={{
+                              width: cell.column.getSize(),
+                              flex: `0 0 ${cell.column.getSize()}px`,
+                              minWidth: 0,
+                              overflow: 'hidden',
+                            }}>
+                              <div style={{
+                                width: '100%',
+                                overflow: 'hidden',
+                                textOverflow: 'ellipsis',
+                                whiteSpace: 'nowrap',
+                                padding: '0.5rem',
+                              }}>
+                                {cell.column.columnDef.cell(cell.getContext())}
+                              </div>
+                            </div>
+                          );
+                        })}
                       </TableRow>
                     );
                   })}

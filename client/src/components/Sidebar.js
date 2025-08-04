@@ -1,7 +1,7 @@
 import React from 'react';
-import { Users, CheckCircle, LogOut, PanelLeftOpen, PanelLeftClose } from 'lucide-react';
+import { Users, CheckCircle, PanelLeftOpen, PanelLeftClose } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { removeAuthToken } from '../utils/auth';
+import { getUserId } from '../utils/auth.js';
 import './Sidebar.css';
 
 /**
@@ -16,11 +16,7 @@ import './Sidebar.css';
 const Sidebar = ({ isCollapsed, onToggleCollapse }) => {
   const navigate = useNavigate();
   const location = useLocation();
-
-  const handleLogout = () => {
-    removeAuthToken();
-    navigate('/login');
-  };
+  const userId = getUserId(); // Get userId properly
 
   return (
     <div 
@@ -35,7 +31,7 @@ const Sidebar = ({ isCollapsed, onToggleCollapse }) => {
         color: 'white',
         display: 'flex',
         flexDirection: 'column',
-        zIndex: 9999
+        zIndex: 10000
       }}
     >
       {/* Header with SoleCRM branding */}
@@ -51,7 +47,7 @@ const Sidebar = ({ isCollapsed, onToggleCollapse }) => {
           <li style={{ marginBottom: '8px', padding: '0 12px' }}>
             <button 
               className={`nav-item ${location.pathname.includes('/contacts') ? 'active' : ''}`}
-              onClick={() => navigate(`/dashboard/${localStorage.getItem('userId')}/contacts`)}
+              onClick={() => navigate(`/dashboard/${userId}/contacts`)}
               title={isCollapsed ? 'Contacts' : ''}
               style={{
                 display: 'flex',
@@ -87,7 +83,7 @@ const Sidebar = ({ isCollapsed, onToggleCollapse }) => {
           <li style={{ marginBottom: '8px', padding: '0 12px' }}>
             <button 
               className={`nav-item ${location.pathname.includes('/tasks') ? 'active' : ''}`}
-              onClick={() => navigate(`/dashboard/${localStorage.getItem('userId')}/tasks`)}
+              onClick={() => navigate(`/dashboard/${userId}/tasks`)}
               title={isCollapsed ? 'Tasks' : ''}
               style={{
                 display: 'flex',
@@ -120,43 +116,13 @@ const Sidebar = ({ isCollapsed, onToggleCollapse }) => {
               {!isCollapsed && <span>Tasks</span>}
             </button>
           </li>
+
         </ul>
       </nav>
 
-      {/* Footer with logout and collapse buttons */}
+      {/* Footer with collapse button */}
       <div className="sidebar-footer" style={{ padding: '20px 12px', borderTop: '1px solid rgba(255,255,255,0.1)' }}>
-        <div className="sidebar-footer-content" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-          {!isCollapsed && (
-            <button 
-              className="logout-button" 
-              onClick={handleLogout}
-              title="Logout"
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '12px',
-                padding: '12px 16px',
-                background: 'none',
-                border: 'none',
-                color: 'rgba(255,255,255,0.8)',
-                cursor: 'pointer',
-                borderRadius: '8px',
-                flex: 1,
-                transition: 'all 0.2s ease'
-              }}
-              onMouseEnter={(e) => {
-                e.target.style.backgroundColor = 'rgba(255,255,255,0.1)';
-                e.target.style.color = 'white';
-              }}
-              onMouseLeave={(e) => {
-                e.target.style.backgroundColor = 'none';
-                e.target.style.color = 'rgba(255,255,255,0.8)';
-              }}
-            >
-              <LogOut size={20} />
-              <span>Logout</span>
-            </button>
-          )}
+        <div className="sidebar-footer-content" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
           <button 
             className="collapse-toggle-button"
             onClick={onToggleCollapse}

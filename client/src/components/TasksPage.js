@@ -1,9 +1,9 @@
 import React, { useState, useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { flexRender, createColumnHelper } from '@tanstack/react-table';
-import { useContactsTable } from '../hooks/useContactsTable';
+import { useContactsTable } from '../hooks/useContactsTable.js';
 import { Plus, Calendar, Clock, User, CheckCircle, AlertCircle } from 'lucide-react';
-import { getAuthHeaders, getUserId } from '../utils/auth';
+import { getAuthHeaders, getUserId } from '../utils/auth.js';
 
 const TasksPage = () => {
   const [isAddTaskModalOpen, setIsAddTaskModalOpen] = useState(false);

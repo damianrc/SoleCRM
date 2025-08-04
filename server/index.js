@@ -1,242 +1,144 @@
 import express from 'express';
 import cors from 'cors';
+import helmet from 'helmet';
 import { PrismaClient } from '@prisma/client';
-import bcrypt from 'bcrypt';
-import jwt from 'jsonwebtoken';
-import authRouter from './routes/auth.js'; // Import the auth routes
+import authRouter from './routes/auth.js';
+import contactsRouter from './routes/contacts.js';
+import usersRouter from './routes/users.js';
+import { authenticateToken } from './middleware/auth.js';
 
 const app = express();
 const prisma = new PrismaClient();
-const PORT = 4000;
+const PORT = process.env.PORT || 4000;
 
-app.use(cors());
-app.use(express.json());
-app.use('/auth', authRouter); // Mount the auth router on the /auth path
+console.log('🚀 Starting SoleCRM Backend');
+console.log('📊 Environment:', process.env.NODE_ENV || 'development');
+console.log('🗄️ Database URL:', process.env.DATABASE_URL ? 'Configured' : 'Not configured');
 
-// Authentication middleware
-function authenticateToken(req, res, next) {
-    const authHeader = req.headers['authorization'];
-    const token = authHeader && authHeader.split(' ')[1];
-
-    if (token == null) return res.sendStatus(401);
-
-    jwt.verify(token, process.env.JWT_SECRET || 'your-secret-key', (err, user) => {
-        if (err) return res.sendStatus(403);
-        req.user = user;
-        next();
-    });
+// Security check
+if (!process.env.JWT_SECRET || process.env.JWT_SECRET === 'your-secret-key') {
+    console.error('❌ CRITICAL: JWT_SECRET environment variable must be set to a secure value!');
+    if (process.env.NODE_ENV === 'production') {
+        process.exit(1);
+    }
 }
 
-// Leads endpoints
-app.get('/leads', async (req, res) => {
-    try {
-        const { page = 1, limit = 10, search, status } = req.query;
-        const skip = (page - 1) * limit;
-        
-        let where = {};
-        
-        if (search) {
-            where.OR = [
-                { name: { contains: search, mode: 'insensitive' } },
-                { email: { contains: search, mode: 'insensitive' } },
-                { phone: { contains: search, mode: 'insensitive' } }
-            ];
-        }
-        
-        if (status) {
-            where.status = status;
-        }
-        
-        const contacts = await prisma.contact.findMany({
-            where,
-            include: {
-                customFields: true,
-                tasks: {
-                    where: { status: { not: 'COMPLETED' } },
-                    orderBy: { dueDate: 'asc' }
-                },
-                _count: {
-                    select: {
-                        tasks: true,
-                        notes: true,
-                        activities: true
-                    }
-                }
-            },
-            orderBy: { updatedAt: 'desc' },
-            skip: parseInt(skip),
-            take: parseInt(limit)
-        });
+// Test database connection on startup
+prisma.$connect()
+    .then(() => console.log('✅ Database connected successfully'))
+    .catch(err => {
+        console.error('❌ Database connection failed:', err);
+        process.exit(1);
+    });
 
-        const total = await prisma.contact.count({ where });
+// Security middleware
+app.use(helmet({
+    crossOriginResourcePolicy: { policy: "cross-origin" }
+}));
 
-        res.json({
-            contacts,
-            pagination: {
-                total,
-                page: parseInt(page),
-                limit: parseInt(limit),
-                pages: Math.ceil(total / limit)
-            }
-        });
-    } catch (error) {
-        res.status(500).json({ error: error.message });
-    }
+// CORS configuration
+const corsOptions = {
+    origin: [
+        process.env.FRONTEND_URL || 'http://localhost:3000',
+        'http://localhost:3001' // Add support for alternative port
+    ],
+    credentials: true,
+    optionsSuccessStatus: 200
+};
+app.use(cors(corsOptions));
+
+// Body parsing middleware
+app.use(express.json({ limit: '10mb' }));
+app.use(express.urlencoded({ extended: true, limit: '10mb' }));
+
+// Request logging middleware
+app.use((req, res, next) => {
+    console.log(`${new Date().toISOString()} - ${req.method} ${req.path}`);
+    next();
 });
 
-app.get('/leads/:id', authenticateToken, async (req, res) => {
+// Mount auth routes (no authentication required)
+app.use('/api/auth', authRouter);
+
+// Mount protected routes (authentication required)
+app.use('/api/contacts', contactsRouter);
+app.use('/api/users', usersRouter);
+
+// Tasks endpoints
+app.get('/api/leads/:leadId/tasks', authenticateToken, async (req, res) => {
     try {
-        const contact = await prisma.contact.findUnique({
-            where: { id: req.params.id },
-            include: {
-                customFields: true,
-                tasks: {
-                    orderBy: { createdAt: 'desc' }
-                },
-                notes: {
-                    orderBy: { createdAt: 'desc' }
-                },
-                activities: {
-                    orderBy: { createdAt: 'desc' },
-                    take: 20
-                }
-            }
+        const userId = req.user.id;
+        const leadId = req.params.leadId;
+
+        // Verify contact ownership
+        const contact = await prisma.contact.findFirst({
+            where: { id: leadId, userId },
+            select: { id: true }
         });
 
         if (!contact) {
-            return res.status(404).json({ error: 'Contact not found' });
-        }
-
-        res.json(contact);
-    } catch (error) {
-        res.status(500).json({ error: error.message });
-    }
-});
-
-app.post('/leads', authenticateToken, async (req, res) => {
-    try {
-        const { name, email, phone, address, status, customFields = [] } = req.body;
-
-        const contact = await prisma.contact.create({
-            data: {
-                name,
-                email,
-                phone,
-                address,
-                status: status || 'NEW',
-                customFields: {
-                    create: customFields
-                }
-            },
-            include: {
-                customFields: true
-            }
-        });
-
-        // Log activity
-        await prisma.activity.create({
-            data: {
-                contactId: contact.id,
-                type: 'NOTE',
-                title: 'Contact Created',
-                description: `New contact ${name} was added to the system`
-            }
-        });
-
-        res.status(201).json(contact);
-    } catch (error) {
-        res.status(500).json({ error: error.message });
-    }
-});
-
-app.put('/leads/:id', authenticateToken, async (req, res) => {
-    try {
-        const { name, email, phone, address, status, customFields = [] } = req.body;
-        const contactId = req.params.id;
-
-        // Get current contact to track status changes
-        const currentContact = await prisma.contact.findUnique({
-            where: { id: contactId }
-        });
-
-        // Delete existing custom fields
-        await prisma.contactCustomField.deleteMany({
-            where: { contactId }
-        });
-
-        // Update contact
-        const contact = await prisma.contact.update({
-            where: { id: contactId },
-            data: {
-                name,
-                email,
-                phone,
-                address,
-                status,
-                customFields: {
-                    create: customFields
-                }
-            },
-            include: {
-                customFields: true,
-                tasks: { orderBy: { createdAt: 'desc' } },
-                notes: { orderBy: { createdAt: 'desc' } },
-                activities: { orderBy: { createdAt: 'desc' }, take: 20 }
-            }
-        });
-
-        // Log status change activity
-        if (currentContact.status !== status) {
-            await prisma.activity.create({
-                data: {
-                    contactId: contact.id,
-                    type: 'STATUS_CHANGED',
-                    title: 'Status Updated',
-                    description: `Status changed from ${currentContact.status} to ${status}`
-                }
+            return res.status(404).json({ 
+                error: 'Contact not found',
+                code: 'CONTACT_NOT_FOUND'
             });
         }
 
-        res.json(contact);
-    } catch (error) {
-        res.status(500).json({ error: error.message });
-    }
-});
-
-app.delete('/leads/:id', authenticateToken, async (req, res) => {
-    try {
-        await prisma.contact.delete({
-            where: { id: req.params.id }
-        });
-        res.status(204).send();
-    } catch (error) {
-        res.status(500).json({ error: error.message });
-    }
-});
-
-// Tasks endpoints
-app.get('/leads/:leadId/tasks', async (req, res) => {
-    try {
         const tasks = await prisma.task.findMany({
-            where: { contactId: req.params.leadId },
+            where: { contactId: leadId },
             orderBy: { createdAt: 'desc' }
         });
+
         res.json(tasks);
     } catch (error) {
-        res.status(500).json({ error: error.message });
+        console.error('Error fetching tasks:', error);
+        res.status(500).json({ 
+            error: 'Failed to fetch tasks',
+            code: 'FETCH_TASKS_ERROR'
+        });
     }
 });
 
-app.post('/leads/:leadId/tasks', async (req, res) => {
+app.post('/api/leads/:leadId/tasks', authenticateToken, async (req, res) => {
     try {
+        const userId = req.user.id;
+        const leadId = req.params.leadId;
         const { title, description, priority, dueDate } = req.body;
+
+        // Verify contact ownership
+        const contact = await prisma.contact.findFirst({
+            where: { id: leadId, userId },
+            select: { id: true }
+        });
+
+        if (!contact) {
+            return res.status(404).json({ 
+                error: 'Contact not found',
+                code: 'CONTACT_NOT_FOUND'
+            });
+        }
+
+        if (!title || title.trim() === '') {
+            return res.status(400).json({ 
+                error: 'Title is required',
+                code: 'TITLE_REQUIRED'
+            });
+        }
+
+        const validPriorities = ['LOW', 'MEDIUM', 'HIGH', 'URGENT'];
+        if (priority && !validPriorities.includes(priority.toUpperCase())) {
+            return res.status(400).json({
+                error: `Invalid priority. Must be one of: ${validPriorities.join(', ')}`,
+                code: 'INVALID_PRIORITY'
+            });
+        }
 
         const task = await prisma.task.create({
             data: {
-                contactId: req.params.leadId,
-                title,
-                description,
-                priority: priority || 'MEDIUM',
+                contactId: leadId,
+                userId,
+                title: title.trim(),
+                description: description ? description.trim() : null,
+                priority: priority ? priority.toUpperCase() : 'MEDIUM',
                 dueDate: dueDate ? new Date(dueDate) : null
             }
         });
@@ -244,36 +146,85 @@ app.post('/leads/:leadId/tasks', async (req, res) => {
         // Log activity
         await prisma.activity.create({
             data: {
-                contactId: req.params.leadId,
+                contactId: leadId,
                 type: 'TASK_CREATED',
                 title: 'Task Created',
                 description: `New task: ${title}`
             }
         });
 
+        console.log('Task created successfully:', task.id);
         res.status(201).json(task);
     } catch (error) {
-        res.status(500).json({ error: error.message });
+        console.error('Error creating task:', error);
+        res.status(500).json({ 
+            error: 'Failed to create task',
+            code: 'CREATE_TASK_ERROR'
+        });
     }
 });
 
-app.put('/tasks/:id', async (req, res) => {
+app.put('/api/tasks/:id', authenticateToken, async (req, res) => {
     try {
+        const userId = req.user.id;
+        const taskId = req.params.id;
         const { title, description, status, priority, dueDate } = req.body;
 
+        // Verify task ownership
+        const existingTask = await prisma.task.findFirst({
+            where: { 
+                id: taskId,
+                OR: [
+                    { userId },
+                    { contact: { userId } }
+                ]
+            }
+        });
+
+        if (!existingTask) {
+            return res.status(404).json({ 
+                error: 'Task not found',
+                code: 'TASK_NOT_FOUND'
+            });
+        }
+
+        if (!title || title.trim() === '') {
+            return res.status(400).json({ 
+                error: 'Title is required',
+                code: 'TITLE_REQUIRED'
+            });
+        }
+
+        const validStatuses = ['PENDING', 'IN_PROGRESS', 'COMPLETED', 'CANCELLED'];
+        const validPriorities = ['LOW', 'MEDIUM', 'HIGH', 'URGENT'];
+
+        if (status && !validStatuses.includes(status.toUpperCase())) {
+            return res.status(400).json({
+                error: `Invalid status. Must be one of: ${validStatuses.join(', ')}`,
+                code: 'INVALID_STATUS'
+            });
+        }
+
+        if (priority && !validPriorities.includes(priority.toUpperCase())) {
+            return res.status(400).json({
+                error: `Invalid priority. Must be one of: ${validPriorities.join(', ')}`,
+                code: 'INVALID_PRIORITY'
+            });
+        }
+
         const task = await prisma.task.update({
-            where: { id: req.params.id },
+            where: { id: taskId },
             data: {
-                title,
-                description,
-                status,
-                priority,
+                title: title.trim(),
+                description: description ? description.trim() : null,
+                status: status ? status.toUpperCase() : existingTask.status,
+                priority: priority ? priority.toUpperCase() : existingTask.priority,
                 dueDate: dueDate ? new Date(dueDate) : null
             }
         });
 
-        // Log completion activity
-        if (status === 'COMPLETED') {
+        // Log completion activity if status changed to completed
+        if (status && status.toUpperCase() === 'COMPLETED' && existingTask.status !== 'COMPLETED') {
             await prisma.activity.create({
                 data: {
                     contactId: task.contactId,
@@ -284,185 +235,412 @@ app.put('/tasks/:id', async (req, res) => {
             });
         }
 
+        console.log('Task updated successfully:', task.id);
         res.json(task);
     } catch (error) {
-        res.status(500).json({ error: error.message });
+        console.error('Error updating task:', error);
+        res.status(500).json({ 
+            error: 'Failed to update task',
+            code: 'UPDATE_TASK_ERROR'
+        });
     }
 });
 
-app.delete('/tasks/:id', async (req, res) => {
+app.delete('/api/tasks/:id', authenticateToken, async (req, res) => {
     try {
-        await prisma.task.delete({
-            where: { id: req.params.id }
+        const userId = req.user.id;
+        const taskId = req.params.id;
+
+        // Verify task ownership
+        const existingTask = await prisma.task.findFirst({
+            where: { 
+                id: taskId,
+                OR: [
+                    { userId },
+                    { contact: { userId } }
+                ]
+            }
         });
+
+        if (!existingTask) {
+            return res.status(404).json({ 
+                error: 'Task not found',
+                code: 'TASK_NOT_FOUND'
+            });
+        }
+
+        await prisma.task.delete({
+            where: { id: taskId }
+        });
+
+        console.log('Task deleted successfully:', taskId);
         res.status(204).send();
     } catch (error) {
-        res.status(500).json({ error: error.message });
+        console.error('Error deleting task:', error);
+        res.status(500).json({ 
+            error: 'Failed to delete task',
+            code: 'DELETE_TASK_ERROR'
+        });
     }
 });
 
 // Notes endpoints
-app.get('/leads/:leadId/notes', async (req, res) => {
+app.get('/api/leads/:leadId/notes', authenticateToken, async (req, res) => {
     try {
+        const userId = req.user.id;
+        const leadId = req.params.leadId;
+
+        // Verify contact ownership
+        const contact = await prisma.contact.findFirst({
+            where: { id: leadId, userId },
+            select: { id: true }
+        });
+
+        if (!contact) {
+            return res.status(404).json({ 
+                error: 'Contact not found',
+                code: 'CONTACT_NOT_FOUND'
+            });
+        }
+
         const notes = await prisma.note.findMany({
-            where: { contactId: req.params.leadId },
+            where: { contactId: leadId },
             orderBy: { createdAt: 'desc' }
         });
+
         res.json(notes);
     } catch (error) {
-        res.status(500).json({ error: error.message });
+        console.error('Error fetching notes:', error);
+        res.status(500).json({ 
+            error: 'Failed to fetch notes',
+            code: 'FETCH_NOTES_ERROR'
+        });
     }
 });
 
-app.post('/leads/:leadId/notes', async (req, res) => {
+app.post('/api/leads/:leadId/notes', authenticateToken, async (req, res) => {
     try {
+        const userId = req.user.id;
+        const leadId = req.params.leadId;
         const { content } = req.body;
+
+        // Verify contact ownership
+        const contact = await prisma.contact.findFirst({
+            where: { id: leadId, userId },
+            select: { id: true }
+        });
+
+        if (!contact) {
+            return res.status(404).json({ 
+                error: 'Contact not found',
+                code: 'CONTACT_NOT_FOUND'
+            });
+        }
+
+        if (!content || content.trim() === '') {
+            return res.status(400).json({ 
+                error: 'Content is required',
+                code: 'CONTENT_REQUIRED'
+            });
+        }
 
         const note = await prisma.note.create({
             data: {
-                contactId: req.params.leadId,
-                content
+                contactId: leadId,
+                content: content.trim()
             }
         });
 
         // Log activity
         await prisma.activity.create({
             data: {
-                contactId: req.params.leadId,
+                contactId: leadId,
                 type: 'NOTE',
                 title: 'Note Added',
                 description: content.substring(0, 100) + (content.length > 100 ? '...' : '')
             }
         });
 
+        console.log('Note created successfully:', note.id);
         res.status(201).json(note);
     } catch (error) {
-        res.status(500).json({ error: error.message });
+        console.error('Error creating note:', error);
+        res.status(500).json({ 
+            error: 'Failed to create note',
+            code: 'CREATE_NOTE_ERROR'
+        });
     }
 });
 
-app.put('/notes/:id', async (req, res) => {
+app.put('/api/notes/:id', authenticateToken, async (req, res) => {
     try {
+        const userId = req.user.id;
+        const noteId = req.params.id;
         const { content } = req.body;
 
-        const note = await prisma.note.update({
-            where: { id: req.params.id },
-            data: { content }
+        // Verify note ownership through contact
+        const existingNote = await prisma.note.findFirst({
+            where: { 
+                id: noteId,
+                contact: { userId }
+            }
         });
 
+        if (!existingNote) {
+            return res.status(404).json({ 
+                error: 'Note not found',
+                code: 'NOTE_NOT_FOUND'
+            });
+        }
+
+        if (!content || content.trim() === '') {
+            return res.status(400).json({ 
+                error: 'Content is required',
+                code: 'CONTENT_REQUIRED'
+            });
+        }
+
+        const note = await prisma.note.update({
+            where: { id: noteId },
+            data: { content: content.trim() }
+        });
+
+        console.log('Note updated successfully:', note.id);
         res.json(note);
     } catch (error) {
-        res.status(500).json({ error: error.message });
+        console.error('Error updating note:', error);
+        res.status(500).json({ 
+            error: 'Failed to update note',
+            code: 'UPDATE_NOTE_ERROR'
+        });
     }
 });
 
-app.delete('/notes/:id', async (req, res) => {
+app.delete('/api/notes/:id', authenticateToken, async (req, res) => {
     try {
-        await prisma.note.delete({
-            where: { id: req.params.id }
+        const userId = req.user.id;
+        const noteId = req.params.id;
+
+        // Verify note ownership through contact
+        const existingNote = await prisma.note.findFirst({
+            where: { 
+                id: noteId,
+                contact: { userId }
+            }
         });
+
+        if (!existingNote) {
+            return res.status(404).json({ 
+                error: 'Note not found',
+                code: 'NOTE_NOT_FOUND'
+            });
+        }
+
+        await prisma.note.delete({
+            where: { id: noteId }
+        });
+
+        console.log('Note deleted successfully:', noteId);
         res.status(204).send();
     } catch (error) {
-        res.status(500).json({ error: error.message });
+        console.error('Error deleting note:', error);
+        res.status(500).json({ 
+            error: 'Failed to delete note',
+            code: 'DELETE_NOTE_ERROR'
+        });
     }
 });
 
 // Activities endpoint
-app.get('/leads/:leadId/activities', async (req, res) => {
+app.get('/api/leads/:leadId/activities', authenticateToken, async (req, res) => {
     try {
+        const userId = req.user.id;
+        const leadId = req.params.leadId;
+
+        // Verify contact ownership
+        const contact = await prisma.contact.findFirst({
+            where: { id: leadId, userId },
+            select: { id: true }
+        });
+
+        if (!contact) {
+            return res.status(404).json({ 
+                error: 'Contact not found',
+                code: 'CONTACT_NOT_FOUND'
+            });
+        }
+
         const activities = await prisma.activity.findMany({
-            where: { contactId: req.params.leadId },
+            where: { contactId: leadId },
             orderBy: { createdAt: 'desc' },
             take: 50
         });
+
         res.json(activities);
     } catch (error) {
-        res.status(500).json({ error: error.message });
+        console.error('Error fetching activities:', error);
+        res.status(500).json({ 
+            error: 'Failed to fetch activities',
+            code: 'FETCH_ACTIVITIES_ERROR'
+        });
     }
 });
 
 // All tasks endpoint
-app.get('/tasks', async (req, res) => {
+app.get('/api/tasks', authenticateToken, async (req, res) => {
     try {
-        const tasks = await prisma.task.findMany({
-            orderBy: { createdAt: 'desc' },
-            include: {
-                contact: {
-                    select: { id: true, name: true }
+        const userId = req.user.id;
+        const { status, priority, page = 1, limit = 50 } = req.query;
+
+        const where = {
+            OR: [
+                { userId },
+                { contact: { userId } }
+            ]
+        };
+
+        if (status) {
+            where.status = status.toUpperCase();
+        }
+
+        if (priority) {
+            where.priority = priority.toUpperCase();
+        }
+
+        const offset = (parseInt(page) - 1) * parseInt(limit);
+
+        const [tasks, totalCount] = await Promise.all([
+            prisma.task.findMany({
+                where,
+                orderBy: { createdAt: 'desc' },
+                skip: offset,
+                take: parseInt(limit),
+                include: {
+                    contact: {
+                        select: { id: true, name: true }
+                    }
                 }
+            }),
+            prisma.task.count({ where })
+        ]);
+
+        res.json({
+            tasks,
+            pagination: {
+                page: parseInt(page),
+                limit: parseInt(limit),
+                total: totalCount,
+                totalPages: Math.ceil(totalCount / parseInt(limit))
             }
         });
-        res.json(tasks);
     } catch (error) {
-        res.status(500).json({ error: error.message });
+        console.error('Error fetching all tasks:', error);
+        res.status(500).json({ 
+            error: 'Failed to fetch tasks',
+            code: 'FETCH_ALL_TASKS_ERROR'
+        });
     }
 });
 
 // Statistics endpoint
-app.get('/stats', async (req, res) => {
+app.get('/api/stats', authenticateToken, async (req, res) => {
     try {
-        const totalContacts = await prisma.contact.count();
-        const contactsByStatus = await prisma.contact.groupBy({
-            by: ['status'],
-            _count: true
-        });
+        const userId = req.user.id;
 
-        const pendingTasks = await prisma.task.count({
-            where: { status: { not: 'COMPLETED' } }
-        });
+        const [totalContacts, contactsByStatus, pendingTasks, totalTasks] = await Promise.all([
+            prisma.contact.count({
+                where: { userId }
+            }),
+            prisma.contact.groupBy({
+                by: ['status'],
+                where: { userId },
+                _count: true
+            }),
+            prisma.task.count({
+                where: { 
+                    status: { not: 'COMPLETED' },
+                    OR: [
+                        { userId },
+                        { contact: { userId } }
+                    ]
+                }
+            }),
+            prisma.task.count({
+                where: {
+                    OR: [
+                        { userId },
+                        { contact: { userId } }
+                    ]
+                }
+            })
+        ]);
 
         res.json({
             totalContacts,
             contactsByStatus,
-            pendingTasks
+            pendingTasks,
+            totalTasks
         });
     } catch (error) {
-        res.status(500).json({ error: error.message });
+        console.error('Error fetching stats:', error);
+        res.status(500).json({ 
+            error: 'Failed to fetch statistics',
+            code: 'FETCH_STATS_ERROR'
+        });
     }
 });
 
-// Debug endpoint to check request body
-app.post('/debug', (req, res) => {
-    console.log('Headers:', req.headers);
-    console.log('Body:', req.body);
-    res.json({
-        headers: req.headers,
-        body: req.body,
-        contentType: req.get('Content-Type')
+// Health check endpoint
+app.get('/health', (req, res) => {
+    res.json({ 
+        status: 'OK', 
+        timestamp: new Date().toISOString(),
+        environment: process.env.NODE_ENV || 'development',
+        version: '1.0.0'
     });
 });
 
-// Additional login endpoint (if not handled by authRouter)
-app.post('/auth/login', async (req, res) => {
-    try {
-        console.log('Login request body:', req.body);
-        console.log('Content-Type:', req.get('Content-Type'));
+// Global error handling middleware
+app.use((error, req, res, next) => {
+    console.error('Unhandled error:', error);
+    
+    // Don't leak error details in production
+    const isDevelopment = process.env.NODE_ENV === 'development';
+    
+    res.status(500).json({ 
+        error: 'Internal server error',
+        code: 'INTERNAL_ERROR',
+        ...(isDevelopment && { details: error.message, stack: error.stack })
+    });
+});
 
-        const { email, password } = req.body;
+// 404 handler
+app.use((req, res) => {
+    console.log(`404 - Route not found: ${req.method} ${req.path}`);
+    res.status(404).json({ 
+        error: 'Route not found',
+        code: 'ROUTE_NOT_FOUND',
+        path: req.path,
+        method: req.method 
+    });
+});
 
-        // Validate input
-        if (!email || !password) {
-            return res.status(400).json({
-                error: 'Email and password are required',
-                received: { email, password }
-            });
-        }
+// Graceful shutdown
+process.on('SIGINT', async () => {
+    console.log('Shutting down gracefully...');
+    await prisma.$disconnect();
+    process.exit(0);
+});
 
-        const user = await prisma.user.findUnique({ where: { email } });
-        if (!user) return res.status(401).json({ error: 'Invalid email or password' });
-
-        const isValid = await bcrypt.compare(password, user.passwordHash);
-        if (!isValid) return res.status(401).json({ error: 'Invalid email or password' });
-
-        const token = jwt.sign({ userId: user.id }, 'secret-key', { expiresIn: '1h' });
-
-        res.json({ token });
-    } catch (error) {
-        console.error('Login error:', error);
-        res.status(500).json({ error: 'Internal server error' });
-    }
+process.on('SIGTERM', async () => {
+    console.log('Shutting down gracefully...');
+    await prisma.$disconnect();
+    process.exit(0);
 });
 
 app.listen(PORT, () => {
-    console.log(`SoleCRM backend running on port ${PORT}`);
+    console.log(`🚀 SoleCRM backend running on http://localhost:${PORT}`);
+    console.log(`📊 Environment: ${process.env.NODE_ENV || 'development'}`);
+    console.log(`🗄️ Database: Connected`);
+    console.log(`🔐 Auth: ${process.env.JWT_SECRET && process.env.JWT_SECRET !== 'your-secret-key' ? 'Secured' : '⚠️  Using default secret!'}`);
 });

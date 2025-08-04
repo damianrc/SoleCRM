@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Save, X } from 'lucide-react';
 import './AddContactModal.css';
 
@@ -29,6 +29,30 @@ const AddContactModal = ({ isOpen, onClose, onAddContact }) => {
   // Form validation state
   const [errors, setErrors] = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Animation state for slide-in effect
+  const [animationState, setAnimationState] = useState('entering');
+  const [shouldRender, setShouldRender] = useState(false);
+
+  // Handle modal open/close animations
+  useEffect(() => {
+    if (isOpen) {
+      setShouldRender(true);
+      // Small delay to ensure the element is rendered before starting animation
+      const timer = setTimeout(() => {
+        setAnimationState('entered');
+      }, 10);
+      return () => clearTimeout(timer);
+    } else if (shouldRender) {
+      setAnimationState('exiting');
+      // Wait for animation to complete before unmounting
+      const timer = setTimeout(() => {
+        setShouldRender(false);
+        setAnimationState('entering');
+      }, 300); // Match the CSS transition duration
+      return () => clearTimeout(timer);
+    }
+  }, [isOpen, shouldRender]);
 
   /**
    * Handle input field changes
@@ -168,11 +192,15 @@ const AddContactModal = ({ isOpen, onClose, onAddContact }) => {
 
   /**
    * Handle modal close
-   * Resets form and calls parent close function
+   * Resets form and triggers exit animation
    */
   const handleClose = () => {
     resetForm();
-    onClose();
+    setAnimationState('exiting');
+    // The actual onClose will be called after animation completes
+    setTimeout(() => {
+      onClose();
+    }, 300);
   };
 
   /**
@@ -181,17 +209,18 @@ const AddContactModal = ({ isOpen, onClose, onAddContact }) => {
    */
   const handleOverlayClick = (e) => {
     // Only close if clicking the overlay itself, not the modal content
-    if (e.target === e.currentTarget) {
+    // Also don't close if we're already animating out
+    if (e.target === e.currentTarget && animationState !== 'exiting') {
       handleClose();
     }
   };
 
-  // Don't render anything if modal is not open
-  if (!isOpen) return null;
+  // Don't render anything if modal should not be rendered
+  if (!shouldRender && !isOpen) return null;
 
   return (
-    <div className="modal-overlay" onClick={handleOverlayClick}>
-      <div className="modal-content">
+    <div className={`modal-overlay ${animationState}`} onClick={handleOverlayClick}>
+      <div className={`modal-content ${animationState}`}>
         {/* Modal Header */}
         <div className="modal-header">
           <h2>Add New Contact</h2>

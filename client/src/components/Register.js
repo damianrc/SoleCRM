@@ -7,7 +7,8 @@ const Register = () => {
   const [formData, setFormData] = useState({
     email: '',
     password: '',
-    confirmPassword: ''
+    confirmPassword: '',
+    displayName: ''
   });
   const [errors, setErrors] = useState({});
   const [isLoading, setIsLoading] = useState(false);
@@ -90,7 +91,11 @@ const Register = () => {
     try {
       console.log('Attempting registration for:', formData.email);
       
-      const result = await register(formData.email.trim(), formData.password);
+      const result = await register(
+        formData.email.trim(), 
+        formData.password, 
+        formData.displayName.trim() || null
+      );
 
       if (result.success) {
         console.log('Registration successful:', result.user);
@@ -177,6 +182,22 @@ const Register = () => {
                 placeholder="Enter your email address"
               />
               {errors.email && <span className="error-text">{errors.email}</span>}
+            </div>
+
+            <div className="form-group">
+              <label htmlFor="displayName">Display Name (Optional)</label>
+              <input
+                type="text"
+                id="displayName"
+                name="displayName"
+                value={formData.displayName}
+                onChange={handleInputChange}
+                className={errors.displayName ? 'error' : ''}
+                disabled={isLoading}
+                autoComplete="name"
+                placeholder="Enter your display name"
+              />
+              {errors.displayName && <span className="error-text">{errors.displayName}</span>}
             </div>
 
             <div className="form-group">

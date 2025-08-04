@@ -3,92 +3,106 @@ generator client {
 }
 
 datasource db {
-  provider = "sqlite"
-  url      = "file:./dev.db"
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
 }
 
 model User {
-  id          String   @id @default(cuid())
-  email       String   @unique
-  passwordHash    String
-  contacts    Contact[]
-  tasks       Task[]
+  id            String    @id
+  email         String    @unique
+  displayName   String?
+  profileImage  String?   // Base64 encoded image data
+  passwordHash  String
+  contacts      Contact[]
+  tasks         Task[]
 
   @@map("users")
 }
 
 model Contact {
-  id        String   @id @default(cuid())
-  name      String
-  email     String?
-  phone     String?
-  address   String?
-  status    ContactStatus @default(NEW)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id            String         @id
+  name          String
+  email         String?
+  phone         String?
+  address       String?
+  suburb        String?
+  contactType   ContactType    @default(LEAD)
+  leadSource    String?
+  status        ContactStatus  @default(NEW)
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
   
-  userId      String
-  user        User?     @relation(fields: [userId], references: [id])
+  userId        String
+  user          User?          @relation(fields: [userId], references: [id])
 
   // Relations
-  customFields ContactCustomField[]
-  tasks        Task[]
-  notes        Note[]
-  activities   Activity[]
+  customFields  ContactCustomField[]
+  tasks         Task[]
+  notes         Note[]
+  activities    Activity[]
+  
+  // Add indexes for better query performance
+  @@index([userId])
+  @@index([userId, createdAt])
+  @@index([userId, contactType])
+  @@index([userId, status])
+  @@index([name])
+  @@index([email])
   @@map("contacts")
 }
 
 model ContactCustomField {
-  id        String @id @default(cuid())
-  contactId String
-  fieldName String
-  fieldValue String
-  fieldType CustomFieldType @default(TEXT)
-  contact   Contact @relation(fields: [contactId], references: [id], onDelete: Cascade)
+  id            String          @id @default(cuid())
+  contactId     String
+  fieldName     String
+  fieldValue    String
+  fieldType     CustomFieldType @default(TEXT)
+  contact       Contact         @relation(fields: [contactId], references: [id], onDelete: Cascade)
   
   @@map("contact_custom_fields")
 }
 
 model Task {
-  id          String     @id @default(cuid())
-  contactId   String
-  title       String
-  description String?
-  status      TaskStatus @default(PENDING)
-  priority    TaskPriority @default(MEDIUM)
-  dueDate     DateTime?
-  createdAt   DateTime   @default(now())
-  updatedAt   DateTime   @updatedAt
+  id            String       @id @default(cuid())
+  contactId     String
+  title         String
+  description   String?
+  status        TaskStatus   @default(PENDING)
+  priority      TaskPriority @default(MEDIUM)
+  dueDate       DateTime?
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
 
-  contact     Contact    @relation(fields: [contactId], references: [id], onDelete: Cascade)
+  contact       Contact      @relation(fields: [contactId], references: [id], onDelete: Cascade)
 
-  userId      String
-  user        User       @relation(fields: [userId], references: [id])
+  userId        String
+  user          User         @relation(fields: [userId], references: [id])
 
   @@map("tasks")
 }
 
 model Note {
-  id        String   @id @default(cuid())
-  contactId String
-  content   String
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id            String   @id @default(cuid())
+  contactId     String
+  title         String
+  content       String
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
 
-  contact   Contact  @relation(fields: [contactId], references: [id], onDelete: Cascade)
+  contact       Contact  @relation(fields: [contactId], references: [id], onDelete: Cascade)
 
   @@map("notes")
 }
 
 model Activity {
-  id          String       @id @default(cuid())
-  contactId   String
-  type        ActivityType
-  title       String
-  description String?
-  createdAt   DateTime     @default(now())
+  id            String       @id @default(cuid())
+  contactId     String
+  type          ActivityType
+  title         String
+  description   String?
+  createdAt     DateTime     @default(now())
 
-  contact     Contact      @relation(fields: [contactId], references: [id], onDelete: Cascade)
+  contact       Contact      @relation(fields: [contactId], references: [id], onDelete: Cascade)
 
   @@map("activities")
 }
@@ -101,6 +115,13 @@ enum ContactStatus {
   NEGOTIATION
   CLOSED_WON
   CLOSED_LOST
+}
+
+enum ContactType {
+  BUYER
+  SELLER
+  PAST_CLIENT
+  LEAD
 }
 
 enum TaskStatus {
@@ -122,6 +143,7 @@ enum ActivityType {
   EMAIL
   MEETING
   NOTE
+  WHATSAPP
   TASK_CREATED
   TASK_COMPLETED
   STATUS_CHANGED

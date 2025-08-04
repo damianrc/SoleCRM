@@ -7,17 +7,32 @@ const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:4000';
 export const contactsQueryKeys = {
   all: ['contacts'],
   lists: () => [...contactsQueryKeys.all, 'list'],
-  list: (filters) => [...contactsQueryKeys.lists(), { filters }],
+  list: (userId, filters) => [...contactsQueryKeys.lists(), userId, { filters }],
   details: () => [...contactsQueryKeys.all, 'detail'],
-  detail: (id) => [...contactsQueryKeys.details(), id],
+  detail: (userId, id) => [...contactsQueryKeys.details(), userId, id],
 };
 
-// Custom hook for fetching all contacts
-export const useContacts = (filters = {}) => {
+// Custom hook for fetching all contacts with pagination
+export const useContacts = (filters = {}, page = 1, limit = 100) => {
+  const userId = getUserId();
+  
   return useQuery({
-    queryKey: contactsQueryKeys.list(filters),
+    queryKey: contactsQueryKeys.list(userId, { ...filters, page, limit }),
     queryFn: async () => {
-      const response = await fetch(`${API_BASE_URL}/api/contacts`, {
+      const searchParams = new URLSearchParams();
+      
+      // Add pagination parameters
+      searchParams.append('page', page.toString());
+      searchParams.append('limit', limit.toString());
+      
+      // Add filter parameters
+      Object.entries(filters).forEach(([key, value]) => {
+        if (value) {
+          searchParams.append(key, value);
+        }
+      });
+      
+      const response = await fetch(`${API_BASE_URL}/api/contacts?${searchParams}`, {
         method: 'GET',
         headers: getAuthHeaders(),
       });
@@ -28,30 +43,26 @@ export const useContacts = (filters = {}) => {
       
       return response.json();
     },
+    enabled: !!userId, // Only run query if userId is available
     staleTime: 2 * 60 * 1000, // 2 minutes
+    cacheTime: 5 * 60 * 1000, // 5 minutes
+    refetchOnWindowFocus: false, // Prevent excessive refetching
     select: (data) => {
-      // Apply client-side filtering if needed
-      let contacts = data.contacts || [];
-      
-      // Apply filters
-      if (Object.keys(filters).length > 0) {
-        contacts = contacts.filter(contact => {
-          return Object.entries(filters).every(([key, value]) => {
-            if (!value) return true;
-            return contact[key] === value;
-          });
-        });
-      }
-      
-      return { ...data, contacts };
+      // Return the full response including pagination info
+      return {
+        contacts: data.contacts || [],
+        pagination: data.pagination || {}
+      };
     },
   });
 };
 
 // Custom hook for fetching a single contact
 export const useContact = (contactId) => {
+  const userId = getUserId();
+  
   return useQuery({
-    queryKey: contactsQueryKeys.detail(contactId),
+    queryKey: contactsQueryKeys.detail(userId, contactId),
     queryFn: async () => {
       const response = await fetch(`${API_BASE_URL}/api/contacts/${contactId}`, {
         method: 'GET',
@@ -64,7 +75,7 @@ export const useContact = (contactId) => {
       
       return response.json();
     },
-    enabled: !!contactId,
+    enabled: !!(contactId && userId),
     staleTime: 5 * 60 * 1000, // 5 minutes for individual contacts
   });
 };
@@ -97,11 +108,12 @@ export const useAddContact = () => {
       return response.json();
     },
     onSuccess: (newContact) => {
-      // Invalidate and refetch contacts list
+      const userId = getUserId();
+      // Invalidate and refetch contacts list for this user
       queryClient.invalidateQueries({ queryKey: contactsQueryKeys.lists() });
       
       // Optionally add the new contact to the cache
-      queryClient.setQueryData(contactsQueryKeys.detail(newContact.id), newContact);
+      queryClient.setQueryData(contactsQueryKeys.detail(userId, newContact.id), newContact);
     },
     onError: (error) => {
       console.error('Failed to add contact:', error);
@@ -131,8 +143,9 @@ export const useUpdateContact = () => {
       return response.json();
     },
     onSuccess: (updatedContact, { contactId }) => {
+      const userId = getUserId();
       // Update the specific contact in the cache
-      queryClient.setQueryData(contactsQueryKeys.detail(contactId), updatedContact);
+      queryClient.setQueryData(contactsQueryKeys.detail(userId, contactId), updatedContact);
       
       // Update the contact in any lists that contain it
       queryClient.setQueriesData(
@@ -193,7 +206,8 @@ export const useDeleteContacts = () => {
       
       // Remove individual contact queries
       idsArray.forEach(id => {
-        queryClient.removeQueries({ queryKey: contactsQueryKeys.detail(id) });
+        const userId = getUserId();
+        queryClient.removeQueries({ queryKey: contactsQueryKeys.detail(userId, id) });
       });
     },
     onError: (error) => {

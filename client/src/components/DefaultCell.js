@@ -1,19 +1,31 @@
-import React from 'react';
+import React, { memo } from 'react';
 import { flexRender } from '@tanstack/react-table';
 import { TableCell } from './ui/Table';
 
-export function DefaultCell({ cell }) {
+export const DefaultCell = memo(function DefaultCell({ cell }) {
   return (
     <TableCell
       key={cell.id}
       style={{
         width: cell.column.getSize(),
         flex: `0 0 ${cell.column.getSize()}px`,
+        minWidth: 0, // Allow shrinking
+        overflow: 'hidden',
+        padding: '0.5rem',
       }}
     >
-      <span className="whitespace-nowrap overflow-hidden text-ellipsis max-w-full block">
+      <div 
+        className="cell-content"
+        style={{
+          width: '100%',
+          overflow: 'hidden',
+          textOverflow: 'ellipsis',
+          whiteSpace: 'nowrap',
+          maxWidth: '100%',
+        }}
+      >
         {flexRender(cell.column.columnDef.cell, cell.getContext())}
-      </span>
+      </div>
     </TableCell>
   );
-}
+});

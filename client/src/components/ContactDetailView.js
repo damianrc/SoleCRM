@@ -1,34 +1,58 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   ChevronLeft,
   Mail,
   Phone,
   MapPin,
   Building,
-  Plus
+  Plus,
+  ChevronDown,
+  Calendar,
+  FileText
 } from 'lucide-react';
+import MovablePopup from './ui/MovablePopup';
 import './ContactDetailView.css';
 
 const ContactDetailView = ({
   contact,
   onBack,
   onContactUpdate,
-  onNavigateToTasks
+  onNavigateToTasks,
+  onAddTask,
+  onUpdateTask,
+  onDeleteTask,
+  onToggleTaskCompletion,
+  onAddNote,
+  onUpdateNote,
+  onDeleteNote,
+  onAddActivity,
+  onUpdateActivity,
+  onDeleteActivity
 }) => {
-  const [activeTab, setActiveTab] = useState('tasks');
   const [editingField, setEditingField] = useState(null);
   const [editValue, setEditValue] = useState('');
-
-  // Form states
-  const [newTask, setNewTask] = useState({
-    title: '',
-    description: '',
-    priority: 'MEDIUM',
-    dueDate: ''
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const [popupState, setPopupState] = useState({ isOpen: false, type: '', title: '', editingItem: null });
+  const [activeTab, setActiveTab] = useState('all');
+  const [taskFilters, setTaskFilters] = useState({
+    status: 'all', // 'all', 'completed', 'pending'
+    priority: 'all' // 'all', 'low', 'medium', 'high', 'urgent'
   });
-  const [newNote, setNewNote] = useState('');
-  const [activityType, setActivityType] = useState('call');
-  const [activityNote, setActivityNote] = useState('');
+  const dropdownRef = useRef(null);
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+        setIsDropdownOpen(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
 
   // Status mapping for clean display
   const statusMapping = {
@@ -49,9 +73,16 @@ const ContactDetailView = ({
   };
 
   const activityIcons = {
+    'CALL': '📞',
     'call': '📞',
+    'EMAIL': '📧',
     'email': '📧',
+    'WHATSAPP': '💬',
     'whatsapp': '💬',
+    'MEETING': '🤝',
+    'meeting': '🤝',
+    'NOTE': '📝',
+    'note': '📝',
     'text': '💬'
   };
 
@@ -81,15 +112,102 @@ const ContactDetailView = ({
     try {
       const date = new Date(dateString);
       const now = new Date();
-      const diffTime = Math.abs(now - date);
-      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+      const diffMs = now - date;
+      const diffMins = Math.floor(diffMs / (1000 * 60));
+      const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
+      const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
 
-      if (diffDays === 1) return '1 day ago';
-      if (diffDays < 7) return `${diffDays} days ago`;
-      if (diffDays < 30) return `${Math.ceil(diffDays / 7)} weeks ago`;
-      return `${Math.ceil(diffDays / 30)} months ago`;
+      if (diffMins < 60) {
+        return diffMins <= 1 ? 'Just now' : `${diffMins}m ago`;
+      } else if (diffHours < 24) {
+        return `${diffHours}h ago`;
+      } else if (diffDays < 7) {
+        return `${diffDays}d ago`;
+      } else {
+        return date.toLocaleDateString();
+      }
     } catch {
-      return dateString;
+      return '';
+    }
+  };
+
+  // Format activity type for display
+  const formatActivityType = (type) => {
+    switch (type?.toUpperCase()) {
+      case 'CALL':
+        return 'Phone Call';
+      case 'EMAIL':
+        return 'Email';
+      case 'WHATSAPP':
+        return 'WhatsApp';
+      case 'MEETING':
+        return 'Meeting';
+      case 'NOTE':
+        return 'Note';
+      default:
+        return type || 'Activity';
+    }
+  };
+
+  // Get all items combined and sorted by creation date
+  const getAllItems = () => {
+    const tasks = (contact.tasks || []).map(task => ({ ...task, itemType: 'task' }));
+    const notes = (contact.notes || []).map(note => ({ ...note, itemType: 'note' }));
+    const activities = (contact.activities || []).map(activity => ({ ...activity, itemType: 'activity' }));
+    
+    const allItems = [...tasks, ...notes, ...activities];
+    return allItems.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+  };
+
+  // Get filtered items based on active tab
+  const getFilteredItems = () => {
+    switch (activeTab) {
+      case 'tasks':
+        let filteredTasks = (contact.tasks || []).map(task => ({ ...task, itemType: 'task' }));
+        
+        // Apply status filter
+        if (taskFilters.status !== 'all') {
+          filteredTasks = filteredTasks.filter(task => {
+            if (taskFilters.status === 'completed') {
+              return task.status === 'COMPLETED';
+            } else if (taskFilters.status === 'pending') {
+              return task.status !== 'COMPLETED';
+            }
+            return true;
+          });
+        }
+        
+        // Apply priority filter
+        if (taskFilters.priority !== 'all') {
+          filteredTasks = filteredTasks.filter(task => 
+            task.priority?.toLowerCase() === taskFilters.priority.toLowerCase()
+          );
+        }
+        
+        return filteredTasks.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+      case 'notes':
+        return (contact.notes || []).map(note => ({ ...note, itemType: 'note' }))
+          .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+      case 'activities':
+        return (contact.activities || []).map(activity => ({ ...activity, itemType: 'activity' }))
+          .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+      default:
+        return getAllItems();
+    }
+  };
+
+  // Handle item click for editing
+  const handleItemClick = (item) => {
+    switch (item.itemType) {
+      case 'task':
+        editTask(item);
+        break;
+      case 'note':
+        editNote(item);
+        break;
+      case 'activity':
+        editActivity(item);
+        break;
     }
   };
 
@@ -121,86 +239,171 @@ const ContactDetailView = ({
     }
   };
 
-  // Handle form submissions
-  const handleAddTask = (e) => {
-    e.preventDefault();
-    if (!newTask.title.trim()) return;
-
-    const task = {
-      id: Date.now(),
-      title: newTask.title.trim(),
-      description: newTask.description.trim(),
-      priority: newTask.priority,
-      dueDate: newTask.dueDate,
-      status: 'PENDING',
-      createdAt: new Date().toISOString(),
-    };
-
-    const updatedTasks = [...(contact.tasks || []), task];
-    onContactUpdate(contact.id, 'tasks', updatedTasks);
-
-    setNewTask({ title: '', description: '', priority: 'MEDIUM', dueDate: '' });
-  };
-
-  const handleAddNote = (e) => {
-    e.preventDefault();
-    if (!newNote.trim()) return;
-
-    const note = {
-      id: Date.now(),
-      text: newNote.trim(),
-      createdAt: new Date().toISOString(),
-    };
-
-    const updatedNotes = [...(contact.notes || []), note];
-    onContactUpdate(contact.id, 'notes', updatedNotes);
-    setNewNote('');
-  };
-
-  const handleAddActivity = (e) => {
-    e.preventDefault();
-    if (!activityNote.trim()) return;
-
-    const activity = {
-      id: Date.now(),
-      type: activityType,
-      note: activityNote.trim(),
-      createdAt: new Date().toISOString(),
-    };
-
-    const updatedActivities = [...(contact.activities || []), activity];
-    onContactUpdate(contact.id, 'activities', updatedActivities);
-
-    setActivityType('call');
-    setActivityNote('');
-  };
-
-  const handleDeleteTask = (taskId) => {
+  const handleDeleteTaskClick = (taskId) => {
     if (window.confirm('Are you sure you want to delete this task?')) {
-      const updatedTasks = contact.tasks.filter(task => task.id !== taskId);
-      onContactUpdate(contact.id, 'tasks', updatedTasks);
+      onDeleteTask(taskId);
     }
   };
 
-  const handleDeleteNote = (noteId) => {
+  const handleDeleteNoteClick = (noteId) => {
     if (window.confirm('Are you sure you want to delete this note?')) {
-      const updatedNotes = contact.notes.filter(note => note.id !== noteId);
-      onContactUpdate(contact.id, 'notes', updatedNotes);
+      onDeleteNote(noteId);
     }
   };
 
-  const handleDeleteActivity = (activityId) => {
+  const handleDeleteActivityClick = (activityId) => {
     if (window.confirm('Are you sure you want to delete this activity?')) {
-      const updatedActivities = contact.activities.filter(activity => activity.id !== activityId);
-      onContactUpdate(contact.id, 'activities', updatedActivities);
+      onDeleteActivity(activityId);
     }
   };
 
-  const handleCompleteTask = (taskId) => {
-    const updatedTasks = contact.tasks.map(task =>
-      task.id === taskId ? { ...task, status: 'COMPLETED' } : task
-    );
-    onContactUpdate(contact.id, 'tasks', updatedTasks);
+  // Handle popup operations
+  const openTaskPopup = () => {
+    setPopupState({ isOpen: true, type: 'task', title: 'Add Task', editingItem: null });
+    setIsDropdownOpen(false);
+  };
+
+  const openActivityPopup = () => {
+    setPopupState({ isOpen: true, type: 'activity', title: 'Add Activity', editingItem: null });
+    setIsDropdownOpen(false);
+  };
+
+  const openNotePopup = () => {
+    setPopupState({ isOpen: true, type: 'note', title: 'Add Note', editingItem: null });
+    setIsDropdownOpen(false);
+  };
+
+  const editTask = (task) => {
+    setPopupState({ isOpen: true, type: 'task', title: 'Edit Task', editingItem: task });
+  };
+
+  const editNote = (note) => {
+    setPopupState({ isOpen: true, type: 'note', title: 'Edit Note', editingItem: note });
+  };
+
+  const editActivity = (activity) => {
+    setPopupState({ isOpen: true, type: 'activity', title: 'Edit Activity', editingItem: activity });
+  };
+
+  const closePopup = () => {
+    setPopupState({ isOpen: false, type: '', title: '', editingItem: null });
+  };
+
+  // Handle form submissions
+  const handleTaskCreate = async (newTask) => {
+    try {
+      // Call the onAddTask prop to update the contact data
+      if (onAddTask) {
+        await onAddTask(newTask);
+      }
+      console.log('Task created successfully:', newTask);
+    } catch (error) {
+      console.error('Error handling task creation:', error);
+    }
+  };
+
+  const handleTaskUpdate = async (taskId, updatedTask) => {
+    try {
+      // Call the onUpdateTask prop to update the contact data
+      if (onUpdateTask) {
+        await onUpdateTask(taskId, updatedTask);
+      }
+      console.log('Task updated successfully:', updatedTask);
+    } catch (error) {
+      console.error('Error handling task update:', error);
+    }
+  };
+
+  const handleTaskDelete = async (taskId) => {
+    try {
+      if (onDeleteTask) {
+        await onDeleteTask(taskId);
+      }
+      console.log('Task deleted successfully');
+    } catch (error) {
+      console.error('Error handling task deletion:', error);
+    }
+  };
+
+  const handleNoteCreate = async (newNote) => {
+    try {
+      // Call the onAddNote prop to update the contact data
+      if (onAddNote) {
+        await onAddNote(newNote);
+      }
+      console.log('Note created successfully:', newNote);
+    } catch (error) {
+      console.error('Error handling note creation:', error);
+    }
+  };
+
+  const handleNoteUpdate = async (noteId, updatedNote) => {
+    try {
+      // Call the onUpdateNote prop to update the contact data
+      if (onUpdateNote) {
+        await onUpdateNote(noteId, updatedNote);
+      }
+      console.log('Note updated successfully:', updatedNote);
+    } catch (error) {
+      console.error('Error handling note update:', error);
+    }
+  };
+
+  const handleNoteDelete = async (noteId) => {
+    try {
+      if (onDeleteNote) {
+        await onDeleteNote(noteId);
+      }
+      console.log('Note deleted successfully');
+    } catch (error) {
+      console.error('Error handling note deletion:', error);
+    }
+  };
+
+  const handleActivityCreate = async (newActivity) => {
+    try {
+      // Call the onAddActivity prop to update the contact data
+      if (onAddActivity) {
+        await onAddActivity(newActivity);
+      }
+      console.log('Activity created successfully:', newActivity);
+    } catch (error) {
+      console.error('Error handling activity creation:', error);
+    }
+  };
+
+  const handleActivityUpdate = async (activityId, updatedActivity) => {
+    try {
+      // Call the onUpdateActivity prop to update the contact data
+      if (onUpdateActivity) {
+        await onUpdateActivity(activityId, updatedActivity);
+      }
+      console.log('Activity updated successfully:', updatedActivity);
+    } catch (error) {
+      console.error('Error handling activity update:', error);
+    }
+  };
+
+  const handleActivityDelete = async (activityId) => {
+    try {
+      if (onDeleteActivity) {
+        await onDeleteActivity(activityId);
+      }
+      console.log('Activity deleted successfully');
+    } catch (error) {
+      console.error('Error handling activity deletion:', error);
+    }
+  };
+
+  const handleCompleteTask = async (taskId) => {
+    const task = contact.tasks.find(t => t.id === taskId);
+    if (task) {
+      const updatedTaskData = {
+        ...task,
+        status: task.status === 'COMPLETED' ? 'PENDING' : 'COMPLETED'
+      };
+      await onUpdateTask(taskId, updatedTaskData);
+    }
   };
 
   const handleStatusChange = (newStatus) => {
@@ -305,258 +508,6 @@ const ContactDetailView = ({
     );
   };
 
-  const renderTabContent = () => {
-    switch (activeTab) {
-      case 'tasks':
-        return (
-          <div>
-            {/* Add Task Form */}
-            <div className="add-form">
-              <form onSubmit={handleAddTask}>
-                <div className="form-row">
-                  <div className="form-group">
-                    <label className="form-label">Task Title</label>
-                    <input
-                      type="text"
-                      className="form-input"
-                      placeholder="Enter task title"
-                      value={newTask.title}
-                      onChange={(e) => setNewTask({ ...newTask, title: e.target.value })}
-                    />
-                  </div>
-                  <div className="form-group" style={{ flex: '0 0 140px' }}>
-                    <label className="form-label">Priority</label>
-                    <select
-                      className="form-select"
-                      value={newTask.priority}
-                      onChange={(e) => setNewTask({ ...newTask, priority: e.target.value })}
-                    >
-                      <option value="LOW">Low</option>
-                      <option value="MEDIUM">Medium</option>
-                      <option value="HIGH">High</option>
-                      <option value="URGENT">Urgent</option>
-                    </select>
-                  </div>
-                  <div className="form-group" style={{ flex: '0 0 140px' }}>
-                    <label className="form-label">Due Date</label>
-                    <input
-                      type="date"
-                      className="form-input"
-                      value={newTask.dueDate}
-                      onChange={(e) => setNewTask({ ...newTask, dueDate: e.target.value })}
-                    />
-                  </div>
-                </div>
-                <div className="form-row">
-                  <div className="form-group">
-                    <label className="form-label">Description</label>
-                    <textarea
-                      className="form-textarea"
-                      placeholder="Add task description (optional)"
-                      value={newTask.description}
-                      onChange={(e) => setNewTask({ ...newTask, description: e.target.value })}
-                    />
-                  </div>
-                </div>
-                <div className="form-actions">
-                  <button type="submit" className="btn btn-primary">
-                    Create Task
-                  </button>
-                </div>
-              </form>
-            </div>
-
-            {/* Tasks List */}
-            <div className="items-list">
-              {contact.tasks && contact.tasks.length > 0 ? (
-                contact.tasks.map((task) => (
-                  <div key={task.id} className="item-card">
-                    <div className="item-header">
-                      <div>
-                        <div className="item-title">{task.title}</div>
-                        <div className="item-meta">
-                          <span className={`priority-dot ${priorityMapping[task.priority]?.toLowerCase() || 'medium'}`}></span>
-                          {task.priority} Priority
-                          <span>•</span>
-                          Due: {formatDate(task.dueDate)}
-                          <span>•</span>
-                          Created {getRelativeTime(task.createdAt)}
-                        </div>
-                      </div>
-                      <div className="item-actions">
-                        <button className="item-action" onClick={() => console.log('Edit task')}>
-                          Edit
-                        </button>
-                        <button 
-                          className="item-action" 
-                          onClick={() => handleCompleteTask(task.id)}
-                          disabled={task.status === 'COMPLETED'}
-                        >
-                          {task.status === 'COMPLETED' ? 'Completed' : 'Complete'}
-                        </button>
-                        <button className="item-action" onClick={() => handleDeleteTask(task.id)}>
-                          Delete
-                        </button>
-                      </div>
-                    </div>
-                    {task.description && (
-                      <div className="item-content">{task.description}</div>
-                    )}
-                  </div>
-                ))
-              ) : (
-                <div className="empty-state">
-                  <div className="empty-state-title">No tasks yet</div>
-                  <div className="empty-state-text">Create your first task to get started</div>
-                </div>
-              )}
-            </div>
-          </div>
-        );
-
-      case 'notes':
-        return (
-          <div>
-            {/* Add Note Form */}
-            <div className="add-form">
-              <form onSubmit={handleAddNote}>
-                <div className="form-row">
-                  <div className="form-group">
-                    <label className="form-label">Note</label>
-                    <textarea
-                      className="form-textarea"
-                      placeholder="Add a note..."
-                      value={newNote}
-                      onChange={(e) => setNewNote(e.target.value)}
-                      rows={3}
-                    />
-                  </div>
-                </div>
-                <div className="form-actions">
-                  <button type="submit" className="btn btn-primary">
-                    Add Note
-                  </button>
-                </div>
-              </form>
-            </div>
-
-            {/* Notes List */}
-            <div className="items-list">
-              {contact.notes && contact.notes.length > 0 ? (
-                contact.notes.map((note) => (
-                  <div key={note.id} className="item-card">
-                    <div className="item-header">
-                      <div>
-                        <div className="item-meta">
-                          Added {getRelativeTime(note.createdAt)}
-                        </div>
-                      </div>
-                      <div className="item-actions">
-                        <button className="item-action" onClick={() => handleDeleteNote(note.id)}>
-                          Delete
-                        </button>
-                      </div>
-                    </div>
-                    <div className="item-content">{note.text}</div>
-                  </div>
-                ))
-              ) : (
-                <div className="empty-state">
-                  <div className="empty-state-title">No notes yet</div>
-                  <div className="empty-state-text">Add your first note about this contact</div>
-                </div>
-              )}
-            </div>
-          </div>
-        );
-
-      case 'activity':
-        return (
-          <div>
-            {/* Add Activity Form */}
-            <div className="add-form">
-              <form onSubmit={handleAddActivity}>
-                <div className="form-row">
-                  <div className="form-group" style={{ flex: '0 0 140px' }}>
-                    <label className="form-label">Activity Type</label>
-                    <select
-                      className="form-select"
-                      value={activityType}
-                      onChange={(e) => setActivityType(e.target.value)}
-                    >
-                      <option value="call">Phone Call</option>
-                      <option value="email">Email</option>
-                      <option value="whatsapp">WhatsApp</option>
-                      <option value="text">Text Message</option>
-                    </select>
-                  </div>
-                  <div className="form-group">
-                    <label className="form-label">Activity Note</label>
-                    <input
-                      type="text"
-                      className="form-input"
-                      placeholder="What happened during this activity?"
-                      value={activityNote}
-                      onChange={(e) => setActivityNote(e.target.value)}
-                    />
-                  </div>
-                </div>
-                <div className="form-actions">
-                  <button type="submit" className="btn btn-primary">
-                    Log Activity
-                  </button>
-                </div>
-              </form>
-            </div>
-
-            {/* Activity List */}
-            <div className="items-list">
-              {contact.activities && contact.activities.length > 0 ? (
-                contact.activities.map((activity) => (
-                  <div key={activity.id} className="item-card">
-                    <div className="item-header">
-                      <div>
-                        <div className="item-title">
-                          {activityIcons[activity.type]} {activity.type === 'call' ? 'Phone Call' : 
-                           activity.type === 'email' ? 'Email' : 
-                           activity.type === 'whatsapp' ? 'WhatsApp' : 'Text Message'}
-                        </div>
-                        <div className="item-meta">
-                          {getRelativeTime(activity.createdAt)}
-                        </div>
-                      </div>
-                      <div className="item-actions">
-                        <button className="item-action" onClick={() => handleDeleteActivity(activity.id)}>
-                          Delete
-                        </button>
-                      </div>
-                    </div>
-                    <div className="item-content">{activity.note}</div>
-                  </div>
-                ))
-              ) : (
-                <div className="empty-state">
-                  <div className="empty-state-title">No activities yet</div>
-                  <div className="empty-state-text">Log your first interaction with this contact</div>
-                </div>
-              )}
-            </div>
-          </div>
-        );
-
-      case 'files':
-        return (
-          <div className="empty-state">
-            <div className="empty-state-title">Files feature coming soon</div>
-            <div className="empty-state-text">File management will be available in a future update</div>
-          </div>
-        );
-
-      default:
-        return null;
-    }
-  };
-
   return (
     <div className="contact-detail-view">
       {/* Header */}
@@ -610,10 +561,55 @@ const ContactDetailView = ({
               <Mail size={16} />
               Email
             </button>
-            <button className="action-btn primary">
-              <Plus size={16} />
-              Add Task
-            </button>
+            <div className="split-button-container" ref={dropdownRef}>
+              <button 
+                className="action-btn primary split-button-main"
+                onClick={(e) => {
+                  e.preventDefault();
+                  console.log('Add Task clicked');
+                  openTaskPopup();
+                }}
+              >
+                <Plus size={16} />
+                Add Task
+              </button>
+              <button 
+                className="action-btn primary split-button-dropdown"
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  setIsDropdownOpen(!isDropdownOpen);
+                }}
+              >
+                <ChevronDown size={16} />
+              </button>
+              {isDropdownOpen && (
+                <div className="dropdown-menu-fixed">
+                  <button 
+                    className="dropdown-item"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      console.log('Add Activity clicked');
+                      openActivityPopup();
+                    }}
+                  >
+                    <Calendar size={16} />
+                    Add Activity
+                  </button>
+                  <button 
+                    className="dropdown-item"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      console.log('Add Note clicked');
+                      openNotePopup();
+                    }}
+                  >
+                    <FileText size={16} />
+                    Add Note
+                  </button>
+                </div>
+              )}
+            </div>
           </div>
         </div>
       </div>
@@ -683,16 +679,19 @@ const ContactDetailView = ({
               {contact.activities && contact.activities.length > 0 ? (
                 contact.activities.slice(0, 3).map((activity) => (
                   <div key={activity.id} className="activity-item">
-                    <div className={`activity-icon ${activity.type}`}>
-                      {activityIcons[activity.type]}
+                    <div className={`activity-icon ${activity.type?.toLowerCase()}`}>
+                      {activityIcons[activity.type?.toUpperCase()] || activityIcons[activity.type?.toLowerCase()] || '📝'}
                     </div>
                     <div className="activity-content">
                       <div className="activity-type">
-                        {activity.type === 'call' ? 'Phone Call' : 
-                         activity.type === 'email' ? 'Email Sent' : 
-                         activity.type === 'whatsapp' ? 'WhatsApp' : 'Text Message'}
+                        {activity.type === 'CALL' || activity.type === 'call' ? 'Phone Call' : 
+                         activity.type === 'EMAIL' || activity.type === 'email' ? 'Email Sent' : 
+                         activity.type === 'WHATSAPP' || activity.type === 'whatsapp' ? 'WhatsApp' :
+                         activity.type === 'MEETING' || activity.type === 'meeting' ? 'Meeting' :
+                         activity.type === 'NOTE' || activity.type === 'note' ? 'Note' :
+                         activity.type}
                       </div>
-                      <div className="activity-note">{activity.note}</div>
+                      <div className="activity-note">{activity.description}</div>
                       <div className="activity-time">{getRelativeTime(activity.createdAt)}</div>
                     </div>
                   </div>
@@ -706,40 +705,195 @@ const ContactDetailView = ({
 
         {/* Main Panel */}
         <div className="detail-main">
-          {/* Tabs */}
-          <div className="detail-tabs">
-            <button
-              className={`tab-button ${activeTab === 'tasks' ? 'active' : ''}`}
-              onClick={() => setActiveTab('tasks')}
-            >
-              Tasks
-            </button>
-            <button
-              className={`tab-button ${activeTab === 'notes' ? 'active' : ''}`}
-              onClick={() => setActiveTab('notes')}
-            >
-              Notes
-            </button>
-            <button
-              className={`tab-button ${activeTab === 'activity' ? 'active' : ''}`}
-              onClick={() => setActiveTab('activity')}
-            >
-              Activity
-            </button>
-            <button
-              className={`tab-button ${activeTab === 'files' ? 'active' : ''}`}
-              onClick={() => setActiveTab('files')}
-            >
-              Files
-            </button>
-          </div>
+          <div className="contact-overview">
+            <h2>Contact Overview</h2>
+            <p>Contact details and information are displayed in the sidebar. Use the add button to create new items for this contact.</p>
+            
+            {/* Quick Stats */}
+            <div className="quick-stats">
+              <div className="stat-card">
+                <div className="stat-number">
+                  {contact.tasks?.filter(task => task.status === 'COMPLETED').length || 0} / {contact.tasks?.length || 0}
+                </div>
+                <div className="stat-label">Tasks Completed</div>
+              </div>
+              <div className="stat-card">
+                <div className="stat-number">{contact.notes?.length || 0}</div>
+                <div className="stat-label">Notes</div>
+              </div>
+              <div className="stat-card">
+                <div className="stat-number">{contact.activities?.length || 0}</div>
+                <div className="stat-label">Activities</div>
+              </div>
+            </div>
 
-          {/* Tab Content */}
-          <div className="tab-content">
-            {renderTabContent()}
+            {/* Tabbed Items Section */}
+            <div className="items-section">
+              {/* Tab Navigation */}
+              <div className="tab-navigation">
+                <button 
+                  className={`tab-button ${activeTab === 'all' ? 'active' : ''}`}
+                  onClick={() => setActiveTab('all')}
+                >
+                  All Items
+                </button>
+                <button 
+                  className={`tab-button ${activeTab === 'tasks' ? 'active' : ''}`}
+                  onClick={() => setActiveTab('tasks')}
+                >
+                  Tasks ({contact.tasks?.length || 0})
+                </button>
+                <button 
+                  className={`tab-button ${activeTab === 'notes' ? 'active' : ''}`}
+                  onClick={() => setActiveTab('notes')}
+                >
+                  Notes ({contact.notes?.length || 0})
+                </button>
+                <button 
+                  className={`tab-button ${activeTab === 'activities' ? 'active' : ''}`}
+                  onClick={() => setActiveTab('activities')}
+                >
+                  Activities ({contact.activities?.length || 0})
+                </button>
+              </div>
+
+              {/* Task Filters - Only show when Tasks tab is active */}
+              {activeTab === 'tasks' && (
+                <div className="task-filters">
+                  <div className="filter-group">
+                    <label htmlFor="status-filter">Status:</label>
+                    <select
+                      id="status-filter"
+                      value={taskFilters.status}
+                      onChange={(e) => setTaskFilters(prev => ({ ...prev, status: e.target.value }))}
+                      className="filter-select"
+                    >
+                      <option value="all">All Tasks</option>
+                      <option value="pending">Pending</option>
+                      <option value="completed">Completed</option>
+                    </select>
+                  </div>
+                  <div className="filter-group">
+                    <label htmlFor="priority-filter">Priority:</label>
+                    <select
+                      id="priority-filter"
+                      value={taskFilters.priority}
+                      onChange={(e) => setTaskFilters(prev => ({ ...prev, priority: e.target.value }))}
+                      className="filter-select"
+                    >
+                      <option value="all">All Priorities</option>
+                      <option value="low">Low</option>
+                      <option value="medium">Medium</option>
+                      <option value="high">High</option>
+                      <option value="urgent">Urgent</option>
+                    </select>
+                  </div>
+                </div>
+              )}
+
+              {/* Tab Content */}
+              <div className="tab-content">
+                {getFilteredItems().length > 0 ? (
+                  <div className="items-list">
+                    {getFilteredItems().map((item) => (
+                      <div 
+                        key={`${item.itemType}-${item.id}`} 
+                        className={`item-card clickable ${item.itemType === 'task' && item.status === 'COMPLETED' ? 'completed-task' : ''}`}
+                      >
+                        <div className="item-header">
+                          {item.itemType === 'task' && (
+                            <label className="task-checkbox-label" onClick={(e) => e.stopPropagation()}>
+                              <input
+                                type="checkbox"
+                                checked={item.status === 'COMPLETED'}
+                                onChange={() => onToggleTaskCompletion && onToggleTaskCompletion(item.id)}
+                                className="task-checkbox"
+                              />
+                            </label>
+                          )}
+                          <div className="item-type-indicator">
+                            <span className={`item-type-badge ${item.itemType}`}>
+                              {item.itemType === 'task' && '📋 Task'}
+                              {item.itemType === 'note' && '📝 Note'}
+                              {item.itemType === 'activity' && `${activityIcons[item.type?.toUpperCase()] || activityIcons[item.type?.toLowerCase()] || '📝'} ${formatActivityType(item.type)}`}
+                            </span>
+                          </div>
+                          <div 
+                            className="item-title"
+                            onClick={() => handleItemClick(item)}
+                          >
+                            {item.title}
+                          </div>
+                          {item.itemType === 'task' && item.priority && (
+                            <span className={`priority-badge ${item.priority?.toLowerCase()}`}>
+                              {item.priority}
+                            </span>
+                          )}
+                        </div>
+                        
+                        {(item.description || item.content) && (
+                          <div 
+                            className="item-content"
+                            onClick={() => handleItemClick(item)}
+                          >
+                            <div dangerouslySetInnerHTML={{ 
+                              __html: (item.description || item.content)?.substring(0, 150) + 
+                                     ((item.description || item.content)?.length > 150 ? '...' : '')
+                            }} />
+                          </div>
+                        )}
+                        
+                        <div 
+                          className="item-meta"
+                          onClick={() => handleItemClick(item)}
+                        >
+                          {item.itemType === 'task' && item.dueDate && (
+                            <span className="item-due-date">Due: {formatDate(item.dueDate)} • </span>
+                          )}
+                          <span className="item-created-time">{getRelativeTime(item.createdAt)}</span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="empty-state">
+                    <div className="empty-state-text">
+                      {activeTab === 'all' ? 'No items yet' : 
+                       activeTab === 'tasks' ? 'No tasks yet' :
+                       activeTab === 'notes' ? 'No notes yet' :
+                       'No activities yet'}
+                    </div>
+                    <div className="empty-state-subtext">
+                      Click the Add Button to create your first {activeTab === 'all' ? 'item' : activeTab.slice(0, -1)}.
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
           </div>
         </div>
       </div>
+
+      {/* Movable Popup */}
+      <MovablePopup
+        isOpen={popupState.isOpen}
+        onClose={closePopup}
+        title={popupState.title}
+        type={popupState.type}
+        contactId={contact.id}
+        onTaskCreate={handleTaskCreate}
+        onTaskUpdate={handleTaskUpdate}
+        onTaskDelete={handleTaskDelete}
+        onNoteCreate={handleNoteCreate}
+        onNoteUpdate={handleNoteUpdate}
+        onNoteDelete={handleNoteDelete}
+        onActivityCreate={handleActivityCreate}
+        onActivityUpdate={handleActivityUpdate}
+        onActivityDelete={handleActivityDelete}
+        editingItem={popupState.editingItem}
+      >
+        {/* Content is now handled by the type-specific forms */}
+      </MovablePopup>
     </div>
   );
 };

@@ -5,12 +5,14 @@ import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
 import './App.css';
 import Home from './components/Home';
 import Login from './components/Login';
-import Register from './components/Register';
+import Register from './components/Register.js';
 import Protected from './components/Protected';
 import ContactsPage from './components/ContactsPage';
 import TasksPage from './components/TasksPage';
 import ContactDetailPage from './components/ContactDetailPage';
+import UserSettings from './components/UserSettings';
 import Sidebar from './components/Sidebar';
+import TopBar from './components/TopBar';
 
 // Optimized QueryClient configuration for TanStack Query v5
 const queryClient = new QueryClient({
@@ -35,6 +37,9 @@ const queryClient = new QueryClient({
   },
 });
 
+// Make queryClient globally accessible for logout function
+window.queryClient = queryClient;
+
 const App = () => {
   const [isSidebarCollapsed, setIsSidebarCollapsed] = React.useState(() => {
     const saved = localStorage.getItem('sidebarCollapsed');
@@ -49,22 +54,26 @@ const App = () => {
   return (
     <QueryClientProvider client={queryClient}>
       <Router>
-        <div className="app-container">
+        <div className="app-container" style={{ height: '100vh' }}>
           <Routes>
             <Route path="/" element={<Home />} />
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
             <Route path="/dashboard/:userId/*" element={
               <>
+                <TopBar isCollapsed={isSidebarCollapsed} />
                 <Sidebar 
                   isCollapsed={isSidebarCollapsed} 
                   onToggleCollapse={() => setIsSidebarCollapsed(prev => !prev)}
                 />
-                <div 
+                                <div 
                   className={`main-content${isSidebarCollapsed ? ' sidebar-collapsed' : ''}`}
                   style={{
                     marginLeft: isSidebarCollapsed ? '64px' : '260px',
-                    minHeight: '100vh',
+                    marginTop: '50px', // Account for top bar height
+                    height: 'calc(100vh - 50px)', // Fixed height
+                    overflowY: 'auto', // Allow vertical scrolling
+                    overflowX: 'hidden', // Prevent horizontal scroll
                     transition: 'margin-left 0.3s ease'
                   }}
                 >
@@ -73,6 +82,7 @@ const App = () => {
                     <Route path="/contacts" element={<ContactsPage />} />
                     <Route path="/contacts/:id" element={<ContactDetailPage />} />
                     <Route path="/tasks" element={<TasksPage />} />
+                    <Route path="/settings" element={<UserSettings />} />
                   </Routes>
                 </div>
               </>

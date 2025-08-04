@@ -14,6 +14,21 @@ export const getAuthToken = () => {
 export const removeAuthToken = () => {
   localStorage.removeItem('token');
   localStorage.removeItem('user');
+  localStorage.removeItem('userId'); // Legacy key that might be used elsewhere
+  localStorage.removeItem('crm_contacts'); // Clear any cached contacts
+  
+  // Set a logout flag to prevent immediate re-authentication
+  localStorage.setItem('logout_in_progress', 'true');
+  
+  // Clear any other auth-related items
+  const keysToRemove = [];
+  for (let i = 0; i < localStorage.length; i++) {
+    const key = localStorage.key(i);
+    if (key && (key.startsWith('auth_') || key.startsWith('user_') || key.startsWith('token_'))) {
+      keysToRemove.push(key);
+    }
+  }
+  keysToRemove.forEach(key => localStorage.removeItem(key));
 };
 
 // User data management
@@ -42,6 +57,11 @@ export const getAuthHeaders = () => {
 
 // Authentication status
 export const isAuthenticated = () => {
+  // Check if logout is in progress
+  if (localStorage.getItem('logout_in_progress') === 'true') {
+    return false;
+  }
+  
   const token = getAuthToken();
   const user = getUserData();
   
@@ -105,6 +125,9 @@ export const authenticatedFetch = async (url, options = {}) => {
 // Login function
 export const login = async (email, password) => {
   try {
+    // Clear logout flag when attempting to login
+    localStorage.removeItem('logout_in_progress');
+    
     const response = await fetch(`${API_BASE_URL}/api/auth/login`, {
       method: 'POST',
       headers: {
@@ -192,14 +215,14 @@ export const initializeAuth = async () => {
 }
 
 // Register function
-export const register = async (email, password) => {
+export const register = async (email, password, displayName = null) => {
   try {
     const response = await fetch(`${API_BASE_URL}/api/auth/register`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({ email, password }),
+      body: JSON.stringify({ email, password, displayName }),
     });
 
     const data = await response.json();
@@ -253,9 +276,35 @@ export const verifyToken = async () => {
 
 // Logout function
 export const logout = async () => {
+  console.log('🔓 Starting logout process...');
+  
+  // Immediately clear local authentication data first
+  console.log('🗑️ Clearing localStorage...');
+  removeAuthToken();
+  
+  // Clear React Query cache to prevent data leakage between users
+  if (window.queryClient) {
+    console.log('🗑️ Clearing React Query cache...');
+    window.queryClient.clear();
+  }
+  
+  // Clear all cookies that might contain auth data
+  document.cookie.split(";").forEach((c) => {
+    const eqPos = c.indexOf("=");
+    const name = eqPos > -1 ? c.substr(0, eqPos) : c;
+    document.cookie = name + "=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/";
+  });
+  
+  console.log('✅ User logged out and authentication data cleared');
+  
+  // Double-check that auth data is actually cleared
+  const token = getAuthToken();
+  const user = getUserData();
+  console.log('🔍 Auth check after logout - Token:', token ? 'STILL EXISTS' : 'CLEARED', 'User:', user ? 'STILL EXISTS' : 'CLEARED');
+  
   try {
-    // Optional: Call backend logout endpoint
-    const token = getAuthToken();
+    // Optional: Call backend logout endpoint (non-blocking)
+    const token = getAuthToken(); // This will be null now, but that's ok
     if (token) {
       await fetch(`${API_BASE_URL}/api/auth/logout`, {
         method: 'POST',
@@ -264,10 +313,11 @@ export const logout = async () => {
           'Content-Type': 'application/json',
         },
       }).catch(() => {
-        // Ignore logout errors, still clean up locally
+        // Ignore logout errors, local cleanup already done
       });
     }
   } catch (error) {
-    console.error('Logout error:', error);
+    console.error('Logout API error (non-critical):', error);
+    // Don't throw - local cleanup already completed
   }
 };

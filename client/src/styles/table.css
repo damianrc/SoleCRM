@@ -19,6 +19,29 @@
   overflow: hidden;
   text-overflow: ellipsis;
   box-sizing: border-box;
+  position: relative;
+}
+
+/* Enhanced text overflow for all table cell content */
+.contacts-table td *,
+.contacts-modern-table td * {
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  box-sizing: border-box;
+}
+
+/* Exception for action buttons and controls */
+.contacts-table td .actions-cell *,
+.contacts-table td button,
+.contacts-table td input[type="checkbox"],
+.contacts-modern-table td .actions-cell *,
+.contacts-modern-table td button,
+.contacts-modern-table td input[type="checkbox"] {
+  white-space: normal;
+  overflow: visible;
+  text-overflow: initial;
 }
 
 /* Column resizing and reordering styles */

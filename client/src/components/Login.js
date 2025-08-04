@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, Link, useLocation } from 'react-router-dom';
-import { login, isAuthenticated, validateEmail, getUserId } from '../utils/auth';
+import { login, validateEmail } from '../utils/auth.js';
 import './Login.css';
 
 const Login = () => {
@@ -27,15 +27,19 @@ const Login = () => {
     }
   }, [location.state]);
 
-  // Redirect if already authenticated
+  // Only redirect on successful form submission, not on page load
+  // This prevents automatic redirects when users are trying to logout
   useEffect(() => {
-    if (isAuthenticated()) {
-      const userId = getUserId();
-      if (userId) {
-        navigate(`/dashboard/${userId}`, { replace: true });
-      }
+    // Clear any logout flags when the login page loads
+    if (localStorage.getItem('logout_in_progress') === 'true') {
+      console.log('🔄 Clearing logout flag');
+      localStorage.removeItem('logout_in_progress');
     }
-  }, [navigate]);
+    
+    // Remove the automatic redirect - let users login manually
+    // This prevents the logout -> immediate redirect loop
+    console.log('📝 Login page loaded, waiting for user input');
+  }, []);
 
   const validateForm = () => {
     const newErrors = {};

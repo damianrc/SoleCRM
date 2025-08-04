@@ -9,7 +9,7 @@ function Table({ className, ...props }) {
   return (
     <div
       data-slot="table-container"
-      className="relative w-full overflow-x-auto"
+      className="relative w-full"
     >
       <table
         data-slot="table"
@@ -84,9 +84,16 @@ function TableCell({ className, ...props }) {
     <td
       data-slot="table-cell"
       className={cn(
-        "p-2 align-middle whitespace-nowrap [&:has([role=checkbox])]:pr-0 [&>[role=checkbox]]:translate-y-[2px]",
+        "p-2 align-middle whitespace-nowrap overflow-hidden text-ellipsis [&:has([role=checkbox])]:pr-0 [&>[role=checkbox]]:translate-y-[2px]",
         className
       )}
+      style={{
+        maxWidth: 0, // This forces the cell to respect its container width
+        overflow: 'hidden',
+        textOverflow: 'ellipsis',
+        whiteSpace: 'nowrap',
+        ...props.style
+      }}
       {...props}
     />
   );

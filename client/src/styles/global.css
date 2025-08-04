@@ -313,12 +313,6 @@
   border-radius: var(--radius-2xl);
   box-shadow: var(--shadow-lg);
   padding: var(--spacing-xl);
-  transition: transform var(--transition-normal), box-shadow var(--transition-normal);
-}
-
-.card:hover {
-  transform: translateY(-5px);
-  box-shadow: 0 6px 15px rgba(0, 0, 0, 0.12);
 }
 
 /* ===== MODAL COMPONENTS ===== */

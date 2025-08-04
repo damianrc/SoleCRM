@@ -54,9 +54,20 @@ const NameCell = React.memo(({ getValue, row, onViewContact }) => {
   const contact = row.original;
   
   return (
-    <div className="contact-name-cell" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}>
-      <div className="name-cell" style={{ flex: 1 }}>
-        <span className="contact-name" title={name} style={{ fontSize: '14px' }}>
+    <div className="contact-name-cell" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%', minWidth: 0 }}>
+      <div className="name-cell" style={{ flex: 1, minWidth: 0, overflow: 'hidden' }}>
+        <span 
+          className="contact-name whitespace-nowrap overflow-hidden text-ellipsis" 
+          title={name} 
+          style={{ 
+            fontSize: '14px',
+            display: 'block',
+            maxWidth: '100%',
+            overflow: 'hidden',
+            textOverflow: 'ellipsis',
+            whiteSpace: 'nowrap'
+          }}
+        >
           {name || 'Unnamed Contact'}
         </span>
       </div>
@@ -124,9 +135,12 @@ const StatusCell = React.memo(({ getValue }) => {
   
   return (
     <span 
-      className={`status-badge ${statusClass}`}
+      className={`status-badge ${statusClass} whitespace-nowrap overflow-hidden text-ellipsis block`}
       title={status}
-      style={{ fontSize: '14px' }}
+      style={{ 
+        fontSize: '14px',
+        maxWidth: '100%'
+      }}
     >
       {status || 'No Status'}
     </span>
@@ -144,9 +158,12 @@ const ContactTypeCell = React.memo(({ getValue }) => {
   
   return (
     <span 
-      className={`contact-type-badge type-${type?.toLowerCase() || 'unknown'}`}
+      className={`contact-type-badge type-${type?.toLowerCase() || 'unknown'} whitespace-nowrap overflow-hidden text-ellipsis block`}
       title={type}
-      style={{ fontSize: '14px' }}
+      style={{ 
+        fontSize: '14px',
+        maxWidth: '100%'
+      }}
     >
       {typeLabels[type] || type || 'Unknown'}
     </span>
@@ -155,10 +172,18 @@ const ContactTypeCell = React.memo(({ getValue }) => {
 
 const EmailCell = React.memo(({ getValue }) => {
   const email = getValue();
-  if (!email) return <span className="text-muted" style={{ fontSize: '14px' }}>No email</span>;
+  if (!email) return <span className="text-muted whitespace-nowrap overflow-hidden text-ellipsis block" style={{ fontSize: '14px', maxWidth: '100%' }}>No email</span>;
   
   return (
-    <a href={`mailto:${email}`} className="email-link" title={email} style={{ fontSize: '14px' }}>
+    <a 
+      href={`mailto:${email}`} 
+      className="email-link whitespace-nowrap overflow-hidden text-ellipsis block" 
+      title={email} 
+      style={{ 
+        fontSize: '14px',
+        maxWidth: '100%'
+      }}
+    >
       {email}
     </a>
   );
@@ -166,10 +191,18 @@ const EmailCell = React.memo(({ getValue }) => {
 
 const PhoneCell = React.memo(({ getValue }) => {
   const phone = getValue();
-  if (!phone) return <span className="text-muted" style={{ fontSize: '14px' }}>No phone</span>;
+  if (!phone) return <span className="text-muted whitespace-nowrap overflow-hidden text-ellipsis block" style={{ fontSize: '14px', maxWidth: '100%' }}>No phone</span>;
   
   return (
-    <a href={`tel:${phone}`} className="phone-link" title={phone} style={{ fontSize: '14px' }}>
+    <a 
+      href={`tel:${phone}`} 
+      className="phone-link whitespace-nowrap overflow-hidden text-ellipsis block" 
+      title={phone} 
+      style={{ 
+        fontSize: '14px',
+        maxWidth: '100%'
+      }}
+    >
       {phone}
     </a>
   );
@@ -177,12 +210,19 @@ const PhoneCell = React.memo(({ getValue }) => {
 
 const AddressCell = React.memo(({ row }) => {
   const { address, suburb } = row.original;
-  if (!address && !suburb) return <span className="text-muted" style={{ fontSize: '14px' }}>No address</span>;
+  if (!address && !suburb) return <span className="text-muted whitespace-nowrap overflow-hidden text-ellipsis block" style={{ fontSize: '14px', maxWidth: '100%' }}>No address</span>;
   
   const fullAddress = [address, suburb].filter(Boolean).join(', ');
   
   return (
-    <span className="address-text" title={fullAddress} style={{ fontSize: '14px' }}>
+    <span 
+      className="address-text whitespace-nowrap overflow-hidden text-ellipsis block" 
+      title={fullAddress} 
+      style={{ 
+        fontSize: '14px',
+        maxWidth: '100%'
+      }}
+    >
       {fullAddress}
     </span>
   );
@@ -349,7 +389,7 @@ export const createContactsColumns = ({
     columnHelper.accessor('leadSource', {
       id: 'leadSource',
       header: 'Lead Source',
-      cell: ({ getValue }) => getValue() || <span className="text-muted" style={{ fontSize: '14px' }}>Unknown</span>,
+      cell: ({ getValue }) => getValue() || <span className="text-muted whitespace-nowrap overflow-hidden text-ellipsis block" style={{ fontSize: '14px', maxWidth: '100%' }}>Unknown</span>,
       size: 120,
       minSize: 100,
       maxSize: 180,
@@ -365,12 +405,12 @@ export const createContactsColumns = ({
       header: 'Created',
       cell: ({ getValue }) => {
         const date = getValue();
-        if (!date) return <span className="text-muted" style={{ fontSize: '14px' }}>Unknown</span>;
+        if (!date) return <span className="text-muted whitespace-nowrap overflow-hidden text-ellipsis block" style={{ fontSize: '14px', maxWidth: '100%' }}>Unknown</span>;
         
         try {
-          return <span style={{ fontSize: '14px' }}>{new Date(date).toLocaleDateString()}</span>;
+          return <span className="whitespace-nowrap overflow-hidden text-ellipsis block" style={{ fontSize: '14px', maxWidth: '100%' }}>{new Date(date).toLocaleDateString()}</span>;
         } catch {
-          return <span className="text-muted" style={{ fontSize: '14px' }}>Invalid date</span>;
+          return <span className="text-muted whitespace-nowrap overflow-hidden text-ellipsis block" style={{ fontSize: '14px', maxWidth: '100%' }}>Invalid date</span>;
         }
       },
       size: 100,

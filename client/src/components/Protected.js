@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Outlet, useLocation, useNavigate } from 'react-router-dom';
-import { isAuthenticated, getUserId, verifyToken, logout } from '../utils/auth';
+import { isAuthenticated, getUserId, verifyToken, logout } from '../utils/auth.js';
 import Sidebar from './Sidebar';
 
 const Protected = () => {
@@ -26,15 +26,17 @@ const Protected = () => {
 
       try {
         // First, check if we have valid auth data
+        console.log('🔍 Checking authentication...');
         if (!isAuthenticated()) {
-          console.log('No valid authentication found, redirecting to login');
+          console.log('❌ Not authenticated, redirecting to login');
           navigate('/login', { replace: true });
           return;
         }
 
         const userId = getUserId();
+        console.log('👤 User ID from auth:', userId);
         if (!userId) {
-          console.log('No user ID found, redirecting to login');
+          console.log('❌ No user ID, redirecting to login');
           navigate('/login', { replace: true });
           return;
         }
@@ -42,7 +44,6 @@ const Protected = () => {
         // Verify token with backend
         const verificationResult = await verifyToken();
         if (!verificationResult.success) {
-          console.log('Token verification failed:', verificationResult.error);
           navigate('/login', { replace: true });
           return;
         }
@@ -127,11 +128,19 @@ const Protected = () => {
 
   const handleLogout = async () => {
     try {
+      console.log('🚀 Starting logout from Protected component...');
+      
       await logout();
+      
+      console.log('🔄 Redirecting to login page...');
+      
+      // Simple redirect to login - no automatic redirect back
+      window.location.replace('/login');
+      
     } catch (error) {
       console.error('Logout error:', error);
       // Force redirect even if logout API call fails
-      navigate('/login', { replace: true });
+      window.location.replace('/login');
     }
   };
 

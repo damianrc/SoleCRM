@@ -5,7 +5,6 @@ import ReactDOM from 'react-dom/client';
 // These styles apply to your entire application.
 import './index.css';
 import 'bootstrap/dist/css/bootstrap.min.css';
-import 'datatables.net-bs5/css/dataTables.bootstrap5.min.css';
 
 // --- Root Application Component ---
 import App from './App';

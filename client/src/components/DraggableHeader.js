@@ -10,6 +10,7 @@ const cn = (...classes) => {
 };
 
 export function DraggableHeader({ header, columnId }) {
+  const isReorderable = header.column.columnDef.enableReordering !== false;
   const {
     attributes,
     listeners,
@@ -17,13 +18,15 @@ export function DraggableHeader({ header, columnId }) {
     transform,
     transition,
     isDragging,
-  } = useSortable({ id: columnId });
+  } = useSortable({ id: columnId, disabled: !isReorderable });
 
-  const style = {
-    transform: CSS.Transform.toString(transform),
-    transition,
-    opacity: isDragging ? 0.5 : 1,
-  };
+  const style = isReorderable
+    ? {
+        transform: CSS.Transform.toString(transform),
+        transition,
+        opacity: isDragging ? 0.5 : 1,
+      }
+    : {};
 
   const resizeHandler = header.getResizeHandler();
 
@@ -39,14 +42,18 @@ export function DraggableHeader({ header, columnId }) {
       colSpan={header.colSpan}
       className={cn(
         "relative font-semibold text-left p-2 bg-background table-header-cell",
-        isDragging && "z-50"
+        isDragging && isReorderable && "z-50"
       )}
     >
       {/* Draggable header content */}
       <div
-        {...attributes}
-        {...listeners}
-        className="draggable-header-content whitespace-nowrap overflow-hidden text-ellipsis max-w-full cursor-grab active:cursor-grabbing select-none"
+        {...(isReorderable ? attributes : {})}
+        {...(isReorderable ? listeners : {})}
+        className={cn(
+          "draggable-header-content whitespace-nowrap overflow-hidden text-ellipsis max-w-full select-none",
+          isReorderable && "cursor-grab active:cursor-grabbing",
+          !isReorderable && "not-draggable"
+        )}
         style={{ paddingRight: header.column.getCanResize() ? '10px' : '0' }}
       >
         {flexRender(header.column.columnDef.header, header.getContext())}
