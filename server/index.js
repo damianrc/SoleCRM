@@ -6,6 +6,8 @@ import authRouter from './routes/auth.js';
 import contactsRouter from './routes/contacts.js';
 import usersRouter from './routes/users.js';
 import { authenticateToken } from './middleware/auth.js';
+import { generalLimiter, progressiveLimiter } from './middleware/rateLimiting.js';
+import { cleanupExpiredTokens } from './utils/tokenUtils.js';
 
 const app = express();
 const prisma = new PrismaClient();
@@ -25,15 +27,55 @@ if (!process.env.JWT_SECRET || process.env.JWT_SECRET === 'your-secret-key') {
 
 // Test database connection on startup
 prisma.$connect()
-    .then(() => console.log('✅ Database connected successfully'))
+    .then(() => {
+        console.log('✅ Database connected successfully');
+        
+        // Setup periodic cleanup of expired refresh tokens
+        const cleanupInterval = setInterval(() => {
+            const cleanedCount = cleanupExpiredTokens();
+            if (cleanedCount > 0) {
+                console.log(`🧹 Cleaned up ${cleanedCount} expired refresh tokens`);
+            }
+        }, 60 * 60 * 1000); // Run every hour
+        
+        // Clear interval on process exit
+        process.on('SIGTERM', () => {
+            clearInterval(cleanupInterval);
+        });
+    })
     .catch(err => {
         console.error('❌ Database connection failed:', err);
         process.exit(1);
     });
 
-// Security middleware
+// Enhanced security middleware
 app.use(helmet({
-    crossOriginResourcePolicy: { policy: "cross-origin" }
+    contentSecurityPolicy: {
+        directives: {
+            defaultSrc: ["'self'"],
+            styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
+            fontSrc: ["'self'", "https://fonts.gstatic.com"],
+            imgSrc: ["'self'", "data:", "https:"],
+            scriptSrc: ["'self'"],
+            connectSrc: ["'self'"],
+            objectSrc: ["'none'"],
+            mediaSrc: ["'self'"],
+            frameSrc: ["'none'"],
+        },
+    },
+    crossOriginResourcePolicy: { policy: "cross-origin" },
+    hsts: {
+        maxAge: 31536000, // 1 year
+        includeSubDomains: true,
+        preload: true
+    },
+    xssFilter: true,
+    noSniff: true,
+    frameguard: { action: 'deny' },
+    hidePoweredBy: true,
+    ieNoOpen: true,
+    permittedCrossDomainPolicies: false,
+    referrerPolicy: { policy: "same-origin" }
 }));
 
 // CORS configuration
@@ -56,6 +98,9 @@ app.use((req, res, next) => {
     console.log(`${new Date().toISOString()} - ${req.method} ${req.path}`);
     next();
 });
+
+// Apply rate limiting
+app.use('/api/', progressiveLimiter);
 
 // Mount auth routes (no authentication required)
 app.use('/api/auth', authRouter);
@@ -515,9 +560,21 @@ app.get('/api/tasks', authenticateToken, async (req, res) => {
                 orderBy: { createdAt: 'desc' },
                 skip: offset,
                 take: parseInt(limit),
-                include: {
+                select: {
+                    id: true,
+                    title: true,
+                    description: true,
+                    status: true,
+                    priority: true,
+                    dueDate: true,
+                    createdAt: true,
+                    updatedAt: true,
+                    contactId: true,
                     contact: {
-                        select: { id: true, name: true }
+                        select: { 
+                            id: true, 
+                            name: true 
+                        }
                     }
                 }
             }),

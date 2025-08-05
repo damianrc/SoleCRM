@@ -74,12 +74,16 @@ function TableHead({ className, ...props }) {
         "text-foreground h-10 px-2 text-left align-middle font-medium whitespace-nowrap [&:has([role=checkbox])]:pr-0 [&>[role=checkbox]]:translate-y-[2px]",
         className
       )}
+      style={{
+        borderRight: '1px solid rgba(0, 0, 0, 0.1)', // Add column separator directly to the style
+        ...props.style
+      }}
       {...props}
     />
   );
 }
 
-function TableCell({ className, ...props }) {
+function TableCell({ className, isLastCell = false, ...props }) {
   return (
     <td
       data-slot="table-cell"
@@ -92,6 +96,7 @@ function TableCell({ className, ...props }) {
         overflow: 'hidden',
         textOverflow: 'ellipsis',
         whiteSpace: 'nowrap',
+        borderRight: '1px solid rgba(0, 0, 0, 0.1)', // Add column separator directly to the style
         ...props.style
       }}
       {...props}

@@ -47,13 +47,11 @@ const NameCell = ({ info, onContactUpdate, onViewContact }) => {
     setValue(currentValue);
   }, [currentValue, info]);
 
-  // Focus input when editing starts
+  // Focus input when editing starts but don't auto-select
   useEffect(() => {
     if (isEditing && inputRef.current) {
       inputRef.current.focus();
-      if (inputRef.current.select && typeof inputRef.current.select === 'function') {
-        inputRef.current.select();
-      }
+      // Don't auto-select text - just focus the input
     }
   }, [isEditing]);
 
@@ -97,22 +95,22 @@ const NameCell = ({ info, onContactUpdate, onViewContact }) => {
   };
 
   return (
-    <div className="name-cell-container">
+    <div className={`name-cell-container ${isEditing ? 'editing' : ''}`}>
       {isEditing ? (
-        <div className="w-full h-full flex items-center px-1">
+        <div className="cell-input-container">
           <input
             ref={inputRef}
-            value={value}
+            value={value || ''}
             onChange={(e) => setValue(e.target.value)}
             onBlur={handleBlur}
             onKeyDown={handleKeyDown}
-            className="name-cell-input"
+            className="cell-input"
           />
         </div>
       ) : (
         <>
           <div 
-            className="w-full h-full flex items-center cursor-pointer hover:bg-gray-50 px-1 rounded transition-colors duration-150 min-h-[32px]"
+            className="name-cell-content"
             onClick={handleClick}
           >
             <span className="name-cell-text">
@@ -138,6 +136,7 @@ const CustomCell = ({ info, onContactUpdate }) => {
   const [isEditing, setIsEditing] = useState(false);
   const [value, setValue] = useState(info.getValue());
   const inputRef = useRef(null);
+  const cellRef = useRef(null);
 
   // Extract the current value to avoid complex expression in dependency array
   const currentValue = info.getValue();
@@ -147,28 +146,30 @@ const CustomCell = ({ info, onContactUpdate }) => {
     setValue(currentValue);
   }, [currentValue, info]);
 
-  // Focus input when editing starts
+  // Focus input when editing starts but don't auto-select
   useEffect(() => {
     if (isEditing && inputRef.current) {
       inputRef.current.focus();
-      if (inputRef.current.select && typeof inputRef.current.select === 'function') {
-        inputRef.current.select();
-      }
+      // Don't auto-select text - just focus the input
     }
   }, [isEditing]);
 
   const handleClick = (e) => {
     e.stopPropagation();
+    // Start editing mode for any cell, even if it's empty
     setIsEditing(true);
   };
 
   const handleSave = async () => {
     setIsEditing(false);
     
-    if (value !== info.getValue() && onContactUpdate) {
+    // Always save regardless of whether the value changed
+    // This allows adding data to empty cells
+    if (onContactUpdate) {
       try {
+        console.log(`Updating field ${info.column.id} for contact ${info.row.original.id}:`, value);
         await onContactUpdate(info.row.original.id, {
-          [info.column.id]: value
+          [info.column.id]: value === '' ? null : value
         });
       } catch (error) {
         console.error('Failed to update contact:', error);
@@ -192,24 +193,25 @@ const CustomCell = ({ info, onContactUpdate }) => {
   };
 
   return (
-    <div className="custom-cell-container">
+    <div className={`custom-cell-container ${isEditing ? 'editing' : ''}`} ref={cellRef}>
       {isEditing ? (
-        <div className="w-full h-full flex items-center px-1">
+        <div className="cell-input-container">
           <input
             ref={inputRef}
-            value={value}
+            value={value || ''}
             onChange={(e) => setValue(e.target.value)}
             onBlur={handleBlur}
             onKeyDown={handleKeyDown}
-            className="name-cell-input"
+            className="cell-input"
+            placeholder={`Enter ${info.column.id}`}
           />
         </div>
       ) : (
         <div 
-          className="w-full h-full flex items-center cursor-pointer hover:bg-gray-50 px-1 rounded transition-colors duration-150 min-h-[32px]"
+          className="editable-cell-display"
           onClick={handleClick}
         >
-          <span className="name-cell-text">
+          <span className="cell-content">
             {value || ''}
           </span>
         </div>

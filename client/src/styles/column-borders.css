@@ -1,0 +1,62 @@
+/* 
+ * Column borders for tables
+ * This file contains explicit styling for table column borders
+ * that should override any other styling
+ */
+
+/* Extreme catch-all styling for all table cells */
+td, th {
+  border-right: 1px solid rgba(0, 0, 0, 0.1) !important;
+}
+
+td:last-child, th:last-child {
+  border-right: none !important;
+}
+
+/* Target table elements directly */
+table td,
+table th,
+.contacts-table td,
+.contacts-table th,
+.contacts-modern-table td,
+.contacts-modern-table th,
+[data-slot="table-cell"],
+[data-slot="table-head"],
+.table-cell,
+.cell-content,
+tr > *:not(:last-child) {
+  border-right: 1px solid rgba(0, 0, 0, 0.1) !important;
+}
+
+table td:last-child,
+table th:last-child,
+.contacts-table td:last-child,
+.contacts-table th:last-child,
+.contacts-modern-table td:last-child,
+.contacts-modern-table th:last-child,
+[data-slot="table-cell"]:last-child,
+[data-slot="table-head"]:last-child,
+.table-cell:last-child,
+.cell-content:last-child,
+tr > *:last-child {
+  border-right: none !important;
+}
+
+/* Target the actual cell components we saw in the code */
+.cell-content {
+  border-right: none !important; /* Clear inner content borders */
+}
+
+/* Target cell in edit mode */
+.editable-cell-display {
+  border-right: none !important; /* Clear display borders */
+}
+
+/* Target direct parent that holds actual content */
+.editable-cell-container {
+  border-right: 1px solid rgba(0, 0, 0, 0.1) !important;
+}
+
+.editable-cell-container:last-child {
+  border-right: none !important;
+}

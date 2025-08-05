@@ -1,0 +1,63 @@
+/* Editable Cell Specific Styles */
+
+.editable-cell {
+  position: relative;
+}
+
+.editable-cell.editing {
+  background-color: #EBF4FF !important; /* Light blue background */
+  border: 2px solid #3B82F6 !important; /* Solid blue border */
+  border-radius: 4px !important;
+  box-shadow: 0 0 0 1px rgba(59, 130, 246, 0.5) !important; /* Subtle glow */
+  z-index: 10;
+}
+
+.cell-empty-placeholder {
+  font-style: italic;
+  color: #94A3B8;
+  cursor: pointer;
+}
+
+.cell-input-container {
+  width: 100%;
+  height: 100%;
+  padding: 4px;
+}
+
+.cell-input {
+  width: 100%;
+  height: 100%;
+  background-color: #F8FAFC;
+  border: none;
+  border-radius: 2px;
+  padding: 4px 6px;
+  font-size: 0.875rem;
+  line-height: 1.25rem;
+}
+
+.cell-input:focus {
+  outline: none;
+  box-shadow: none;
+}
+
+.editable-cell-display {
+  width: 100%;
+  height: 100%;
+  min-height: 32px;
+  display: flex;
+  align-items: center;
+  padding: 0 8px;
+  cursor: pointer;
+}
+
+.editable-cell-display:hover {
+  background-color: rgba(241, 245, 249, 0.8);
+  border-radius: 3px;
+}
+
+/* Specific styling for empty cells to make them more prominent */
+.cell-is-empty.editable-cell-display {
+  background-color: #F1F5F9;
+  border: 1px dashed #CBD5E1;
+  border-radius: 3px;
+}

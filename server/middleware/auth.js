@@ -1,9 +1,10 @@
 import jwt from 'jsonwebtoken';
 import { PrismaClient } from '@prisma/client';
+import { verifyAccessToken } from '../utils/tokenUtils.js';
 
 const prisma = new PrismaClient();
 
-// Main authentication middleware
+// Main authentication middleware with enhanced security
 export const authenticateToken = async (req, res, next) => {
   try {
     const authHeader = req.headers['authorization'];
@@ -16,17 +17,8 @@ export const authenticateToken = async (req, res, next) => {
       });
     }
 
-    const jwtSecret = process.env.JWT_SECRET;
-    if (!jwtSecret || jwtSecret === 'your-secret-key') {
-      console.error('CRITICAL: JWT_SECRET not properly configured!');
-      return res.status(500).json({
-        error: 'Authentication service unavailable',
-        code: 'AUTH_CONFIG_ERROR'
-      });
-    }
-
-    // Verify token
-    const decoded = jwt.verify(token, jwtSecret);
+    // Verify token using utility function
+    const decoded = verifyAccessToken(token);
     
     // Verify user still exists in database
     const user = await prisma.user.findUnique({
@@ -52,16 +44,16 @@ export const authenticateToken = async (req, res, next) => {
 
     next();
   } catch (error) {
-    if (error.name === 'JsonWebTokenError') {
-      return res.status(401).json({
-        error: 'Invalid access token',
-        code: 'INVALID_TOKEN'
-      });
-    }
-    if (error.name === 'TokenExpiredError') {
+    if (error.message === 'Access token expired') {
       return res.status(401).json({
         error: 'Access token has expired',
         code: 'TOKEN_EXPIRED'
+      });
+    }
+    if (error.message === 'Invalid access token') {
+      return res.status(401).json({
+        error: 'Invalid access token',
+        code: 'INVALID_TOKEN'
       });
     }
     

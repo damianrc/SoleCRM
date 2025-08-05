@@ -384,29 +384,107 @@
 }
 
 /* Editable Cell Styles */
+.custom-cell-container.editing,
+.editable-cell.editing,
 .editing {
-  background-color: #f8fafc;
-  border: 1px solid #e2e8f0;
-  border-radius: 2px;
+  background-color: #ebf4ff !important;
+  border: 2px solid #3b82f6 !important;
+  border-radius: 4px !important;
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.3) !important;
+  z-index: 100 !important;
+  position: relative !important;
+}
+
+.cell-input-container {
+  width: 100%;
+  height: 100%;
+  padding: 4px;
 }
 
 .editing input,
-.editing select {
-  padding: 2px 4px;
+.editing select,
+.cell-input {
+  width: 100%;
+  padding: 4px 6px;
   font-size: 0.875rem;
   line-height: 1.25rem;
+  background-color: #f0f7ff;
+  border: none;
+  outline: none;
 }
 
 .editing input:focus,
-.editing select:focus {
-  outline: 1px solid #3b82f6;
-  outline-offset: -1px;
+.editing select:focus,
+.cell-input:focus {
+  outline: none;
+  box-shadow: none;
+}
+
+/* Cell display styles */
+.editable-cell-display,
+.name-cell-content {
+  width: 100%;
+  height: 100%;
+  min-height: 32px;
+  display: flex;
+  align-items: center;
+  padding: 0 8px;
+  cursor: pointer;
+}
+
+.editable-cell-display:hover,
+.name-cell-content:hover {
+  background-color: rgba(241, 245, 249, 0.8);
+  border-radius: 3px;
+}
+
+/* Name cell container */
+.name-cell-container {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  position: relative;
+}
+
+/* Make sure all cells including the name cell use the same editing style */
+.custom-cell-container.editing,
+.editable-cell.editing,
+.name-cell-container.editing,
+.editing {
+  background-color: #ebf4ff !important;
+  border: 2px solid #3b82f6 !important;
+  border-radius: 4px !important;
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.3) !important;
+  z-index: 100 !important;
+  position: relative !important;
+}
+
+/* Hide view button when editing */
+.name-cell-container.editing .name-cell-view-button {
+  display: none;
 }
 
 /* Hover effect for editable cells */
 [role="cell"]:not(.editing) > div:hover {
   background-color: #f8fafc !important;
   transition: background-color 0.1s ease;
+}
+
+/* Special style for editable cells with empty content */
+.editable-cell-content {
+  min-height: 32px;
+  position: relative;
+}
+
+.editable-cell-content:empty::before {
+  content: "Click to edit";
+  font-style: italic;
+  color: #94a3b8;
+  opacity: 0.7;
+  position: absolute;
+  top: 50%;
+  left: 5px;
+  transform: translateY(-50%);
 }
 
 /* Cursor pointer for clickable cells */

@@ -24,6 +24,11 @@ const TaskForm = ({ contactId, onSubmit, onCancel, onDelete, initialData = null,
   const handleSubmit = async (e) => {
     e.preventDefault();
     
+    // Prevent double submissions
+    if (isSubmitting) {
+      return;
+    }
+    
     if (!formData.title.trim()) {
       setValidationError('Task title is required');
       setError('');
@@ -76,7 +81,8 @@ const TaskForm = ({ contactId, onSubmit, onCancel, onDelete, initialData = null,
           onSubmit(taskResult);
         }
       }
-      
+      // Close the popup immediately after successful submit
+      onCancel();
       // Reset form only if creating new task
       if (!isEditing) {
         setFormData({
@@ -86,9 +92,6 @@ const TaskForm = ({ contactId, onSubmit, onCancel, onDelete, initialData = null,
           dueDate: ''
         });
       }
-      
-      // Close the popup
-      onCancel();
       
     } catch (err) {
       console.error(`Error ${isEditing ? 'updating' : 'creating'} task:`, err);
@@ -100,24 +103,12 @@ const TaskForm = ({ contactId, onSubmit, onCancel, onDelete, initialData = null,
 
   const handleDelete = async () => {
     if (!isEditing || !initialData) return;
-    
-    if (!window.confirm('Are you sure you want to delete this task?')) {
-      return;
-    }
 
     try {
       setIsSubmitting(true);
-      const response = await authenticatedFetch(`/api/contacts/${contactId}/tasks/${initialData.id}`, {
-        method: 'DELETE'
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to delete task');
-      }
-
+      
       if (onDelete) {
-        onDelete(initialData.id);
+        await onDelete(initialData.id);
       }
       
       onCancel();

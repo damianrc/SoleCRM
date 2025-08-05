@@ -70,10 +70,8 @@ const ContactDetailPage = () => {
       }
 
       const token = getAuthToken();
-      
-      // Prepare the update data based on the field
-      const updateData = { [field]: value };
-      
+      // Send the full contact object with the updated field
+      const updateData = { ...contact, [field]: value };
       const response = await fetch(`http://localhost:4000/api/contacts/${contactId}`, {
         method: 'PUT',
         headers: {
@@ -84,11 +82,18 @@ const ContactDetailPage = () => {
       });
 
       if (response.ok) {
-        const updatedContact = await response.json();
-        
-        // Update the current contact state with the response from server
-        setContact(updatedContact);
-        
+        // Re-fetch the full contact to get all related data
+        const refreshed = await fetch(`http://localhost:4000/api/contacts/${contactId}`, {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        if (refreshed.ok) {
+          const fullContact = await refreshed.json();
+          setContact(fullContact);
+        } else {
+          // fallback: use the partial update
+          const updatedContact = await response.json();
+          setContact(updatedContact);
+        }
         console.log('Contact updated successfully');
       } else if (response.status === 401) {
         navigate('/login');

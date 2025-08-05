@@ -3,6 +3,10 @@ import { flexRender } from '@tanstack/react-table';
 import { TableCell } from './ui/Table';
 
 export const DefaultCell = memo(function DefaultCell({ cell }) {
+  // Get the index of this cell in the row
+  const cellIndex = cell.row.getAllCells().indexOf(cell);
+  const isLastCell = cellIndex === cell.row.getAllCells().length - 1;
+  
   return (
     <TableCell
       key={cell.id}
@@ -12,6 +16,7 @@ export const DefaultCell = memo(function DefaultCell({ cell }) {
         minWidth: 0, // Allow shrinking
         overflow: 'hidden',
         padding: '0.5rem',
+        borderRight: isLastCell ? 'none' : '1px solid rgba(0, 0, 0, 0.1)', // Add column border
       }}
     >
       <div 

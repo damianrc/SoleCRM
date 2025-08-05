@@ -5,10 +5,11 @@ import './Register.css';
 
 const Register = () => {
   const [formData, setFormData] = useState({
+    name: '',
     email: '',
     password: '',
     confirmPassword: '',
-    displayName: ''
+    displayName: '' // for backend compatibility
   });
   const [errors, setErrors] = useState({});
   const [isLoading, setIsLoading] = useState(false);
@@ -29,6 +30,10 @@ const Register = () => {
   const validateForm = () => {
     const newErrors = {};
 
+    // Name validation
+    if (!formData.name) {
+      newErrors.name = 'Name is required';
+    }
     // Email validation
     if (!formData.email) {
       newErrors.email = 'Email is required';
@@ -61,7 +66,9 @@ const Register = () => {
     const { name, value } = e.target;
     setFormData(prev => ({
       ...prev,
-      [name]: value
+      [name]: value,
+      // keep displayName in sync for backend
+      ...(name === 'name' ? { displayName: value } : {})
     }));
 
     // Clear field-specific error when user starts typing
@@ -169,6 +176,21 @@ const Register = () => {
             )}
 
             <div className="form-group">
+              <label htmlFor="name">Name</label>
+              <input
+                type="text"
+                id="name"
+                name="name"
+                value={formData.name}
+                onChange={handleInputChange}
+                className={errors.name ? 'error' : ''}
+                disabled={isLoading}
+                autoComplete="name"
+                placeholder="Enter your name"
+              />
+              {errors.name && <span className="error-text">{errors.name}</span>}
+            </div>
+            <div className="form-group">
               <label htmlFor="email">Email Address</label>
               <input
                 type="email"
@@ -182,22 +204,6 @@ const Register = () => {
                 placeholder="Enter your email address"
               />
               {errors.email && <span className="error-text">{errors.email}</span>}
-            </div>
-
-            <div className="form-group">
-              <label htmlFor="displayName">Display Name (Optional)</label>
-              <input
-                type="text"
-                id="displayName"
-                name="displayName"
-                value={formData.displayName}
-                onChange={handleInputChange}
-                className={errors.displayName ? 'error' : ''}
-                disabled={isLoading}
-                autoComplete="name"
-                placeholder="Enter your display name"
-              />
-              {errors.displayName && <span className="error-text">{errors.displayName}</span>}
             </div>
 
             <div className="form-group">

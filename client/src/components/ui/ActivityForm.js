@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { authenticatedFetch } from '../../utils/auth';
 import './PopupForms.css';
 
@@ -11,6 +11,7 @@ const ActivityForm = ({ contactId, onSubmit, onCancel, onDelete, initialData = n
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState('');
   const [validationError, setValidationError] = useState('');
+  const submissionRef = useRef(false);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -31,6 +32,11 @@ const ActivityForm = ({ contactId, onSubmit, onCancel, onDelete, initialData = n
   const handleSubmit = async (e) => {
     e.preventDefault();
     
+    // Prevent duplicate submissions
+    if (isSubmitting || submissionRef.current) {
+      return;
+    }
+    
     if (!formData.title.trim()) {
       setValidationError('Activity title is required');
       setError('');
@@ -38,6 +44,7 @@ const ActivityForm = ({ contactId, onSubmit, onCancel, onDelete, initialData = n
     }
 
     setIsSubmitting(true);
+    submissionRef.current = true;
     setError('');
     setValidationError('');
 
@@ -73,15 +80,6 @@ const ActivityForm = ({ contactId, onSubmit, onCancel, onDelete, initialData = n
 
       const activityResult = await response.json();
       
-      // Reset form only if creating new activity
-      if (!isEditing) {
-        setFormData({
-          type: 'CALL',
-          title: '',
-          description: ''
-        });
-      }
-      
       // Call the onSubmit callback with the result
       if (onSubmit) {
         if (isEditing) {
@@ -90,37 +88,33 @@ const ActivityForm = ({ contactId, onSubmit, onCancel, onDelete, initialData = n
           onSubmit(activityResult);
         }
       }
-      
-      // Close the popup
+      // Close the popup immediately after successful submit
       onCancel();
+      // Reset form only if creating new activity
+      if (!isEditing) {
+        setFormData({
+          type: 'CALL',
+          title: '',
+          description: ''
+        });
+      }
     } catch (err) {
       console.error(`Error ${isEditing ? 'updating' : 'creating'} activity:`, err);
       setError(err.message || `Failed to ${isEditing ? 'update' : 'create'} activity. Please try again.`);
     } finally {
       setIsSubmitting(false);
+      submissionRef.current = false;
     }
   };
 
   const handleDelete = async () => {
     if (!isEditing || !initialData) return;
-    
-    if (!window.confirm('Are you sure you want to delete this activity?')) {
-      return;
-    }
 
     try {
       setIsSubmitting(true);
-      const response = await authenticatedFetch(`/api/contacts/${contactId}/activities/${initialData.id}`, {
-        method: 'DELETE'
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to delete activity');
-      }
-
+      
       if (onDelete) {
-        onDelete(initialData.id);
+        await onDelete(initialData.id);
       }
       
       onCancel();

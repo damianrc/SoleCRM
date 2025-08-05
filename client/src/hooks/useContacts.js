@@ -128,11 +128,26 @@ export const useUpdateContact = () => {
   return useMutation({
     mutationFn: async ({ contactId, updates }) => {
       const userId = getUserId();
-      const updateData = { ...updates, userId };
+      
+      console.log('Updating contact:', contactId, 'with data:', updates);
+      
+      // Ensure we're using the right data format for the backend
+      // Convert empty strings to null for the database
+      const processedUpdates = Object.entries(updates).reduce((acc, [key, value]) => {
+        acc[key] = value === '' ? null : value;
+        return acc;
+      }, {});
+      
+      const updateData = { ...processedUpdates, userId };
+      
+      console.log('Processed update data:', updateData);
       
       const response = await fetch(`${API_BASE_URL}/api/contacts/${contactId}`, {
         method: 'PUT',
-        headers: getAuthHeaders(),
+        headers: {
+          ...getAuthHeaders(),
+          'Content-Type': 'application/json'
+        },
         body: JSON.stringify(updateData),
       });
 

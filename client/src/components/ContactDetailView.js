@@ -151,19 +151,17 @@ const ContactDetailView = ({
 
   // Get all items combined and sorted by creation date
   const getAllItems = () => {
-    const tasks = (contact.tasks || []).map(task => ({ ...task, itemType: 'task' }));
-    const notes = (contact.notes || []).map(note => ({ ...note, itemType: 'note' }));
-    const activities = (contact.activities || []).map(activity => ({ ...activity, itemType: 'activity' }));
-    
-    const allItems = [...tasks, ...notes, ...activities];
-    return allItems.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+    const filteredTasks = (contact.tasks || []).filter(task => task.contactId === contact.id).map(task => ({ ...task, itemType: 'task' }));
+    const filteredNotes = (contact.notes || []).filter(note => note.contactId === contact.id).map(note => ({ ...note, itemType: 'note' }));
+    const filteredActivities = (contact.activities || []).filter(activity => activity.contactId === contact.id).map(activity => ({ ...activity, itemType: 'activity' }));
+    return [...filteredTasks, ...filteredNotes, ...filteredActivities].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
   };
 
   // Get filtered items based on active tab
   const getFilteredItems = () => {
     switch (activeTab) {
       case 'tasks':
-        let filteredTasks = (contact.tasks || []).map(task => ({ ...task, itemType: 'task' }));
+        let filteredTasks = (contact.tasks || []).filter(task => task.contactId === contact.id).map(task => ({ ...task, itemType: 'task' }));
         
         // Apply status filter
         if (taskFilters.status !== 'all') {
@@ -186,10 +184,10 @@ const ContactDetailView = ({
         
         return filteredTasks.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
       case 'notes':
-        return (contact.notes || []).map(note => ({ ...note, itemType: 'note' }))
+        return (contact.notes || []).filter(note => note.contactId === contact.id).map(note => ({ ...note, itemType: 'note' }))
           .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
       case 'activities':
-        return (contact.activities || []).map(activity => ({ ...activity, itemType: 'activity' }))
+        return (contact.activities || []).filter(activity => activity.contactId === contact.id).map(activity => ({ ...activity, itemType: 'activity' }))
           .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
       default:
         return getAllItems();

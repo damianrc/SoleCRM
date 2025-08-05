@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { TableCell } from './ui/Table';
+import '../styles/editable-cell.css';
 
 export function EditableCell({ 
   cell, 
@@ -13,65 +14,55 @@ export function EditableCell({
   const [value, setValue] = useState(initialValue);
   const [isEditing, setIsEditing] = useState(false);
   const inputRef = useRef(null);
+  const cellRef = useRef(null);
 
   // Reset value when cell value changes from outside
   useEffect(() => {
     setValue(initialValue);
   }, [initialValue]);
 
-  // Focus input when editing starts
+  // Focus input when editing starts but don't auto-select
   useEffect(() => {
     if (isEditing && inputRef.current) {
       inputRef.current.focus();
-      // Only call select() for input elements, not select elements
-      if (inputRef.current.select && typeof inputRef.current.select === 'function') {
-        inputRef.current.select();
-      }
+      // Don't auto-select text - just focus the input
     }
   }, [isEditing]);
 
   const handleClick = (e) => {
     e.stopPropagation();
-    console.log('Cell clicked:', column.id, 'value:', value, 'initialValue:', initialValue);
     // Don't allow editing of certain columns
     const nonEditableColumns = ['select', 'actions', 'createdAt', 'updatedAt'];
     if (nonEditableColumns.includes(column.id)) {
-      console.log('Column not editable:', column.id);
       return;
     }
-    console.log('Setting editing to true for column:', column.id);
+    
+    // Start editing mode
     setIsEditing(true);
   };
 
   const handleSave = async () => {
     setIsEditing(false);
     
-    // Only save if value has changed
-    if (value !== initialValue && onUpdate) {
+    // Always attempt to update the cell, regardless of whether the value changed
+    // or whether it was empty before - this is key to fixing the empty cell issue
+    if (onUpdate) {
       try {
-        // Get the current contact data and merge with the changed field
-        const currentContact = row.original;
+        // Always update even if the values are the same
+        // This allows adding data to previously empty cells
         const updatedData = {
-          name: currentContact.name,
-          email: currentContact.email,
-          phone: currentContact.phone,
-          address: currentContact.address,
-          suburb: currentContact.suburb,
-          contactType: currentContact.contactType,
-          leadSource: currentContact.leadSource,
-          status: currentContact.status,
-          // Override the specific field that was changed
-          [column.id]: value
+          [column.id]: value === '' ? null : value
         };
         
+        console.log(`Updating field ${column.id} for contact ${row.original.id} to:`, value);
+        
+        // Send to the backend
         await onUpdate(row.original.id, updatedData);
       } catch (error) {
         console.error('Failed to update cell:', error);
         // Revert to original value on error
         setValue(initialValue);
       }
-    } else {
-      // No update needed - value unchanged
     }
   };
 
@@ -126,12 +117,13 @@ export function EditableCell({
       return (
         <select
           ref={inputRef}
-          value={value}
+          value={value || ''}
           onChange={(e) => setValue(e.target.value)}
           onBlur={handleBlur}
           onKeyDown={handleKeyDown}
-          className="w-full bg-transparent border-none outline-none text-sm"
+          className="cell-input"
         >
+          <option value="">-- Select Type --</option>
           <option value="BUYER">Buyer</option>
           <option value="SELLER">Seller</option>
           <option value="PAST_CLIENT">Past Client</option>
@@ -144,12 +136,13 @@ export function EditableCell({
       return (
         <select
           ref={inputRef}
-          value={value}
+          value={value || ''}
           onChange={(e) => setValue(e.target.value)}
           onBlur={handleBlur}
           onKeyDown={handleKeyDown}
-          className="w-full bg-transparent border-none outline-none text-sm"
+          className="cell-input"
         >
+          <option value="">-- Select Status --</option>
           <option value="NEW">New</option>
           <option value="CONTACTED">Contacted</option>
           <option value="QUALIFIED">Qualified</option>
@@ -166,47 +159,41 @@ export function EditableCell({
       <input
         ref={inputRef}
         type={column.id === 'email' ? 'email' : 'text'}
-        value={value}
+        value={value || ''}
         onChange={(e) => setValue(e.target.value)}
         onBlur={handleBlur}
         onKeyDown={handleKeyDown}
-        className="w-full bg-transparent border-none outline-none text-sm"
+        className="cell-input"
+        placeholder={`Enter ${column.id}`}
       />
     );
   };
 
   return (
     <TableCell
+      ref={cellRef}
       style={{
         width: cell.column.getSize(),
         flex: `0 0 ${cell.column.getSize()}px`,
       }}
-      className={`relative ${isEditing ? 'editing' : ''}`}
-      onClick={handleClick}
+      className={`editable-cell ${isEditing ? 'editing' : ''}`}
     >
       {isEditing ? (
-        <div className="w-full h-full flex items-center px-1">
+        <div className="cell-input-container">
           {renderInput()}
         </div>
       ) : (
         <div 
-          className="w-full h-full flex items-center cursor-pointer hover:bg-gray-50 px-1 rounded transition-colors duration-150 min-h-[32px]"
+          className="editable-cell-display"
           onClick={handleClick}
-          style={{ overflow: 'hidden', minWidth: 0 }}
         >
-          <span 
-            className="text-sm"
-            style={{
-              whiteSpace: 'nowrap',
-              overflow: 'hidden',
-              textOverflow: 'ellipsis',
-              maxWidth: '100%',
-              display: 'block',
-              minWidth: 0
-            }}
-          >
-            {formatDisplayValue(value)}
-          </span>
+          {value === null || value === undefined || value === '' ? (
+            <span className="cell-empty-placeholder">Click to add {column.id}</span>
+          ) : (
+            <span className="cell-content">
+              {formatDisplayValue(value)}
+            </span>
+          )}
         </div>
       )}
     </TableCell>

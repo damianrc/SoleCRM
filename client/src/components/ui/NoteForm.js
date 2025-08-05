@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { authenticatedFetch } from '../../utils/auth';
 import './PopupForms.css';
 
@@ -10,6 +10,7 @@ const NoteForm = ({ contactId, onSubmit, onCancel, onDelete, initialData = null,
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState('');
   const [validationError, setValidationError] = useState('');
+  const submissionRef = useRef(false);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -30,6 +31,11 @@ const NoteForm = ({ contactId, onSubmit, onCancel, onDelete, initialData = null,
   const handleSubmit = async (e) => {
     e.preventDefault();
     
+    // Prevent duplicate submissions
+    if (isSubmitting || submissionRef.current) {
+      return;
+    }
+    
     if (!formData.title.trim()) {
       setValidationError('Note title is required');
       setError('');
@@ -43,6 +49,7 @@ const NoteForm = ({ contactId, onSubmit, onCancel, onDelete, initialData = null,
     }
 
     setIsSubmitting(true);
+    submissionRef.current = true;
     setError('');
     setValidationError('');
 
@@ -84,7 +91,8 @@ const NoteForm = ({ contactId, onSubmit, onCancel, onDelete, initialData = null,
           onSubmit(noteResult);
         }
       }
-      
+      // Close the popup immediately after successful submit
+      onCancel();
       // Reset form only if creating new note
       if (!isEditing) {
         setFormData({
@@ -93,37 +101,23 @@ const NoteForm = ({ contactId, onSubmit, onCancel, onDelete, initialData = null,
         });
       }
       
-      // Close the popup
-      onCancel();
-      
     } catch (err) {
       console.error(`Error ${isEditing ? 'updating' : 'creating'} note:`, err);
       setError(err.message || `Failed to ${isEditing ? 'update' : 'create'} note. Please try again.`);
     } finally {
       setIsSubmitting(false);
+      submissionRef.current = false;
     }
   };
 
   const handleDelete = async () => {
     if (!isEditing || !initialData) return;
-    
-    if (!window.confirm('Are you sure you want to delete this note?')) {
-      return;
-    }
 
     try {
       setIsSubmitting(true);
-      const response = await authenticatedFetch(`/api/contacts/${contactId}/notes/${initialData.id}`, {
-        method: 'DELETE'
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to delete note');
-      }
-
+      
       if (onDelete) {
-        onDelete(initialData.id);
+        await onDelete(initialData.id);
       }
       
       onCancel();

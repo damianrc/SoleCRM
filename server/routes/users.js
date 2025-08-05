@@ -1,32 +1,12 @@
 import express from 'express';
 import bcrypt from 'bcrypt';
 import { PrismaClient } from '@prisma/client';
-import rateLimit from 'express-rate-limit';
 import { authenticateToken } from '../middleware/auth.js';
+import { userUpdateLimiter } from '../middleware/rateLimiting.js';
+import { validateBody, userUpdateSchema, passwordChangeSchema } from '../middleware/validation.js';
 
 const router = express.Router();
 const prisma = new PrismaClient();
-
-// Rate limiting for user update endpoints
-const userUpdateLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 5, // limit each IP to 5 requests per windowMs
-  message: { error: '⚠️ Too many update attempts. Please wait 15 minutes before trying again.' },
-  standardHeaders: true,
-  legacyHeaders: false,
-});
-
-// Input validation helpers
-const validateEmail = (email) => {
-  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-  return emailRegex.test(email);
-};
-
-const validatePassword = (password) => {
-  // At least 8 characters, 1 uppercase, 1 lowercase, 1 number
-  const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)[a-zA-Z\d@$!%*?&]{8,}$/;
-  return passwordRegex.test(password);
-};
 
 // Get current user profile
 router.get('/profile', authenticateToken, async (req, res) => {
@@ -63,8 +43,8 @@ router.get('/profile', authenticateToken, async (req, res) => {
   }
 });
 
-// Update user email
-router.put('/email', authenticateToken, userUpdateLimiter, async (req, res) => {
+// Update user email with validation
+router.put('/email', authenticateToken, userUpdateLimiter, validateBody(userUpdateSchema), async (req, res) => {
   try {
     const userId = req.user.id;
     const { email, currentPassword } = req.body;
@@ -168,8 +148,8 @@ router.put('/email', authenticateToken, userUpdateLimiter, async (req, res) => {
   }
 });
 
-// Update user password
-router.put('/password', authenticateToken, userUpdateLimiter, async (req, res) => {
+// Update user password with validation
+router.put('/password', authenticateToken, userUpdateLimiter, validateBody(passwordChangeSchema), async (req, res) => {
   try {
     const userId = req.user.id;
     const { currentPassword, newPassword, confirmPassword } = req.body;
@@ -186,13 +166,6 @@ router.put('/password', authenticateToken, userUpdateLimiter, async (req, res) =
       return res.status(400).json({
         error: 'New password and confirm password do not match',
         code: 'PASSWORD_MISMATCH'
-      });
-    }
-
-    if (!validatePassword(newPassword)) {
-      return res.status(400).json({
-        error: 'Password must be at least 8 characters long and contain at least one uppercase letter, one lowercase letter, and one number',
-        code: 'WEAK_PASSWORD'
       });
     }
 

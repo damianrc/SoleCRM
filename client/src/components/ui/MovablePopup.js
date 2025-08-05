@@ -3,6 +3,7 @@ import { X, GripHorizontal } from 'lucide-react';
 import TaskForm from './TaskForm';
 import NoteForm from './NoteForm';
 import ActivityForm from './ActivityForm';
+import EnlargeIcon from './EnlargeIcon';
 import './MovablePopup.css';
 
 const MovablePopup = ({ 
@@ -127,6 +128,24 @@ const MovablePopup = ({
     });
   };
 
+  // Handle enlarge/collapse
+  const handleEnlarge = e => {
+    e.stopPropagation();
+    if (size.width < 900) {
+      setSize({ width: 900, height: 600 });
+      setPosition({
+        x: Math.max(0, Math.floor((window.innerWidth - 900) / 2)),
+        y: Math.max(0, Math.floor((window.innerHeight - 600) / 2))
+      });
+    } else {
+      setSize({ width: 500, height: 300 });
+      setPosition({
+        x: Math.max(0, window.innerWidth - 500 - 30),
+        y: Math.max(0, window.innerHeight - 300 - 50)
+      });
+    }
+  };
+
   // Handle window resize to keep popup in bounds
   useEffect(() => {
     const handleWindowResize = () => {
@@ -162,20 +181,26 @@ const MovablePopup = ({
         }}
       >
         {/* Header */}
-        <div 
-          className="popup-header"
-          onMouseDown={handleDragStart}
-        >
+        <div className="popup-header" onMouseDown={handleDragStart}>
           <div className="popup-title">
             <GripHorizontal size={16} className="drag-indicator" />
             {title}
           </div>
-          <button 
-            className="popup-close-btn"
-            onClick={onClose}
-          >
-            <X size={16} />
-          </button>
+          <div className="popup-icons" style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+            <button 
+              className="popup-enlarge-btn"
+              onClick={handleEnlarge}
+              title="Enlarge popup"
+            >
+              <EnlargeIcon size={16} />
+            </button>
+            <button 
+              className="popup-close-btn"
+              onClick={onClose}
+            >
+              <X size={16} />
+            </button>
+          </div>
         </div>
 
         {/* Content */}

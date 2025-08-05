@@ -11,6 +11,15 @@
   min-width: 100%;
 }
 
+/* Center align checkbox column cells - more specific selector */
+[data-column-id="select"],
+td[data-column-id="select"],
+th[data-column-id="select"],
+.contacts-table td[data-column-id="select"],
+.contacts-modern-table td[data-column-id="select"] {
+  text-align: center !important;
+}
+
 /* Ensure columns maintain their sizes with improved layout stability */
 .contacts-table th,
 .contacts-table td {
@@ -20,6 +29,13 @@
   text-overflow: ellipsis;
   box-sizing: border-box;
   position: relative;
+  border-right: 1px solid rgba(0, 0, 0, 0.1) !important; /* Stronger column separator */
+}
+
+/* Remove border from last cell in each row */
+.contacts-table th:last-child,
+.contacts-table td:last-child {
+  border-right: none !important;
 }
 
 /* Enhanced text overflow for all table cell content */
@@ -42,6 +58,19 @@
   white-space: normal;
   overflow: visible;
   text-overflow: initial;
+}
+
+/* Fix checkbox styling and shadows for the select column */
+[data-column-id="select"] input[type="checkbox"],
+td[data-column-id="select"] input[type="checkbox"],
+th[data-column-id="select"] input[type="checkbox"],
+[data-column-id="select"] .checkbox,
+[data-column-id="select"] .Checkbox {
+  box-shadow: none !important;
+  margin: 0 auto !important;
+  position: relative !important;
+  left: 0 !important;
+  transform: none !important;
 }
 
 /* Column resizing and reordering styles */
@@ -94,9 +123,61 @@
   font-weight: 600;
 }
 
+/* Style specifically for the table selection column header */
+th[data-column-id="select"],
+[role="columnheader"][data-column-id="select"] {
+  text-align: center !important;
+}
+
+/* Comprehensive fix for checkbox column alignment */
+[data-column-id="select"],
+td[data-column-id="select"] > div,
+th[data-column-id="select"] > div,
+[data-column-id="select"] .h-full {
+  display: flex !important;
+  justify-content: center !important;
+  align-items: center !important;
+  text-align: center !important;
+}
+
+/* Direct styling for table cells and headers - maximum specificity */
+table td,
+table th,
+[data-slot="table-cell"],
+[data-slot="table-head"],
+.contacts-table td,
+.contacts-table th,
+.contacts-modern-table td,
+.contacts-modern-table th {
+  border-right: 1px solid rgba(0, 0, 0, 0.1) !important;
+}
+
+table td:last-child,
+table th:last-child,
+[data-slot="table-cell"]:last-child,
+[data-slot="table-head"]:last-child,
+.contacts-table td:last-child,
+.contacts-table th:last-child,
+.contacts-modern-table td:last-child,
+.contacts-modern-table th:last-child {
+  border-right: none !important;
+}
+
 /* Ensure all table content uses 14px */
 table * {
   font-size: 14px !important;
+}
+
+/* Add column separators to modern table variant */
+.contacts-modern-table th,
+.contacts-modern-table td {
+  border-right: 1px solid rgba(0, 0, 0, 0.1) !important; /* Stronger column separator */
+}
+
+/* Remove border from last cell in each row */
+.contacts-modern-table th:last-child,
+.contacts-modern-table td:last-child {
+  border-right: none !important;
 }
 
 /* Specifically target the contact table elements */
@@ -247,4 +328,23 @@ table * {
 /* Hide resize zone for non-resizable columns */
 .contacts-table-header-cell:not(.resizable) .resize-handle {
   display: none !important;
+}
+
+/* Fix checkbox styling in selection column */
+[data-column-id="select"] input[type="checkbox"],
+[data-column-id="select"] .checkbox-wrapper,
+[data-column-id="select"] .Checkbox {
+  margin: 0 auto !important;
+  display: block !important;
+  box-shadow: none !important;
+}
+
+/* Center content in selection column */
+[data-column-id="select"] .h-full,
+[data-column-id="select"] .cell-content,
+[data-column-id="select"] div {
+  display: flex !important;
+  justify-content: center !important;
+  align-items: center !important;
+  width: 100% !important;
 }

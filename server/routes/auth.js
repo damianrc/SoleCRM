@@ -2,61 +2,24 @@ import express from 'express';
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 import { PrismaClient } from '@prisma/client';
-import rateLimit from 'express-rate-limit';
 import { generateUniqueUserId } from '../utils/idGenerator.js';
+import { authenticateToken } from '../middleware/auth.js';
+import { authLimiter } from '../middleware/rateLimiting.js';
+import { validateBody, authSchema, loginSchema } from '../middleware/validation.js';
+import { 
+  generateTokenPair, 
+  verifyRefreshToken, 
+  revokeRefreshToken, 
+  revokeAllUserRefreshTokens 
+} from '../utils/tokenUtils.js';
 
 const router = express.Router();
 const prisma = new PrismaClient();
 
-// Rate limiting for auth endpoints
-const authLimiter = rateLimit({
-  windowMs: 60 * 1000, // 1 minute
-  max: 10, // limit each IP to 10 requests per windowMs
-  message: { error: '⚠️ Too many login attempts. Please wait 1 minute before trying again.' },
-  standardHeaders: true,
-  legacyHeaders: false,
-});
-
-// Input validation helpers
-const validateEmail = (email) => {
-  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-  return emailRegex.test(email);
-};
-
-const validatePassword = (password) => {
-  // At least 8 characters, 1 uppercase, 1 lowercase, 1 number
-  const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)[a-zA-Z\d@$!%*?&]{8,}$/;
-  return passwordRegex.test(password);
-};
-
-// Register endpoint
-router.post('/register', authLimiter, async (req, res) => {
+// Register endpoint with validation and rate limiting
+router.post('/register', authLimiter, validateBody(authSchema), async (req, res) => {
   try {
-    const { email, password, displayName } = req.body;
-    
-    // Input validation
-    if (!email || !password) {
-      return res.status(400).json({ 
-        error: 'Email and password are required',
-        code: 'MISSING_FIELDS'
-      });
-    }
-
-    if (!validateEmail(email)) {
-      return res.status(400).json({ 
-        error: 'Please provide a valid email address',
-        code: 'INVALID_EMAIL'
-      });
-    }
-
-    if (!validatePassword(password)) {
-      return res.status(400).json({ 
-        error: 'Password must be at least 8 characters long and contain at least one uppercase letter, one lowercase letter, and one number',
-        code: 'WEAK_PASSWORD'
-      });
-    }
-
-    // Validate display name if provided
+    const { email, password, displayName } = req.body;    // Validate display name if provided
     const normalizedDisplayName = displayName && displayName.trim() ? displayName.trim() : null;
 
     // Check if user already exists
@@ -111,27 +74,10 @@ router.post('/register', authLimiter, async (req, res) => {
   }
 });
 
-// Login endpoint
-router.post('/login', authLimiter, async (req, res) => {
+// Login endpoint with validation and rate limiting
+router.post('/login', authLimiter, validateBody(loginSchema), async (req, res) => {
   try {
-    const { email, password } = req.body;
-    
-    // Input validation
-    if (!email || !password) {
-      return res.status(400).json({
-        error: 'Email and password are required',
-        code: 'MISSING_FIELDS'
-      });
-    }
-
-    if (!validateEmail(email)) {
-      return res.status(400).json({
-        error: 'Please provide a valid email address',
-        code: 'INVALID_EMAIL'
-      });
-    }
-
-    // Find user
+    const { email, password } = req.body;    // Find user
     const user = await prisma.user.findUnique({ 
       where: { email: email.toLowerCase().trim() },
       select: {
@@ -158,33 +104,13 @@ router.post('/login', authLimiter, async (req, res) => {
       });
     }
 
-    // Generate JWT token
-    const jwtSecret = process.env.JWT_SECRET;
-    if (!jwtSecret || jwtSecret === 'your-secret-key') {
-      console.error('CRITICAL: JWT_SECRET not properly configured!');
-      return res.status(500).json({
-        error: 'Authentication service unavailable',
-        code: 'AUTH_CONFIG_ERROR'
-      });
-    }
-
-    const token = jwt.sign(
-      { 
-        userId: user.id,
-        email: user.email 
-      }, 
-      jwtSecret, 
-      { 
-        expiresIn: process.env.JWT_EXPIRES_IN || '24h',
-        issuer: 'solecrm',
-        audience: 'solecrm-users'
-      }
-    );
+    // Generate token pair (access + refresh)
+    const tokens = generateTokenPair(user.id, user.email);
     
     console.log(`User logged in successfully: ${user.email} (ID: ${user.id})`);
     
     res.json({ 
-      token,
+      ...tokens,
       user: {
         id: user.id,
         email: user.email,
@@ -265,11 +191,83 @@ router.get('/verify', async (req, res) => {
   }
 });
 
-// Logout endpoint (optional, for token blacklisting if implemented)
+// Logout endpoint - revoke refresh token
 router.post('/logout', (req, res) => {
-  // In a production app, you might want to blacklist the token
-  // For now, we'll just send a success response
-  res.json({ message: 'Logged out successfully' });
+  try {
+    const { refreshToken } = req.body;
+    
+    if (refreshToken) {
+      try {
+        const decoded = verifyRefreshToken(refreshToken);
+        revokeRefreshToken(decoded.tokenId);
+      } catch (error) {
+        // Even if refresh token is invalid, we'll still return success
+        console.log('Invalid refresh token during logout:', error.message);
+      }
+    }
+    
+    res.json({ message: 'Logged out successfully' });
+  } catch (error) {
+    console.error('Logout error:', error);
+    res.json({ message: 'Logged out successfully' }); // Always succeed for logout
+  }
+});
+
+// Refresh token endpoint
+router.post('/refresh', authLimiter, async (req, res) => {
+  try {
+    const { refreshToken } = req.body;
+    
+    if (!refreshToken) {
+      return res.status(401).json({
+        error: 'Refresh token is required',
+        code: 'NO_REFRESH_TOKEN'
+      });
+    }
+
+    // Verify refresh token
+    const decoded = verifyRefreshToken(refreshToken);
+    
+    // Verify user still exists
+    const user = await prisma.user.findUnique({
+      where: { id: decoded.userId },
+      select: {
+        id: true,
+        email: true,
+        displayName: true
+      }
+    });
+
+    if (!user) {
+      // Revoke the refresh token if user no longer exists
+      revokeRefreshToken(decoded.tokenId);
+      return res.status(401).json({
+        error: 'User no longer exists',
+        code: 'USER_NOT_FOUND'
+      });
+    }
+
+    // Generate new token pair
+    const tokens = generateTokenPair(user.id, user.email);
+    
+    // Optionally revoke the old refresh token (rotate tokens)
+    revokeRefreshToken(decoded.tokenId);
+    
+    res.json({
+      ...tokens,
+      user: {
+        id: user.id,
+        email: user.email,
+        displayName: user.displayName
+      }
+    });
+  } catch (error) {
+    console.error('Token refresh error:', error);
+    return res.status(401).json({
+      error: 'Invalid or expired refresh token',
+      code: 'INVALID_REFRESH_TOKEN'
+    });
+  }
 });
 
 export default router;

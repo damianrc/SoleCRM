@@ -1,18 +1,27 @@
-// Authentication utility functions
+// Authentication utility functions with refresh token support
 
 const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:4000';
 
-// Token management
-export const setAuthToken = (token) => {
-  localStorage.setItem('token', token);
+// Token management with refresh token support
+export const setAuthTokens = (tokens) => {
+  localStorage.setItem('accessToken', tokens.accessToken);
+  localStorage.setItem('refreshToken', tokens.refreshToken);
+  localStorage.setItem('tokenExpiry', tokens.accessTokenExpiry);
 };
 
 export const getAuthToken = () => {
-  return localStorage.getItem('token');
+  return localStorage.getItem('accessToken');
 };
 
-export const removeAuthToken = () => {
-  localStorage.removeItem('token');
+export const getRefreshToken = () => {
+  return localStorage.getItem('refreshToken');
+};
+
+export const removeAuthTokens = () => {
+  localStorage.removeItem('accessToken');
+  localStorage.removeItem('refreshToken');
+  localStorage.removeItem('tokenExpiry');
+  localStorage.removeItem('token'); // Legacy token
   localStorage.removeItem('user');
   localStorage.removeItem('userId'); // Legacy key that might be used elsewhere
   localStorage.removeItem('crm_contacts'); // Clear any cached contacts
@@ -46,7 +55,7 @@ export const getUserId = () => {
   return user?.id || null;
 };
 
-// Authentication headers
+// Authentication headers for API requests
 export const getAuthHeaders = () => {
   const token = getAuthToken();
   return {
@@ -55,7 +64,7 @@ export const getAuthHeaders = () => {
   };
 };
 
-// Authentication status
+// Authentication status with token validation
 export const isAuthenticated = () => {
   // Check if logout is in progress
   if (localStorage.getItem('logout_in_progress') === 'true') {
@@ -63,56 +72,103 @@ export const isAuthenticated = () => {
   }
   
   const token = getAuthToken();
+  const refreshToken = getRefreshToken();
   const user = getUserData();
   
-  if (!token || !user) {
+  if (!token || !refreshToken || !user) {
     return false;
   }
 
-  // Check if token is expired (basic check)
+  // Check if access token is expired (basic check)
   try {
     const payload = JSON.parse(atob(token.split('.')[1]));
     const currentTime = Date.now() / 1000;
     
+    // If access token is expired but we have a refresh token, 
+    // we're still considered authenticated (will refresh automatically)
     if (payload.exp < currentTime) {
-      // Token is expired, clean up
-      removeAuthToken();
-      return false;
+      return !!refreshToken; // Return true if we have a refresh token
     }
     
     return true;
   } catch (error) {
-    // Invalid token format
-    removeAuthToken();
-    return false;
+    // If we can't parse the token but have a refresh token, try to use it
+    return !!refreshToken;
   }
 };
 
-// API request wrapper with authentication
+// Refresh access token using refresh token
+export const refreshAccessToken = async () => {
+  try {
+    const refreshToken = getRefreshToken();
+    
+    if (!refreshToken) {
+      throw new Error('No refresh token available');
+    }
+
+    const response = await fetch(`${API_BASE_URL}/api/auth/refresh`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ refreshToken }),
+    });
+
+    if (!response.ok) {
+      throw new Error('Token refresh failed');
+    }
+
+    const data = await response.json();
+    
+    // Update stored tokens
+    setAuthTokens(data);
+    setUserData(data.user);
+    
+    return data.accessToken;
+  } catch (error) {
+    console.error('Token refresh failed:', error);
+    // If refresh fails, clear all tokens and redirect to login
+    removeAuthTokens();
+    window.location.href = '/login';
+    throw error;
+  }
+};
+
+// API request wrapper with automatic token refresh
 export const authenticatedFetch = async (url, options = {}) => {
-  const token = getAuthToken();
+  let token = getAuthToken();
   
   if (!token) {
     throw new Error('No authentication token available');
   }
 
-  const config = {
-    ...options,
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${token}`,
-      ...options.headers,
-    },
+  const makeRequest = async (accessToken) => {
+    const config = {
+      ...options,
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${accessToken}`,
+        ...options.headers,
+      },
+    };
+
+    return fetch(`${API_BASE_URL}${url}`, config);
   };
 
-  const response = await fetch(`${API_BASE_URL}${url}`, config);
+  let response = await makeRequest(token);
 
-  // Handle authentication errors
+  // If access token is expired, try to refresh it
   if (response.status === 401) {
-    // Token is invalid or expired
-    removeAuthToken();
-    window.location.href = '/login';
-    throw new Error('Authentication required');
+    try {
+      const newToken = await refreshAccessToken();
+      response = await makeRequest(newToken);
+    } catch (refreshError) {
+      // Refresh failed, user needs to login again
+      console.error('Token refresh failed:', refreshError);
+      removeAuthTokens();
+      window.location.href = '/login';
+      throw new Error('Authentication required');
+    }
   }
 
   if (response.status === 403) {
@@ -122,7 +178,7 @@ export const authenticatedFetch = async (url, options = {}) => {
   return response;
 };
 
-// Login function
+// Login function with refresh token support
 export const login = async (email, password) => {
   try {
     // Clear logout flag when attempting to login
@@ -142,14 +198,17 @@ export const login = async (email, password) => {
       throw new Error(data.error || 'Login failed');
     }
 
-    // Store authentication data
-    setAuthToken(data.token);
+    // Store authentication data with new token structure
+    setAuthTokens(data);
     setUserData(data.user);
 
     return {
       success: true,
       user: data.user,
-      token: data.token
+      tokens: {
+        accessToken: data.accessToken,
+        refreshToken: data.refreshToken
+      }
     };
   } catch (error) {
     console.error('Login error:', error);
@@ -214,7 +273,7 @@ export const initializeAuth = async () => {
   }
 }
 
-// Register function
+// Register function with token support
 export const register = async (email, password, displayName = null) => {
   try {
     const response = await fetch(`${API_BASE_URL}/api/auth/register`, {
@@ -231,10 +290,18 @@ export const register = async (email, password, displayName = null) => {
       throw new Error(data.error || 'Registration failed');
     }
 
+    // Store authentication data with new token structure
+    setAuthTokens(data);
+    setUserData(data.user);
+
     return {
       success: true,
       user: data.user,
-      message: data.message
+      message: data.message,
+      tokens: {
+        accessToken: data.accessToken,
+        refreshToken: data.refreshToken
+      }
     };
   } catch (error) {
     console.error('Registration error:', error);
@@ -266,7 +333,7 @@ export const verifyToken = async () => {
     };
   } catch (error) {
     console.error('Token verification error:', error);
-    removeAuthToken();
+    removeAuthTokens();
     return {
       success: false,
       error: error.message || 'Token verification failed'
@@ -274,13 +341,15 @@ export const verifyToken = async () => {
   }
 };
 
-// Logout function
+// Logout function with refresh token revocation
 export const logout = async () => {
   console.log('🔓 Starting logout process...');
   
-  // Immediately clear local authentication data first
+  const refreshToken = getRefreshToken();
+  
+  // Clear local authentication data first
   console.log('🗑️ Clearing localStorage...');
-  removeAuthToken();
+  removeAuthTokens();
   
   // Clear React Query cache to prevent data leakage between users
   if (window.queryClient) {
@@ -297,27 +366,19 @@ export const logout = async () => {
   
   console.log('✅ User logged out and authentication data cleared');
   
-  // Double-check that auth data is actually cleared
-  const token = getAuthToken();
-  const user = getUserData();
-  console.log('🔍 Auth check after logout - Token:', token ? 'STILL EXISTS' : 'CLEARED', 'User:', user ? 'STILL EXISTS' : 'CLEARED');
-  
   try {
-    // Optional: Call backend logout endpoint (non-blocking)
-    const token = getAuthToken(); // This will be null now, but that's ok
-    if (token) {
+    // Call backend logout endpoint to revoke refresh token
+    if (refreshToken) {
       await fetch(`${API_BASE_URL}/api/auth/logout`, {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json',
         },
-      }).catch(() => {
-        // Ignore logout errors, local cleanup already done
+        body: JSON.stringify({ refreshToken }),
       });
     }
   } catch (error) {
-    console.error('Logout API error (non-critical):', error);
-    // Don't throw - local cleanup already completed
+    // Logout should succeed even if backend call fails
+    console.warn('Backend logout call failed (non-critical):', error);
   }
 };

@@ -2,6 +2,20 @@ import express from 'express';
 import { PrismaClient } from '@prisma/client';
 import { generateUniqueContactId } from '../utils/idGenerator.js';
 import { authenticateToken, validateResourceOwnership } from '../middleware/auth.js';
+import { bulkOperationLimiter, uploadLimiter } from '../middleware/rateLimiting.js';
+import { 
+  validateBody, 
+  validateQuery, 
+  contactSchema, 
+  contactUpdateSchema, 
+  taskSchema, 
+  noteSchema, 
+  activitySchema,
+  paginationSchema,
+  contactFilterSchema,
+  bulkContactsSchema,
+  bulkDeleteSchema 
+} from '../middleware/validation.js';
 
 const router = express.Router();
 const prisma = new PrismaClient();
@@ -29,8 +43,8 @@ router.get('/health', async (req, res) => {
     }
 });
 
-// GET all contacts for the authenticated user
-router.get('/', async (req, res) => {
+// GET all contacts for the authenticated user with validation
+router.get('/', validateQuery(paginationSchema.merge(contactFilterSchema)), async (req, res) => {
     try {
         const userId = req.user.id;
         const { status, contactType, search, page = 1, limit = 100 } = req.query;
@@ -60,7 +74,7 @@ router.get('/', async (req, res) => {
         // For large datasets, we might want to show a loading indicator
         // and get a quick count first, then load the actual contacts
         
-        // Get contacts with pagination
+        // Get contacts with pagination using select for performance
         const [contacts, totalCount] = await Promise.all([
             prisma.contact.findMany({
                 where,
@@ -115,18 +129,56 @@ router.get('/:id', validateResourceOwnership('contact'), async (req, res) => {
                 id: contactId,
                 userId 
             },
-            include: {
+            select: {
+                id: true,
+                name: true,
+                email: true,
+                phone: true,
+                address: true,
+                suburb: true,
+                contactType: true,
+                leadSource: true,
+                status: true,
+                createdAt: true,
+                updatedAt: true,
                 tasks: {
+                    select: {
+                        id: true,
+                        title: true,
+                        description: true,
+                        status: true,
+                        priority: true,
+                        dueDate: true,
+                        createdAt: true,
+                        updatedAt: true,
+                        contactId: true
+                    },
                     orderBy: { createdAt: 'desc' },
-                    take: 10
+                    take: 20 // Increased limit for better UX
                 },
                 notes: {
+                    select: {
+                        id: true,
+                        title: true,
+                        content: true,
+                        createdAt: true,
+                        updatedAt: true,
+                        contactId: true
+                    },
                     orderBy: { createdAt: 'desc' },
-                    take: 10
+                    take: 20 // Increased limit for better UX
                 },
                 activities: {
+                    select: {
+                        id: true,
+                        type: true,
+                        title: true,
+                        description: true,
+                        createdAt: true,
+                        contactId: true
+                    },
                     orderBy: { createdAt: 'desc' },
-                    take: 20
+                    take: 50 // Reasonable limit for activities
                 }
             }
         });
@@ -148,8 +200,8 @@ router.get('/:id', validateResourceOwnership('contact'), async (req, res) => {
     }
 });
 
-// POST a new contact
-router.post('/', async (req, res) => {
+// POST a new contact with validation
+router.post('/', validateBody(contactSchema), async (req, res) => {
     try {
         const { name, email, phone, address, suburb, contactType, leadSource, status } = req.body;
         const userId = req.user.id;
@@ -224,16 +276,6 @@ router.post('/', async (req, res) => {
             },
         });
 
-        // Create activity log
-        await prisma.activity.create({
-            data: {
-                contactId: newContact.id,
-                type: 'NOTE',
-                title: 'Contact Created',
-                description: `New contact added: ${newContact.name}`
-            }
-        });
-
         console.log('Contact created successfully:', newContact.id);
         res.status(201).json(newContact);
     } catch (error) {
@@ -252,22 +294,14 @@ router.post('/', async (req, res) => {
     }
 });
 
-// PUT update contact (with ownership validation)
-router.put('/:id', validateResourceOwnership('contact'), async (req, res) => {
+// PUT update contact with validation
+router.put('/:id', validateResourceOwnership('contact'), validateBody(contactUpdateSchema), async (req, res) => {
     try {
         const userId = req.user.id;
         const contactId = req.params.id;
-        const { name, email, phone, address, suburb, contactType, leadSource, status } = req.body;
+        const updates = req.body;
 
-        // Validation
-        if (!name || name.trim() === '') {
-            return res.status(400).json({ 
-                error: 'Name is required',
-                code: 'NAME_REQUIRED'
-            });
-        }
-
-        // Get existing contact
+        // Get existing contact first
         const existingContact = await prisma.contact.findFirst({
             where: { id: contactId, userId }
         });
@@ -279,17 +313,25 @@ router.put('/:id', validateResourceOwnership('contact'), async (req, res) => {
             });
         }
 
-        // Validate email format and check for duplicates
-        if (email && email.trim() !== '') {
+        // For partial updates, only validate name if it's included in the update
+        if ('name' in updates && (!updates.name || updates.name.trim() === '')) {
+            return res.status(400).json({ 
+                error: 'Name is required',
+                code: 'NAME_REQUIRED'
+            });
+        }
+
+        // Validate email format and check for duplicates if email is being updated
+        if ('email' in updates && updates.email && updates.email.trim() !== '') {
             const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-            if (!emailRegex.test(email.trim())) {
+            if (!emailRegex.test(updates.email.trim())) {
                 return res.status(400).json({
                     error: 'Invalid email format',
                     code: 'INVALID_EMAIL'
                 });
             }
 
-            const emailLower = email.trim().toLowerCase();
+            const emailLower = updates.email.trim().toLowerCase();
             if (emailLower !== existingContact.email) {
                 const duplicateContact = await prisma.contact.findFirst({
                     where: {
@@ -308,40 +350,52 @@ router.put('/:id', validateResourceOwnership('contact'), async (req, res) => {
             }
         }
 
-        const updatedContact = await prisma.contact.update({
-            where: { id: contactId },
-            data: {
-                name: name.trim(),
-                email: email ? email.trim().toLowerCase() : null,
-                phone: phone ? phone.trim() : null,
-                address: address ? address.trim() : null,
-                suburb: suburb ? suburb.trim() : null,
-                contactType: contactType ? contactType.toUpperCase() : 'LEAD',
-                leadSource: leadSource ? leadSource.trim() : null,
-                status: status ? status.toUpperCase() : 'NEW',
-            },
-        });
-
-        // Log status change if it changed
-        if (status && status.toUpperCase() !== existingContact.status) {
-            await prisma.activity.create({
-                data: {
-                    contactId: contactId,
-                    type: 'STATUS_CHANGED',
-                    title: 'Status Updated',
-                    description: `Status changed from ${existingContact.status} to ${status.toUpperCase()}`
-                }
-            });
+        // Process updates for each field that was provided
+        const processedUpdates = {};
+        
+        // Process each field if it exists in the updates object
+        // Use Object.hasOwnProperty to check if the field is explicitly provided
+        // This ensures we handle null values and empty strings correctly
+        
+        if ('name' in updates) {
+            processedUpdates.name = updates.name ? updates.name.trim() : null;
+        }
+        
+        if ('email' in updates) {
+            processedUpdates.email = updates.email ? updates.email.trim().toLowerCase() : null;
+        }
+        
+        if ('phone' in updates) {
+            processedUpdates.phone = updates.phone ? updates.phone.trim() : null;
+        }
+        
+        if ('address' in updates) {
+            processedUpdates.address = updates.address ? updates.address.trim() : null;
+        }
+        
+        if ('suburb' in updates) {
+            processedUpdates.suburb = updates.suburb ? updates.suburb.trim() : null;
+        }
+        
+        if ('contactType' in updates) {
+            processedUpdates.contactType = updates.contactType ? updates.contactType.toUpperCase() : 'LEAD';
+        }
+        
+        if ('leadSource' in updates) {
+            processedUpdates.leadSource = updates.leadSource ? updates.leadSource.trim() : null;
+        }
+        
+        if ('status' in updates) {
+            processedUpdates.status = updates.status ? updates.status.toUpperCase() : 'NEW';
         }
 
-        // Log general contact update activity
-        await prisma.activity.create({
-            data: {
-                contactId: contactId,
-                type: 'NOTE',
-                title: 'Contact Updated',
-                description: `Contact information updated: ${updatedContact.name}`
-            }
+        console.log('Received updates:', updates);
+        console.log('Processing updates for contact:', contactId);
+        console.log('Updating contact with data:', processedUpdates);
+        
+        const updatedContact = await prisma.contact.update({
+            where: { id: contactId },
+            data: processedUpdates,
         });
 
         console.log('Contact updated successfully:', updatedContact.id);
@@ -390,8 +444,8 @@ router.delete('/:id', validateResourceOwnership('contact'), async (req, res) => 
     }
 });
 
-// Bulk delete contacts
-router.delete('/', async (req, res) => {
+// Bulk delete contacts with validation and rate limiting
+router.delete('/', validateBody(bulkDeleteSchema), bulkOperationLimiter, async (req, res) => {
     try {
         const userId = req.user.id;
         const { contactIds } = req.body;
@@ -440,8 +494,8 @@ router.delete('/', async (req, res) => {
     }
 });
 
-// Bulk import contacts from CSV
-router.post('/bulk-import', async (req, res) => {
+// Bulk import contacts from CSV with validation and rate limiting
+router.post('/bulk-import', validateBody(bulkContactsSchema), bulkOperationLimiter, uploadLimiter, async (req, res) => {
     try {
         const { contacts } = req.body;
         const userId = req.user.id;
@@ -595,25 +649,6 @@ router.post('/bulk-import', async (req, res) => {
             return { createdContacts, skippedContacts };
         });
 
-        // Create activity logs for imported contacts
-        try {
-            const activityPromises = result.createdContacts.map(contact =>
-                prisma.activity.create({
-                    data: {
-                        contactId: contact.id,
-                        type: 'NOTE',
-                        title: 'Contact Imported',
-                        description: 'Contact imported via CSV upload'
-                    }
-                })
-            );
-            
-            await Promise.all(activityPromises);
-        } catch (activityError) {
-            console.error('Error creating import activities:', activityError);
-            // Don't fail the import if activity creation fails
-        }
-
         const response = {
             success: true,
             message: `Successfully imported ${result.createdContacts.length} contacts`,
@@ -641,8 +676,8 @@ router.post('/bulk-import', async (req, res) => {
 });
 
 // TASKS ENDPOINTS
-// POST create a new task for a contact
-router.post('/:id/tasks', validateResourceOwnership('contact'), async (req, res) => {
+// POST create a new task for a contact with validation
+router.post('/:id/tasks', validateResourceOwnership('contact'), validateBody(taskSchema), async (req, res) => {
     try {
         const contactId = req.params.id;
         const userId = req.user.id;
@@ -680,16 +715,6 @@ router.post('/:id/tasks', validateResourceOwnership('contact'), async (req, res)
             data: taskData
         });
 
-        // Create activity log
-        await prisma.activity.create({
-            data: {
-                contactId,
-                type: 'TASK_CREATED',
-                title: 'Task Created',
-                description: `New task created: ${task.title}`
-            }
-        });
-
         res.status(201).json(task);
     } catch (error) {
         console.error('Error creating task:', error);
@@ -700,8 +725,8 @@ router.post('/:id/tasks', validateResourceOwnership('contact'), async (req, res)
     }
 });
 
-// PUT update a task
-router.put('/:id/tasks/:taskId', validateResourceOwnership('contact'), async (req, res) => {
+// PUT update a task with validation
+router.put('/:id/tasks/:taskId', validateResourceOwnership('contact'), validateBody(taskSchema.partial()), async (req, res) => {
     try {
         const contactId = req.params.id;
         const taskId = req.params.taskId;
@@ -730,18 +755,6 @@ router.put('/:id/tasks/:taskId', validateResourceOwnership('contact'), async (re
             where: { id: taskId },
             data: updateData
         });
-
-        // Log task completion activity
-        if (status === 'COMPLETED' && existingTask.status !== 'COMPLETED') {
-            await prisma.activity.create({
-                data: {
-                    contactId,
-                    type: 'TASK_COMPLETED',
-                    title: 'Task Completed',
-                    description: `Task completed: ${updatedTask.title}`
-                }
-            });
-        }
 
         res.json(updatedTask);
     } catch (error) {
@@ -785,8 +798,8 @@ router.delete('/:id/tasks/:taskId', validateResourceOwnership('contact'), async 
 });
 
 // NOTES ENDPOINTS
-// POST create a new note for a contact
-router.post('/:id/notes', validateResourceOwnership('contact'), async (req, res) => {
+// POST create a new note for a contact with validation
+router.post('/:id/notes', validateResourceOwnership('contact'), validateBody(noteSchema), async (req, res) => {
     try {
         const contactId = req.params.id;
         const { title, content } = req.body;
@@ -813,16 +826,6 @@ router.post('/:id/notes', validateResourceOwnership('contact'), async (req, res)
             }
         });
 
-        // Create activity log
-        await prisma.activity.create({
-            data: {
-                contactId,
-                type: 'NOTE',
-                title: 'Note Added',
-                description: `New note added: ${title.trim()}`
-            }
-        });
-
         res.status(201).json(note);
     } catch (error) {
         console.error('Error creating note:', error);
@@ -833,8 +836,8 @@ router.post('/:id/notes', validateResourceOwnership('contact'), async (req, res)
     }
 });
 
-// PUT update a note
-router.put('/:id/notes/:noteId', validateResourceOwnership('contact'), async (req, res) => {
+// PUT update a note with validation
+router.put('/:id/notes/:noteId', validateResourceOwnership('contact'), validateBody(noteSchema.pick({ content: true })), async (req, res) => {
     try {
         const contactId = req.params.id;
         const noteId = req.params.noteId;
@@ -905,8 +908,8 @@ router.delete('/:id/notes/:noteId', validateResourceOwnership('contact'), async 
 });
 
 // ACTIVITIES ENDPOINTS
-// POST create a new activity for a contact
-router.post('/:id/activities', validateResourceOwnership('contact'), async (req, res) => {
+// POST create a new activity for a contact with validation
+router.post('/:id/activities', validateResourceOwnership('contact'), validateBody(activitySchema), async (req, res) => {
     try {
         const contactId = req.params.id;
         const { type, title, description } = req.body;
