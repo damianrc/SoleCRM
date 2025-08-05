@@ -11,18 +11,11 @@
     "@tanstack/react-table": "^8.21.3",
     "@tanstack/react-virtual": "^3.13.12",
     "@testing-library/dom": "^10.4.1",
-    "@testing-library/jest-dom": "^6.6.4",
-    "@testing-library/react": "^16.3.0",
-    "@testing-library/user-event": "^13.5.0",
     "bootstrap": "^5.3.7",
-    "draft-js": "^0.11.7",
-    "draftjs-to-html": "^0.9.1",
-    "html-to-draftjs": "^1.5.0",
     "lucide-react": "^0.534.0",
     "papaparse": "^5.5.3",
     "react": "^19.1.1",
     "react-dom": "^19.1.1",
-    "react-draft-wysiwyg": "^1.15.0",
     "react-router-dom": "^7.7.1",
     "web-vitals": "^2.1.4"
   },
@@ -30,7 +23,8 @@
     "start": "react-scripts start",
     "build": "react-scripts build",
     "test": "react-scripts test",
-    "eject": "react-scripts eject"
+    "eject": "react-scripts eject",
+    "check:deadcode": "npx depcheck && npx unimported"
   },
   "eslintConfig": {
     "extends": [
@@ -51,8 +45,13 @@
     ]
   },
   "devDependencies": {
-    "@types/papaparse": "^5.3.16",
-    "nth-check": "^2.0.1",
-    "react-scripts": "^5.0.1"
+    "datatables.net-bs5": "^2.3.2",
+    "datatables.net-colreorder": "^2.1.1",
+    "datatables.net-colreorder-bs5": "^2.1.1",
+    "depcheck": "^1.4.7",
+    "eslint-config-react-app": "^7.0.1",
+    "jquery-resizable-columns": "^0.2.3",
+    "react-scripts": "^5.0.1",
+    "unimported": "^1.31.0"
   }
 }
