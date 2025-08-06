@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import {
   ChevronLeft,
   Mail,
@@ -38,7 +39,9 @@ const ContactDetailView = ({
     status: 'all', // 'all', 'completed', 'pending'
     priority: 'all' // 'all', 'low', 'medium', 'high', 'urgent'
   });
+  const [dropdownPosition, setDropdownPosition] = useState({ top: 0, left: 0 });
   const dropdownRef = useRef(null);
+  const splitButtonRef = useRef(null);
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -53,6 +56,16 @@ const ContactDetailView = ({
       document.removeEventListener('mousedown', handleClickOutside);
     };
   }, []);
+
+  useEffect(() => {
+    if (isDropdownOpen && splitButtonRef.current) {
+      const rect = splitButtonRef.current.getBoundingClientRect();
+      setDropdownPosition({
+        top: rect.bottom + window.scrollY + 8,
+        left: rect.left + window.scrollX
+      });
+    }
+  }, [isDropdownOpen]);
 
   // Status mapping for clean display
   const statusMapping = {
@@ -551,20 +564,12 @@ const ContactDetailView = ({
           </div>
 
           <div className="header-actions">
-            <button className="action-btn">
-              <Phone size={16} />
-              Call
-            </button>
-            <button className="action-btn">
-              <Mail size={16} />
-              Email
-            </button>
-            <div className="split-button-container" ref={dropdownRef}>
+            {/* Only show Add Task and dropdown, remove Call and Email */}
+            <div className="split-button-container" ref={splitButtonRef}>
               <button 
                 className="action-btn primary split-button-main"
                 onClick={(e) => {
                   e.preventDefault();
-                  console.log('Add Task clicked');
                   openTaskPopup();
                 }}
               >
@@ -581,33 +586,42 @@ const ContactDetailView = ({
               >
                 <ChevronDown size={16} />
               </button>
-              {isDropdownOpen && (
-                <div className="dropdown-menu-fixed">
-                  <button 
-                    className="dropdown-item"
-                    onClick={(e) => {
-                      e.preventDefault();
-                      console.log('Add Activity clicked');
-                      openActivityPopup();
-                    }}
-                  >
-                    <Calendar size={16} />
-                    Add Activity
-                  </button>
-                  <button 
-                    className="dropdown-item"
-                    onClick={(e) => {
-                      e.preventDefault();
-                      console.log('Add Note clicked');
-                      openNotePopup();
-                    }}
-                  >
-                    <FileText size={16} />
-                    Add Note
-                  </button>
-                </div>
-              )}
             </div>
+            {isDropdownOpen && createPortal(
+              <div
+                className="dropdown-menu-fixed"
+                style={{
+                  position: 'absolute',
+                  top: dropdownPosition.top,
+                  left: dropdownPosition.left,
+                  zIndex: 2147483647
+                }}
+              >
+                <button 
+                  className="dropdown-item"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    openActivityPopup();
+                    setIsDropdownOpen(false);
+                  }}
+                >
+                  <Calendar size={16} />
+                  Add Activity
+                </button>
+                <button 
+                  className="dropdown-item"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    openNotePopup();
+                    setIsDropdownOpen(false);
+                  }}
+                >
+                  <FileText size={16} />
+                  Add Note
+                </button>
+              </div>,
+              document.body
+            )}
           </div>
         </div>
       </div>
