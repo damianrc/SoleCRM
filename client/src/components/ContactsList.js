@@ -28,7 +28,7 @@ import { EditableCell } from './EditableCell.js';
 import { Checkbox } from './ui/Checkbox.js';
 import { Button } from './ui/Button.js';
 import { BulkDeleteModal } from './ui/BulkDeleteModal.js';
-import '../styles/contacts-table.css';
+import '../styles/table.css';
 
 // Create column helper
 const columnHelper = createColumnHelper();
