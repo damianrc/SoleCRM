@@ -4,7 +4,6 @@ import './PopupForms.css';
 
 const NoteForm = ({ contactId, onSubmit, onCancel, onDelete, initialData = null, isEditing = false }) => {
   const [formData, setFormData] = useState({
-    title: initialData?.title || '',
     content: initialData?.content || ''
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -18,72 +17,44 @@ const NoteForm = ({ contactId, onSubmit, onCancel, onDelete, initialData = null,
       ...prev,
       [name]: value
     }));
-    
-    // Clear validation errors when user starts typing
-    if (validationError) {
-      setValidationError('');
-    }
-    if (error) {
-      setError('');
-    }
+    if (validationError) setValidationError('');
+    if (error) setError('');
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
-    // Prevent duplicate submissions
-    if (isSubmitting || submissionRef.current) {
-      return;
-    }
-    
-    if (!formData.title.trim()) {
-      setValidationError('Note title is required');
-      setError('');
-      return;
-    }
-    
+    if (isSubmitting || submissionRef.current) return;
     if (!formData.content.trim()) {
       setValidationError('Note content is required');
       setError('');
       return;
     }
-
     setIsSubmitting(true);
     submissionRef.current = true;
     setError('');
     setValidationError('');
-
     try {
       let response;
-      
       if (isEditing && initialData) {
-        // Update existing note
         response = await authenticatedFetch(`/api/contacts/${contactId}/notes/${initialData.id}`, {
           method: 'PUT',
           body: JSON.stringify({
-            title: formData.title.trim(),
             content: formData.content.trim()
           })
         });
       } else {
-        // Create new note
         response = await authenticatedFetch(`/api/contacts/${contactId}/notes`, {
           method: 'POST',
           body: JSON.stringify({
-            title: formData.title.trim(),
             content: formData.content.trim()
           })
         });
       }
-
       if (!response.ok) {
         const errorData = await response.json();
         throw new Error(errorData.error || `Failed to ${isEditing ? 'update' : 'create'} note`);
       }
-
       const noteResult = await response.json();
-      
-      // Call the callback to update the parent component
       if (onSubmit) {
         if (isEditing) {
           onSubmit(initialData.id, noteResult);
@@ -91,16 +62,10 @@ const NoteForm = ({ contactId, onSubmit, onCancel, onDelete, initialData = null,
           onSubmit(noteResult);
         }
       }
-      // Close the popup immediately after successful submit
       onCancel();
-      // Reset form only if creating new note
       if (!isEditing) {
-        setFormData({
-          title: '',
-          content: ''
-        });
+        setFormData({ content: '' });
       }
-      
     } catch (err) {
       console.error(`Error ${isEditing ? 'updating' : 'creating'} note:`, err);
       setError(err.message || `Failed to ${isEditing ? 'update' : 'create'} note. Please try again.`);
@@ -112,14 +77,11 @@ const NoteForm = ({ contactId, onSubmit, onCancel, onDelete, initialData = null,
 
   const handleDelete = async () => {
     if (!isEditing || !initialData) return;
-
     try {
       setIsSubmitting(true);
-      
       if (onDelete) {
         await onDelete(initialData.id);
       }
-      
       onCancel();
     } catch (err) {
       console.error('Error deleting note:', err);
@@ -132,41 +94,21 @@ const NoteForm = ({ contactId, onSubmit, onCancel, onDelete, initialData = null,
   return (
     <form onSubmit={handleSubmit} className="popup-form">
       {error && (
-        <div className="form-error">
-          {error}
-        </div>
+        <div className="form-error">{error}</div>
       )}
-      
-      <div className="form-group">
-        <label htmlFor="title">Note Title *</label>
-        <input
-          type="text"
-          id="title"
-          name="title"
-          value={formData.title}
-          onChange={handleChange}
-          placeholder="Enter note title"
-          required
-          autoFocus
-        />
-      </div>
-      
       <div className="form-group description-group">
-        <label htmlFor="content">Note Content *</label>
+        <label htmlFor="content">Note *</label>
         <textarea
           id="content"
           name="content"
           value={formData.content}
           onChange={handleChange}
-          placeholder="Enter your note content here..."
+          placeholder="Enter your note here..."
           required
         />
       </div>
-
       <div className="form-actions">
-        <div className="form-validation-text">
-          {validationError}
-        </div>
+        <div className="form-validation-text">{validationError}</div>
         <div className="form-actions-buttons">
           {isEditing && (
             <button

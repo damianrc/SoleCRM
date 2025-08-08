@@ -97,7 +97,6 @@ router.get('/', validateQuery(paginationSchema.merge(contactFilterSchema)), asyn
                     tasks: {
                         select: {
                             id: true,
-                            title: true,
                             description: true,
                             status: true,
                             priority: true,
@@ -172,7 +171,6 @@ router.get('/:id', validateResourceOwnership('contact'), async (req, res) => {
                 notes: {
                     select: {
                         id: true,
-                        title: true,
                         content: true,
                         createdAt: true,
                         updatedAt: true,
@@ -815,14 +813,7 @@ router.delete('/:id/tasks/:taskId', validateResourceOwnership('contact'), async 
 router.post('/:id/notes', validateResourceOwnership('contact'), validateBody(noteSchema), async (req, res) => {
     try {
         const contactId = req.params.id;
-        const { title, content } = req.body;
-
-        if (!title || title.trim() === '') {
-            return res.status(400).json({
-                error: 'Note title is required',
-                code: 'TITLE_REQUIRED'
-            });
-        }
+        const { content } = req.body;
 
         if (!content || content.trim() === '') {
             return res.status(400).json({
@@ -834,7 +825,6 @@ router.post('/:id/notes', validateResourceOwnership('contact'), validateBody(not
         const note = await prisma.note.create({
             data: {
                 contactId,
-                title: title.trim(),
                 content: content.trim()
             }
         });
@@ -850,7 +840,7 @@ router.post('/:id/notes', validateResourceOwnership('contact'), validateBody(not
 });
 
 // PUT update a note with validation
-router.put('/:id/notes/:noteId', validateResourceOwnership('contact'), validateBody(noteSchema.pick({ content: true })), async (req, res) => {
+router.put('/:id/notes/:noteId', validateResourceOwnership('contact'), validateBody(noteSchema), async (req, res) => {
     try {
         const contactId = req.params.id;
         const noteId = req.params.noteId;

@@ -84,7 +84,6 @@ model Task {
 model Note {
   id            String   @id @default(cuid())
   contactId     String
-  title         String
   content       String
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt

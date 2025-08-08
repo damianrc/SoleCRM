@@ -100,6 +100,8 @@
   transform: translateZ(0); /* Force GPU acceleration */
   /* Force horizontal scrollbar to always show when content overflows */
   scrollbar-gutter: stable;
+  /* Ensure content doesn't extend beyond wrapper boundaries */
+  contain: layout style paint;
 }
 
 .table-header-wrapper {
@@ -107,6 +109,9 @@
   /* Performance optimizations */
   will-change: transform;
   transform: translateZ(0);
+  /* Ensure header content doesn't extend beyond boundaries */
+  position: relative;
+  z-index: 10;
 }
 
 .table-body-wrapper {
@@ -182,7 +187,6 @@
 
 /* Header cell styling */
 .table-header-cell {
-  border-bottom: 1px solid #e2e8f0;
   position: sticky;
   top: 0;
   z-index: 10;
@@ -210,6 +214,8 @@
   border-collapse: separate;
   border-spacing: 0;
   table-layout: fixed;
+  /* Prevent any table elements from extending beyond boundaries */
+  overflow: hidden;
 }
 
 /* Scrollbar Customization */
@@ -323,6 +329,11 @@
 [data-slot="table-row"] {
   border-bottom: 1px solid #f1f5f9;
   transition: background-color 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Ensure first row doesn't create visual artifacts above header */
+[data-slot="table-body"] [data-slot="table-row"]:first-child {
+  border-top: none;
 }
 
 [data-slot="table-row"]:hover {

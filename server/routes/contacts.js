@@ -20,6 +20,12 @@ import {
 const router = express.Router();
 const prisma = new PrismaClient();
 
+/**
+ * Extend Express Request type to include user
+ */
+/** @typedef {{ id: string }} AuthUser */
+/** @typedef {import('express').Request & { user?: AuthUser }} AuthRequest */
+
 // Apply authentication to all routes
 router.use(authenticateToken);
 
@@ -46,20 +52,20 @@ router.get('/health', async (req, res) => {
 // GET all contacts for the authenticated user with validation
 router.get('/', validateQuery(paginationSchema.merge(contactFilterSchema)), async (req, res) => {
     try {
-        const userId = req.user.id;
-        const { status, contactType, search, page = 1, limit = 100 } = req.query;
-        
+        const userId = req.user && req.user.id;
+        const status = typeof req.query.status === 'string' ? req.query.status : undefined;
+        const contactType = typeof req.query.contactType === 'string' ? req.query.contactType : undefined;
+        const search = typeof req.query.search === 'string' ? req.query.search : undefined;
+        const page = typeof req.query.page === 'string' ? req.query.page : '1';
+        const limit = typeof req.query.limit === 'string' ? req.query.limit : '100';
         // Build where clause
         const where = { userId };
-        
         if (status) {
             where.status = status.toUpperCase();
         }
-        
         if (contactType) {
             where.contactType = contactType.toUpperCase();
         }
-        
         if (search) {
             where.OR = [
                 { name: { contains: search, mode: 'insensitive' } },
@@ -67,13 +73,8 @@ router.get('/', validateQuery(paginationSchema.merge(contactFilterSchema)), asyn
                 { phone: { contains: search, mode: 'insensitive' } }
             ];
         }
-
         // Calculate pagination
         const offset = (parseInt(page) - 1) * parseInt(limit);
-        
-        // For large datasets, we might want to show a loading indicator
-        // and get a quick count first, then load the actual contacts
-        
         // Get contacts with pagination using select for performance
         const [contacts, totalCount] = await Promise.all([
             prisma.contact.findMany({
@@ -92,14 +93,24 @@ router.get('/', validateQuery(paginationSchema.merge(contactFilterSchema)), asyn
                     leadSource: true,
                     status: true,
                     createdAt: true,
-                    updatedAt: true
+                    updatedAt: true,
+                    tasks: {
+                        select: {
+                            id: true,
+                            description: true,
+                            status: true,
+                            priority: true,
+                            dueDate: true,
+                            createdAt: true,
+                            updatedAt: true,
+                            contactId: true
+                        },
+                        orderBy: { createdAt: 'desc' }
+                    }
                 }
             }),
             prisma.contact.count({ where })
         ]);
-        
-        console.log(`Fetched ${contacts.length} contacts for user ${userId} (page ${page})`);
-        
         res.json({
             contacts,
             pagination: {
@@ -110,9 +121,10 @@ router.get('/', validateQuery(paginationSchema.merge(contactFilterSchema)), asyn
             }
         });
     } catch (error) {
-        console.error('Error fetching contacts:', error);
+        const errMsg = (error && typeof error === 'object' && 'message' in error) ? error.message : String(error);
         res.status(500).json({ 
             error: 'Failed to fetch contacts',
+            details: errMsg,
             code: 'FETCH_CONTACTS_ERROR'
         });
     }
@@ -159,7 +171,6 @@ router.get('/:id', validateResourceOwnership('contact'), async (req, res) => {
                 notes: {
                     select: {
                         id: true,
-                        title: true,
                         content: true,
                         createdAt: true,
                         updatedAt: true,
@@ -802,14 +813,7 @@ router.delete('/:id/tasks/:taskId', validateResourceOwnership('contact'), async 
 router.post('/:id/notes', validateResourceOwnership('contact'), validateBody(noteSchema), async (req, res) => {
     try {
         const contactId = req.params.id;
-        const { title, content } = req.body;
-
-        if (!title || title.trim() === '') {
-            return res.status(400).json({
-                error: 'Note title is required',
-                code: 'TITLE_REQUIRED'
-            });
-        }
+        const { content } = req.body;
 
         if (!content || content.trim() === '') {
             return res.status(400).json({
@@ -821,7 +825,6 @@ router.post('/:id/notes', validateResourceOwnership('contact'), validateBody(not
         const note = await prisma.note.create({
             data: {
                 contactId,
-                title: title.trim(),
                 content: content.trim()
             }
         });
@@ -837,7 +840,7 @@ router.post('/:id/notes', validateResourceOwnership('contact'), validateBody(not
 });
 
 // PUT update a note with validation
-router.put('/:id/notes/:noteId', validateResourceOwnership('contact'), validateBody(noteSchema.pick({ content: true })), async (req, res) => {
+router.put('/:id/notes/:noteId', validateResourceOwnership('contact'), validateBody(noteSchema), async (req, res) => {
     try {
         const contactId = req.params.id;
         const noteId = req.params.noteId;

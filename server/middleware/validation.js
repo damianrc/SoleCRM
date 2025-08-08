@@ -31,6 +31,7 @@ export const contactSchema = z.object({
     .max(255, 'Lead source must be less than 255 characters')
     .optional()
     .or(z.literal(''))
+    .or(z.null())
     .transform(val => val === '' ? null : val),
   status: z.enum(['NEW', 'CONTACTED', 'QUALIFIED', 'PROPOSAL', 'NEGOTIATION', 'CLOSED_WON', 'CLOSED_LOST'])
     .optional()
@@ -70,10 +71,6 @@ export const taskSchema = z.object({
 });
 
 export const noteSchema = z.object({
-  title: z.string()
-    .min(1, 'Title is required')
-    .max(255, 'Title must be less than 255 characters')
-    .trim(),
   content: z.string()
     .min(1, 'Content is required')
     .max(10000, 'Content must be less than 10000 characters')

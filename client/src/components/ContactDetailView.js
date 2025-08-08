@@ -834,7 +834,7 @@ const ContactDetailView = ({
                             className="item-title"
                             onClick={() => handleItemClick(item)}
                           >
-                            {item.title}
+                            {item.itemType === 'note' ? item.content : item.title}
                           </div>
                           {item.itemType === 'task' && item.priority && (
                             <span className={`priority-badge ${item.priority?.toLowerCase()}`}>
