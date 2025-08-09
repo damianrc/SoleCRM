@@ -16,7 +16,7 @@ export const DefaultCell = memo(function DefaultCell({ cell }) {
         minWidth: 0, // Allow shrinking
         overflow: 'hidden',
         padding: '0.5rem',
-        borderRight: isLastCell ? 'none' : '1px solid rgba(0, 0, 0, 0.1)', // Add column border
+        borderRight: isLastCell ? 'none' : '1px solid var(--color-primary-border)', // Add column border
       }}
     >
       <div 
@@ -27,6 +27,7 @@ export const DefaultCell = memo(function DefaultCell({ cell }) {
           textOverflow: 'ellipsis',
           whiteSpace: 'nowrap',
           maxWidth: '100%',
+          color: 'var(--color-primary-text)',
         }}
       >
         {flexRender(cell.column.columnDef.cell, cell.getContext())}

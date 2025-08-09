@@ -14,10 +14,11 @@ export function DefaultHeader({ header }) {
     <TableHead
       key={header.column.id}
       colSpan={header.colSpan}
-      className={cn("relative font-semibold text-left p-2 bg-background")}
+      className={cn("relative font-semibold text-left p-2", "bg-[var(--color-table-header-bg)]")}
       style={{
         width: header.column.getSize(),
         flex: `0 0 ${header.column.getSize()}px`,
+        color: 'var(--color-primary-text)',
       }}
     >
       <span className="whitespace-nowrap overflow-hidden text-ellipsis max-w-full">
@@ -28,8 +29,8 @@ export function DefaultHeader({ header }) {
           onDoubleClick={() => header.column.resetSize()}
           onMouseDown={resizeHandler}
           onTouchStart={resizeHandler}
-          className={`absolute right-0 top-0 h-full w-5px hover:bg-primary/20 transition-colors duration-200 select-none ${
-            header.column.getIsResizing() ? "bg-secondary" : ""
+          className={`absolute right-0 top-0 h-full w-5px hover:bg-[var(--color-accent-hover)]/20 transition-colors duration-200 select-none ${
+            header.column.getIsResizing() ? "bg-[var(--color-secondary-bg)]" : ""
           }`}
           style={{ cursor: "col-resize", touchAction: "none" }}
         />

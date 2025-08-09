@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { TableCell } from './ui/Table';
-import '../styles/editable-cell.css';
+import '../styles/tables/editable-cell.css';
 
 export function EditableCell({ 
   cell, 

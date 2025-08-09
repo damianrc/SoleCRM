@@ -53,5 +53,6 @@
     "jquery-resizable-columns": "^0.2.3",
     "react-scripts": "^5.0.1",
     "unimported": "^1.31.0"
-  }
+  },
+  "proxy": "http://localhost:4000"
 }

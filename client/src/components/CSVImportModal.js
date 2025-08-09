@@ -1,7 +1,7 @@
 import React, { useState, useRef, useMemo } from 'react';
 import Papa from 'papaparse';
 import { X, Upload, FileText, AlertCircle, CheckCircle } from 'lucide-react';
-import './CSVImportModal.css';
+import '../styles/Components/CSVImportModal.css';
 
 const CSVImportModal = ({ isOpen, onClose, onImport }) => {
   const [file, setFile] = useState(null);

@@ -56,14 +56,14 @@ const updateUserPassword = async ({ currentPassword, newPassword, confirmPasswor
   return response.json();
 };
 
-const updateUserDisplayName = async ({ displayName }) => {
+const updateUserDisplayName = async ({ displayName, jobTitle }) => {
   const response = await fetch(`${API_BASE_URL}/api/users/display-name`, {
     method: 'PUT',
     headers: {
       ...getAuthHeaders(),
       'Content-Type': 'application/json',
     },
-    body: JSON.stringify({ displayName }),
+    body: JSON.stringify({ displayName, jobTitle }),
   });
 
   if (!response.ok) {

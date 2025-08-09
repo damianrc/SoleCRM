@@ -104,6 +104,10 @@ export const authSchema = z.object({
   displayName: z.string()
     .max(255, 'Display name must be less than 255 characters')
     .optional()
+    .or(z.literal('')),
+  jobTitle: z.string()
+    .max(50, 'Job title must be 50 characters or less')
+    .optional()
     .or(z.literal(''))
 });
 
@@ -124,6 +128,10 @@ export const userUpdateSchema = z.object({
     .optional(),
   displayName: z.string()
     .max(255, 'Display name must be less than 255 characters')
+    .optional()
+    .or(z.literal('')),
+  jobTitle: z.string()
+    .max(50, 'Job title must be 50 characters or less')
     .optional()
     .or(z.literal('')),
   currentPassword: z.string()

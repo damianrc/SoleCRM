@@ -21,14 +21,14 @@ import {
   sortableKeyboardCoordinates,
   horizontalListSortingStrategy,
 } from '@dnd-kit/sortable';
-import { Table, TableBody, TableHeader, TableRow } from './ui/Table.js';
+import { Table, TableBody, TableHeader, TableRow, TableCell } from './ui/Table.js';
 import { DraggableHeader } from './DraggableHeader.js';
 import { DefaultCell } from './DefaultCell.js';
 import { EditableCell } from './EditableCell.js';
 import { Checkbox } from './ui/Checkbox.js';
 import { Button } from './ui/Button.js';
 import { BulkDeleteModal } from './ui/BulkDeleteModal.js';
-import '../styles/table.css';
+import '../styles/tables/table.css';
 
 // Create column helper
 const columnHelper = createColumnHelper();
@@ -638,22 +638,19 @@ const ContactsList = ({
                           }
                           // For editable columns, the EditableCell is already defined in the column definition
                           return (
-                            <div key={cell.id} style={{
-                              width: cell.column.getSize(),
-                              flex: `0 0 ${cell.column.getSize()}px`,
-                              minWidth: 0,
-                              overflow: 'hidden',
-                            }}>
-                              <div style={{
-                                width: '100%',
+                            <TableCell
+                              key={cell.id}
+                              style={{
+                                width: cell.column.getSize(),
+                                flex: `0 0 ${cell.column.getSize()}px`,
+                                minWidth: 0,
                                 overflow: 'hidden',
-                                textOverflow: 'ellipsis',
-                                whiteSpace: 'nowrap',
                                 padding: '0.5rem',
-                              }}>
-                                {cell.column.columnDef.cell(cell.getContext())}
-                              </div>
-                            </div>
+                                color: 'var(--color-primary-text)',
+                              }}
+                            >
+                              {cell.column.columnDef.cell(cell.getContext())}
+                            </TableCell>
                           );
                         })}
                       </TableRow>
@@ -674,3 +671,4 @@ const ContactsList = ({
 };
 
 export default ContactsList;
+// No hardcoded color values found. No changes needed.

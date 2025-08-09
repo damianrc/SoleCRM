@@ -19,8 +19,9 @@ const prisma = new PrismaClient();
 // Register endpoint with validation and rate limiting
 router.post('/register', authLimiter, validateBody(authSchema), async (req, res) => {
   try {
-    const { email, password, displayName } = req.body;    // Validate display name if provided
+    const { email, password, displayName, jobTitle } = req.body;    // Accept jobTitle
     const normalizedDisplayName = displayName && displayName.trim() ? displayName.trim() : null;
+    const normalizedJobTitle = jobTitle && jobTitle.trim() ? jobTitle.trim() : null;
 
     // Check if user already exists
     const existingUser = await prisma.user.findUnique({ 
@@ -47,12 +48,14 @@ router.post('/register', authLimiter, validateBody(authSchema), async (req, res)
         id: userId,
         email: email.toLowerCase().trim(),
         displayName: normalizedDisplayName,
+        jobTitle: normalizedJobTitle,
         passwordHash
       },
       select: {
         id: true,
         email: true,
-        displayName: true
+        displayName: true,
+        jobTitle: true
       }
     });
 
@@ -62,7 +65,9 @@ router.post('/register', authLimiter, validateBody(authSchema), async (req, res)
       message: 'Account created successfully',
       user: {
         id: user.id,
-        email: user.email
+        email: user.email,
+        displayName: user.displayName,
+        jobTitle: user.jobTitle
       }
     });
   } catch (error) {

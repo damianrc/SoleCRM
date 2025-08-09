@@ -1,0 +1,281 @@
+/* Theme styles will be added here in Phase 3 */
+
+:root {
+  /* Light Theme Colors */
+  --color-primary-bg: #ffffff;
+  --color-secondary-bg: #f0f2f5;
+  --color-primary-text: #222222;
+  --color-secondary-text: #555555;
+  --color-reverse-text: #ffffff;
+  --color-primary-border: #d4d4d4; /* Black border for primary */
+  --color-secondary-border: #b0b3b8; /* Dark grey border for secondary */
+  --color-hover-bg: #f8fafc; /* Very light grey for hover in light mode */
+
+  /* Extended Color Palette for Light Theme */
+  --color-accent: #2563eb; /* Primary accent (blue) */
+  --color-accent-hover: #1d4ed8;
+  --color-accent-active: #1e40af;
+  --color-success: #22c55e;
+  --color-success-bg: #e7f9ef;
+  --color-warning: #facc15;
+  --color-warning-bg: #fffbe6;
+  --color-error: #ef4444;
+  --color-error-bg: #ffeaea;
+  --color-info: #0ea5e9;
+  --color-info-bg: #e0f2fe;
+  --color-disabled-bg: #e5e7eb;
+  --color-disabled-text: #9ca3af;
+  --color-overlay: rgba(0,0,0,0.3);
+  --color-modal-bg: #ffffff;
+  --color-card-bg: #f9fafb;
+  --color-table-header-bg: #f3f4f6;
+  --color-table-row-hover: #f1f5f9;
+  --color-button-primary-bg: var(--color-accent);
+  --color-button-primary-text: #ffffff;
+  --color-button-secondary-bg: var(--color-secondary-bg);
+  --color-button-secondary-text: var(--color-primary-text);
+  --color-link: #2563eb;
+  --color-link-hover: #1d4ed8;
+  --color-shadow: rgba(0,0,0,0.08);
+  --color-sidebar: #2e475e;
+
+  /* Bootstrap variable overrides for light mode */
+  --bs-body-bg: #ffffff;
+  --bs-body-color: #222222;
+  --bs-card-bg: #f9fafb;
+  --bs-card-border-color: #d4d4d4;
+
+  /* Modal and Overlay Styles */
+  --color-modal-overlay: rgba(0, 0, 0, 0.5); /* Modal overlay background */
+  --color-modal-shadow: rgba(0,0,0,0.15); /* Modal shadow */
+  --color-modal-header-border: #e5e7eb;
+  --color-modal-footer-bg: #f9fafb;
+  --color-modal-footer-border: #e5e7eb;
+
+  /* Progress and Upload Styles */
+  --color-progress-bg: #f9fafb;
+  --color-progress-step-bg: #e5e7eb;
+  --color-progress-step-active-bg: #3b82f6;
+  --color-progress-step-active-text: #ffffff;
+  --color-upload-area-border: #d1d5db;
+  --color-upload-area-bg: #fafafa;
+  --color-upload-area-hover-border: #3b82f6;
+  --color-upload-area-hover-bg: #f0f9ff;
+
+  /* File and Mapping Table Styles */
+  --color-file-info-bg: #f3f4f6;
+  --color-mapping-table-border: #e5e7eb;
+  --color-mapping-header-bg: #f9fafb;
+  --color-mapping-header-text: #374151;
+  --color-mapping-row-border: #f3f4f6;
+  --color-column-name: #374151;
+  --color-sample-data: #6b7280;
+  --color-field-select-border: #d1d5db;
+  --color-field-select-focus: #3b82f6;
+  --color-mapping-info-bg: #f0f9ff;
+  --color-mapping-info-border: #bae6fd;
+  --color-mapping-info-text: #0369a1;
+
+  /* Preview Table Styles */
+  --color-preview-table-border: #e5e7eb;
+  --color-preview-header-bg: #f9fafb;
+  --color-preview-header-text: #374151;
+  --color-preview-row-border: #f3f4f6;
+  --color-preview-more-bg: #f9fafb;
+  --color-preview-more-text: #6b7280;
+  --color-preview-more-italic: italic;
+
+  /* Error Styles */
+  --color-errors-bg: #fef2f2;
+  --color-errors-border: #fca5a5;
+  --color-errors-icon: #dc2626;
+  --color-errors-header: #dc2626;
+  --color-errors-list: #991b1b;
+
+  /* Loading and Spinner Styles */
+  --color-loading-text: #6b7280;
+  --color-spinner-bg: #e5e7eb;
+  --color-spinner-fg: #3b82f6;
+
+  /* Button and Border Styles */
+  --color-button-secondary-border: #d1d5db;
+  --color-button-secondary-hover-bg: #f9fafb;
+  --color-button-primary-hover-bg: #2563eb;
+  --color-button-success-bg: #10b981;
+  --color-button-success-hover-bg: #059669;
+  --color-select-arrow: #6b7280;
+
+  /* Gradients for backgrounds and buttons */
+  --gradient-primary: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  --gradient-accent: linear-gradient(135deg, #4299e1 0%, #3182ce 100%);
+  --gradient-accent-hover: linear-gradient(135deg, #3182ce 0%, #2c5aa0 100%);
+  --color-accent-outline: #4299e1;
+  --color-accent-outline-hover: #3182ce;
+  --color-outline-bg-hover: #4299e1;
+  --color-outline-shadow: rgba(66, 153, 225, 0.3);
+  --color-feature-bg: rgba(255, 255, 255, 0.6);
+  --color-feature-bg-hover: rgba(255, 255, 255, 0.8);
+  --color-feature-border: rgba(255, 255, 255, 0.3);
+  --color-feature-border-solid: #e2e8f0;
+  --color-feature-text: #2d3748;
+  --color-disabled-btn-bg: #cbd5e0;
+  --color-disabled-btn-text: #a0aec0;
+  --color-success-outline: #2f855a;
+  --color-success-bg: #c6f6d5;
+  --color-success-border: #9ae6b4;
+  --color-error-outline: #c53030;
+  --color-error-bg: #fed7d7;
+  --color-error-border: #feb2b2;
+  --color-error-shadow: rgba(245, 101, 101, 0.1);
+  --color-placeholder: #a0aec0;
+  --color-password-req: #4a5568;
+  --color-password-req-li: #718096;
+  --color-password-req-li-valid: #38a169;
+  --color-password-req-li-invalid: #f56565;
+}
+
+[data-theme="dark"] {
+  /* Dark Theme Colors */
+  --color-primary-bg: #181a1b;
+  --color-secondary-bg: #23272a;
+  --color-primary-text: #f5f6fa;
+  --color-secondary-text: #b0b3b8;
+  --color-reverse-text: #000000;
+  --color-primary-border: #000000; /* Black border for primary */
+  --color-secondary-border: #444950; /* Darker grey for secondary in dark mode */
+  --color-hover-bg: #23272a; /* Grey for hover in dark mode */
+
+  /* Extended Color Palette for Dark Theme */
+  --color-accent: #60a5fa;
+  --color-accent-hover: #3b82f6;
+  --color-accent-active: #1e40af;
+  --color-success: #4ade80;
+  --color-success-bg: #1e293b;
+  --color-warning: #fde047;
+  --color-warning-bg: #3b3b1f;
+  --color-error: #f87171;
+  --color-error-bg: #3b1f1f;
+  --color-info: #38bdf8;
+  --color-info-bg: #1e293b;
+  --color-disabled-bg: #23272a;
+  --color-disabled-text: #6b7280;
+  --color-overlay: rgba(0,0,0,0.7);
+  --color-modal-bg: #23272a;
+  --color-card-bg: #181a1b;
+  --color-table-header-bg: #23272a;
+  --color-table-row-hover: #23272a;
+  --color-button-primary-bg: var(--color-accent);
+  --color-button-primary-text: #181a1b;
+  --color-button-secondary-bg: var(--color-secondary-bg);
+  --color-button-secondary-text: var(--color-primary-text);
+  --color-link: #60a5fa;
+  --color-link-hover: #3b82f6;
+  --color-shadow: rgba(0,0,0,0.32);
+  --color-sidebar: #152330;
+
+  /* Bootstrap variable overrides for dark mode */
+  --bs-body-bg: #181a1b;
+  --bs-body-color: #f5f6fa;
+  --bs-card-bg: #23272a;
+  --bs-card-border-color: #444950;
+
+  /* Modal and Overlay Styles */
+  --color-modal-overlay: rgba(0, 0, 0, 0.7);
+  --color-modal-shadow: rgba(0,0,0,0.32);
+  --color-modal-header-border: #23272a;
+  --color-modal-footer-bg: #23272a;
+  --color-modal-footer-border: #23272a;
+
+  /* Progress and Upload Styles */
+  --color-progress-bg: #23272a;
+  --color-progress-step-bg: #444950;
+  --color-progress-step-active-bg: #3b82f6;
+  --color-progress-step-active-text: #ffffff;
+  --color-upload-area-border: #444950;
+  --color-upload-area-bg: #23272a;
+  --color-upload-area-hover-border: #3b82f6;
+  --color-upload-area-hover-bg: #1e293b;
+
+  /* File and Mapping Table Styles */
+  --color-file-info-bg: #181a1b;
+  --color-mapping-table-border: #444950;
+  --color-mapping-header-bg: #23272a;
+  --color-mapping-header-text: #f5f6fa;
+  --color-mapping-row-border: #23272a;
+  --color-column-name: #f5f6fa;
+  --color-sample-data: #b0b3b8;
+  --color-field-select-border: #444950;
+  --color-field-select-focus: #3b82f6;
+  --color-mapping-info-bg: #1e293b;
+  --color-mapping-info-border: #38bdf8;
+  --color-mapping-info-text: #38bdf8;
+
+  /* Preview Table Styles */
+  --color-preview-table-border: #444950;
+  --color-preview-header-bg: #23272a;
+  --color-preview-header-text: #f5f6fa;
+  --color-preview-row-border: #23272a;
+  --color-preview-more-bg: #23272a;
+  --color-preview-more-text: #b0b3b8;
+  --color-preview-more-italic: italic;
+
+  /* Error Styles */
+  --color-errors-bg: #3b1f1f;
+  --color-errors-border: #f87171;
+  --color-errors-icon: #f87171;
+  --color-errors-header: #f87171;
+  --color-errors-list: #f87171;
+
+  /* Loading and Spinner Styles */
+  --color-loading-text: #b0b3b8;
+  --color-spinner-bg: #444950;
+  --color-spinner-fg: #3b82f6;
+
+  /* Button and Border Styles */
+  --color-button-secondary-border: #444950;
+  --color-button-secondary-hover-bg: #23272a;
+  --color-button-primary-hover-bg: #1e40af;
+  --color-button-success-bg: #4ade80;
+  --color-button-success-hover-bg: #059669;
+  --color-select-arrow: #b0b3b8;
+
+  /* Gradients for backgrounds and buttons */
+  --gradient-primary: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  --gradient-accent: linear-gradient(135deg, #4299e1 0%, #3182ce 100%);
+  --gradient-accent-hover: linear-gradient(135deg, #3182ce 0%, #2c5aa0 100%);
+  --color-accent-outline: #60a5fa;
+  --color-accent-outline-hover: #3b82f6;
+  --color-outline-bg-hover: #60a5fa;
+  --color-outline-shadow: rgba(66, 153, 225, 0.3);
+  --color-feature-bg: rgba(36, 41, 46, 0.6);
+  --color-feature-bg-hover: rgba(36, 41, 46, 0.8);
+  --color-feature-border: rgba(255, 255, 255, 0.1);
+  --color-feature-border-solid: #444950;
+  --color-feature-text: #f5f6fa;
+  --color-disabled-btn-bg: #23272a;
+  --color-disabled-btn-text: #6b7280;
+  --color-success-outline: #4ade80;
+  --color-success-bg: #1e293b;
+  --color-success-border: #38bdf8;
+  --color-error-outline: #f87171;
+  --color-error-bg: #3b1f1f;
+  --color-error-border: #f87171;
+  --color-error-shadow: rgba(248, 113, 113, 0.1);
+  --color-placeholder: #b0b3b8;
+  --color-password-req: #b0b3b8;
+  --color-password-req-li: #b0b3b8;
+  --color-password-req-li-valid: #38a169;
+  --color-password-req-li-invalid: #f87171;
+}
+
+/* Example usage:
+body {
+  background-color: var(--color-primary-bg);
+  color: var(--color-primary-text);
+}
+
+.header {
+  background-color: var(--color-secondary-bg);
+  color: var(--color-secondary-text);
+}
+*/

@@ -75,7 +75,9 @@ function TableHead({ className, ...props }) {
         className
       )}
       style={{
-        borderRight: '1px solid rgba(0, 0, 0, 0.1)', // Add column separator directly to the style
+        borderRight: '1px solid var(--color-primary-border)', // Use theme variable for column separator
+        backgroundColor: 'var(--color-table-header-bg)', // Use theme variable for header background
+        color: 'var(--color-primary-text)', // Use theme variable for header text
         ...props.style
       }}
       {...props}
@@ -96,7 +98,9 @@ function TableCell({ className, isLastCell = false, ...props }) {
         overflow: 'hidden',
         textOverflow: 'ellipsis',
         whiteSpace: 'nowrap',
-        borderRight: '1px solid rgba(0, 0, 0, 0.1)', // Add column separator directly to the style
+        borderRight: isLastCell ? 'none' : '1px solid var(--color-primary-border)', // Use theme variable for column separator
+        backgroundColor: 'var(--color-primary-bg)', // Use theme variable for cell background
+        color: 'var(--color-primary-text)', // Use theme variable for cell text
         ...props.style
       }}
       {...props}

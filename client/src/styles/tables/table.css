@@ -1,0 +1,928 @@
+@import '../typography.css';
+
+/* Contact Table Styles - Based on shadcn/ui design */
+
+/* Container Styles */
+.contacts-container {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  position: relative;
+  overflow: hidden;
+}
+
+/* Table Controls */
+.table-controls {
+  padding: 0.75rem 1rem;
+  background-color: var(--color-table-header-bg);
+  border: 1px solid var(--color-primary-border);
+  border-radius: 0.5rem;
+  font-size: 0.875rem;
+}
+
+/* Draggable Header Styles */
+.draggable-header-content {
+  position: relative;
+  z-index: 1;
+}
+
+.draggable-header-content:hover:not(.not-draggable) {
+  background-color: rgba(var(--color-accent-rgb), 0.05);
+}
+
+.draggable-header-content:active:not(.not-draggable) {
+  background-color: rgba(var(--color-accent-rgb), 0.1);
+}
+
+/* Drag overlay styles */
+.sortable-ghost {
+  opacity: 0.5;
+  transform: rotate(5deg);
+}
+
+/* Resize handle enhanced styles */
+.resize-handle {
+  position: absolute;
+  right: 0;
+  top: 0;
+  height: 100%;
+  width: 5px;
+  background: transparent;
+  cursor: col-resize;
+  user-select: none;
+  touch-action: none;
+  transition: background-color 0.2s ease;
+  z-index: 10;
+}
+
+/* Show resize handle on header hover */
+.table-header-cell:hover .resize-handle {
+  background-color: rgba(var(--color-accent-rgb), 0.3);
+}
+
+/* Make resize handle more prominent when directly hovering */
+.resize-handle:hover {
+  background-color: rgba(var(--color-accent-rgb), 0.5) !important;
+}
+
+/* Bulk Actions Bar */
+.bulk-actions-bar {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.75rem 1rem;
+  background-color: var(--color-table-header-bg);
+  border: 1px solid var(--color-primary-border);
+  border-radius: 0.5rem;
+  font-size: 0.875rem;
+}
+
+.selected-count {
+  color: var(--color-secondary-text);
+  font-weight: 500;
+}
+
+/* Table Wrapper Styles */
+.table-outer-wrapper {
+  border: 1px solid var(--color-primary-border);
+  border-radius: 0.5rem;
+  background-color: var(--color-primary-bg);
+  overflow-x: auto;
+  overflow-y: hidden;
+  position: relative;
+  max-width: 100%;
+  flex: 1;
+  min-height: 0;
+  max-height: 100%;
+  scroll-behavior: smooth;
+  /* Performance optimizations */
+  will-change: scroll-position;
+  transform: translateZ(0); /* Force GPU acceleration */
+  /* Force horizontal scrollbar to always show when content overflows */
+  scrollbar-gutter: stable;
+  /* Ensure content doesn't extend beyond wrapper boundaries */
+  contain: layout style paint;
+}
+
+.table-header-wrapper {
+  overflow: hidden;
+  /* Performance optimizations */
+  will-change: transform;
+  transform: translateZ(0);
+  /* Ensure header content doesn't extend beyond boundaries */
+  position: relative;
+  z-index: 10;
+}
+
+.table-body-wrapper {
+  /* Performance optimizations for smooth scrolling */
+  will-change: scroll-position;
+  transform: translateZ(0); /* Force GPU acceleration */
+  scroll-behavior: smooth;
+  contain: layout style paint; /* CSS containment for better performance */
+}
+
+/* Performance optimizations for virtual table rows */
+[data-slot="table-row"] {
+  /* Enable GPU acceleration for smooth scrolling */
+  will-change: transform;
+  transform: translateZ(0);
+  /* Prevent layout thrashing */
+  contain: layout style paint;
+  /* Reduce repaint frequency */
+  backface-visibility: hidden;
+  /* Smooth transitions but disable during fast scrolling */
+  transition: none;
+}
+
+/* Optimize cell rendering */
+[data-slot="table-cell"] {
+  /* Prevent layout shifts */
+  will-change: auto;
+  /* Enable GPU acceleration for text rendering */
+  transform: translateZ(0);
+  /* Prevent text selection issues during scrolling */
+  user-select: none;
+  /* Re-enable selection on hover */
+}
+
+[data-slot="table-cell"]:hover {
+  user-select: text;
+}
+
+/* Specific optimizations for virtual rows */
+.virtual-row {
+  /* Critical for virtual scrolling performance */
+  position: absolute !important;
+  top: 0 !important;
+  left: 0 !important;
+  /* Enable hardware acceleration */
+  will-change: transform;
+  transform: translateZ(0);
+  /* Prevent subpixel rendering issues */
+  backface-visibility: hidden;
+  /* Optimize compositing */
+  isolation: isolate;
+}
+
+/* Smooth scrolling optimizations */
+.table-body-wrapper {
+  /* Enable smooth scrolling with GPU acceleration */
+  scroll-behavior: auto; /* Change to auto for better performance during fast scrolling */
+  /* Optimize scrolling performance */
+  -webkit-overflow-scrolling: touch;
+  /* Enable CSS containment for better performance */
+  contain: strict;
+}
+
+/* Cell content optimization */
+.cell-content {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  height: 100%;
+  /* Prevent text selection issues during fast scrolling */
+  user-select: none;
+  pointer-events: auto;
+  /* GPU acceleration for smooth rendering */
+  will-change: transform;
+  transform: translateZ(0);
+}
+
+/* Header cell styling */
+.table-header-cell {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  background-color: var(--color-table-header-bg);
+}
+
+.table-body-wrapper {
+  position: relative;
+  overflow-y: auto;
+  overflow-x: hidden;
+  scroll-behavior: smooth;
+}
+
+/* Table Base Styles */
+[data-slot="table-container"] {
+  position: relative;
+  width: 100%;
+  overflow: visible;
+}
+
+[data-slot="table"] {
+  width: 100%;
+  caption-side: bottom;
+  font-size: 0.875rem;
+  border-collapse: separate;
+  border-spacing: 0;
+  table-layout: fixed;
+  /* Prevent any table elements from extending beyond boundaries */
+  overflow: hidden;
+}
+
+/* Scrollbar Customization */
+.table-outer-wrapper::-webkit-scrollbar,
+.table-body-wrapper::-webkit-scrollbar {
+  width: 12px;
+  height: 12px;
+}
+
+.table-outer-wrapper::-webkit-scrollbar-track,
+.table-body-wrapper::-webkit-scrollbar-track {
+  background: var(--color-table-row-hover);
+  border-radius: 6px;
+}
+
+.table-outer-wrapper::-webkit-scrollbar-thumb,
+.table-body-wrapper::-webkit-scrollbar-thumb {
+  background: var(--color-secondary-border);
+  border-radius: 6px;
+  border: 2px solid var(--color-table-row-hover);
+}
+
+.table-outer-wrapper::-webkit-scrollbar-thumb:hover,
+.table-body-wrapper::-webkit-scrollbar-thumb:hover {
+  background: var(--color-primary-border);
+}
+
+/* Ensure horizontal scrollbar is always visible when content overflows */
+.table-outer-wrapper {
+  /* For browsers that support scrollbar-gutter */
+  scrollbar-gutter: stable;
+}
+
+/* For Firefox and other browsers that don't support webkit scrollbar styling */
+.table-outer-wrapper {
+  scrollbar-width: auto;
+  scrollbar-color: var(--color-secondary-border) var(--color-table-row-hover);
+}
+
+/* Header Styles */
+[data-slot="table-header"] tr {
+  border-bottom: 1px solid var(--color-primary-border);
+}
+
+[data-slot="table-head"] {
+  color: var(--color-primary-text);
+  height: 2.5rem;
+  padding: 0.5rem;
+  text-align: left;
+  vertical-align: middle;
+  font-weight: 500;
+  white-space: nowrap;
+  position: relative;
+  background-color: var(--color-table-header-bg) !important;
+  text-transform: uppercase;
+}
+
+[data-slot="table-head"]:has([role="checkbox"]) {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  text-align: center !important;
+  padding-right: 0;
+}
+
+[data-slot="table-head"] [role="checkbox"] {
+  transform: translateY(0.125rem);
+}
+
+/* More specific header styling to override any conflicting styles */
+.table-header-wrapper [data-slot="table-head"],
+.table-header-wrapper th {
+  background-color: var(--color-table-header-bg) !important;
+  text-transform: uppercase !important;
+}
+
+/* Body and Cell Styles */
+[data-slot="table-body"] tr:last-child {
+  border-bottom: none;
+}
+
+[data-slot="table-cell"] {
+  padding: 0.5rem;
+  display: table-cell !important;
+  height: 40px !important;
+  min-height: unset !important;
+  padding-top: 0 !important;
+  padding-bottom: 0 !important;
+  /* Remove vertical-align: middle to avoid 1-2px offset */
+}
+
+/* Remove vertical padding from table cells to avoid offset */
+[data-slot="table-cell"] {
+  padding-top: 0 !important;
+  padding-bottom: 0 !important;
+}
+
+/* Optionally, set line-height for text for better centering */
+[data-slot="table-cell"] span,
+[data-slot="table-cell"] div,
+[data-slot="table-cell"] a {
+  line-height: 1.25 !important;
+}
+
+[data-slot="table-cell"]:has([role="checkbox"]) {
+  text-align: center !important;
+  padding-right: 0;
+}
+
+[data-slot="table-cell"] [role="checkbox"] {
+  transform: translateY(0.125rem);
+}
+
+/* Row Styles */
+[data-slot="table-row"] {
+  border-bottom: 1px solid var(--color-primary-border);
+  transition: background-color 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+  height: 40px !important;
+  min-height: 40px !important;
+}
+
+/* Ensure first row doesn't create visual artifacts above header */
+[data-slot="table-body"] [data-slot="table-row"]:first-child {
+  border-top: none;
+}
+
+[data-slot="table-row"]:hover {
+  background-color: var(--color-table-row-hover);
+}
+
+[data-slot="table-row"][data-state="selected"] {
+  background-color: var(--color-table-row-hover);
+}
+
+/* Footer Styles */
+[data-slot="table-footer"] {
+  background-color: var(--color-table-header-bg);
+  border-top: 1px solid var(--color-primary-border);
+  font-weight: 500;
+}
+
+[data-slot="table-footer"] > tr:last-child {
+  border-bottom: none;
+}
+
+[data-slot="table-caption"] {
+  color: var(--color-secondary-text);
+  margin-top: 1rem;
+  font-size: 0.875rem;
+}
+
+.table-footer {
+  flex: 1;
+  font-size: 0.875rem;
+  color: var(--color-secondary-text);
+  padding: 0.75rem 1rem;
+  background-color: var(--color-table-header-bg);
+  border-top: 1px solid var(--color-primary-border);
+}
+
+/* Column Resize Handle Styles */
+.resize-handle {
+  position: absolute;
+  right: 0;
+  top: 0;
+  height: 100%;
+  width: 5px;
+  background: transparent;
+  cursor: col-resize;
+  user-select: none;
+  touch-action: none;
+  transition: background-color 0.2s ease;
+}
+
+/* Show resize handle on header hover */
+.table-header-cell:hover .resize-handle {
+  background-color: rgba(var(--color-accent-rgb), 0.3);
+}
+
+/* Make resize handle more prominent when directly hovering */
+.resize-handle:hover {
+  background-color: rgba(var(--color-accent-rgb), 0.5) !important;
+}
+
+/* Editable Cell Styles */
+.custom-cell-container.editing,
+.editable-cell.editing,
+.editing {
+  background-color: var(--color-info-bg) !important;
+  border: 2px solid var(--color-accent-hover) !important;
+  border-radius: 4px !important;
+  box-shadow: 0 0 0 2px var(--color-accent) !important;
+  z-index: 100 !important;
+  position: relative !important;
+}
+
+.cell-input-container {
+  width: 100%;
+  height: 100%;
+  padding: 4px;
+}
+
+.editing input,
+.editing select,
+.cell-input {
+  width: 100%;
+  padding: 4px 6px;
+  font-size: 0.875rem;
+  line-height: 1.25rem;
+  background-color: var(--color-info-bg);
+  border: none;
+  outline: none;
+  color: var(--color-primary-text);
+}
+
+.editing input:focus,
+.editing select:focus,
+.cell-input:focus {
+  outline: none;
+  box-shadow: none;
+}
+
+/* Cell display styles */
+.editable-cell-display,
+.name-cell-content {
+  width: 100%;
+  height: 100%;
+  min-height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  padding: 0 8px;
+  cursor: pointer;
+}
+
+.editable-cell-display:hover,
+.name-cell-content:hover {
+  background-color: var(--color-table-row-hover);
+  border-radius: 3px;
+}
+
+/* Name cell container */
+.name-cell-container {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  height: 100%;
+  position: relative;
+  overflow: hidden;
+  min-height: 32px;
+}
+
+/* Make sure all cells including the name cell use the same editing style */
+.custom-cell-container.editing,
+.editable-cell.editing,
+.name-cell-container.editing,
+.editing {
+  background-color: var(--color-info-bg) !important;
+  border: 2px solid var(--color-accent-hover) !important;
+  border-radius: 4px !important;
+  box-shadow: 0 0 0 2px var(--color-accent) !important;
+  z-index: 100 !important;
+  position: relative !important;
+}
+
+/* Hide view button when editing */
+.name-cell-container.editing .name-cell-view-button {
+  display: none;
+}
+
+/* Hover effect for editable cells */
+[role="cell"]:not(.editing) > div:hover {
+  background-color: var(--color-table-row-hover) !important;
+  transition: background-color 0.1s ease;
+}
+
+/* Special style for editable cells with empty content */
+.editable-cell-content {
+  min-height: 32px;
+  position: relative;
+}
+
+.editable-cell-content:empty::before {
+  content: "Click to edit";
+  font-style: italic;
+  color: var(--color-disabled-text);
+  opacity: 0.7;
+  position: absolute;
+  top: 50%;
+  left: 5px;
+  transform: translateY(-50%);
+}
+
+/* Cursor pointer for clickable cells */
+[role="cell"] > div[onclick] {
+  cursor: pointer;
+}
+
+/* CSS Variables for theming */
+:root {
+  --primary: var(--color-accent);
+  --primary-foreground: var(--color-button-primary-text);
+  --secondary: var(--color-table-row-hover);
+  --secondary-foreground: var(--color-primary-text);
+  --muted: var(--color-table-row-hover);
+  --muted-foreground: var(--color-secondary-text);
+  --accent: var(--color-table-row-hover);
+  --accent-foreground: var(--color-primary-text);
+  --destructive: var(--color-error);
+  --destructive-foreground: var(--color-button-primary-text);
+  --border: var(--color-primary-border);
+  --input: var(--color-primary-border);
+  --ring: var(--color-accent);
+  --background: var(--color-primary-bg);
+  --foreground: var(--color-primary-text);
+}
+
+/* Utility Classes */
+.w-full { width: 100%; }
+.h-full { height: 100%; }
+.flex { display: flex; }
+.items-center { align-items: center; }
+.justify-center { justify-content: center; }
+.justify-start { justify-content: flex-start; }
+.justify-between { justify-content: space-between; }
+.gap-4 { gap: 1rem; }
+.p-2 { padding: 0.5rem; }
+.px-2 { padding-left: 0.5rem; padding-right: 0.5rem; }
+.py-2 { padding-top: 0.5rem; padding-bottom: 0.5rem; }
+.text-sm { font-size: 0.875rem; }
+.font-medium { font-weight: 500; }
+.font-semibold { font-weight: 600; }
+.text-left { text-align: left; }
+.whitespace-nowrap { white-space: nowrap; }
+.overflow-hidden { overflow: hidden; }
+.text-ellipsis { text-overflow: ellipsis; }
+.max-w-full { max-width: 100%; }
+.block { display: block; }
+.absolute { position: absolute; }
+.relative { position: relative; }
+.top-0 { top: 0; }
+.left-0 { left: 0; }
+.right-0 { right: 0; }
+.w-5px { width: 5px; }
+.select-none { user-select: none; }
+.transition-colors { transition: color 0.15s cubic-bezier(0.4, 0, 0.2, 1), background-color 0.15s cubic-bezier(0.4, 0, 0.2, 1), border-color 0.15s cubic-bezier(0.4, 0, 0.2, 1); }
+.duration-200 { transition-duration: 0.2s; }
+
+/* Component-specific styles */
+.bg-background { background-color: var(--background); }
+.bg-secondary { background-color: var(--secondary); }
+.bg-primary\/20 { background-color: rgba(var(--color-accent-rgb), 0.2); }
+.text-foreground { color: var(--foreground); }
+.text-muted-foreground { color: var(--muted-foreground); }
+
+/* Button Styles */
+.inline-flex { display: inline-flex; }
+.rounded-md { border-radius: 0.375rem; }
+.shadow { box-shadow: 0 1px 2px 0 var(--color-shadow); }
+.shadow-sm { box-shadow: 0 1px 2px 0 var(--color-shadow); }
+.focus-visible\:outline-none:focus-visible { outline: 2px solid transparent; outline-offset: 2px; }
+.focus-visible\:ring-1:focus-visible { --tw-ring-color: var(--color-accent); }
+.disabled\:pointer-events-none:disabled { pointer-events: none; }
+.disabled\:opacity-50:disabled { opacity: 0.5; }
+
+/* Checkbox Styles */
+.h-4 { height: 1rem; }
+.w-4 { width: 1rem; }
+.w-9 { width: 2.25rem; }
+.h-8 { height: 2rem; }
+.h-9 { height: 2.25rem; }
+.h-10 { height: 2.5rem; }
+.shrink-0 { flex-shrink: 0; }
+.rounded-sm { border-radius: 0.125rem; }
+.border { border-width: 1px; }
+.border-primary { border-color: var(--primary); }
+.border-input { border-color: var(--input); }
+
+/* Modal Styles */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: var(--color-overlay);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.modal-content {
+  background: var(--color-modal-bg);
+  padding: 2rem;
+  border-radius: 0.5rem;
+  box-shadow: 0 10px 25px var(--color-shadow);
+  max-width: 400px;
+  width: 90%;
+}
+
+.modal-content h3 {
+  margin: 0 0 1rem 0;
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: var(--color-primary-text);
+}
+
+.modal-content p {
+  margin: 0 0 1.5rem 0;
+  color: var(--color-disabled-text);
+  line-height: 1.5;
+}
+
+.modal-actions {
+  display: flex;
+  gap: 0.75rem;
+  justify-content: flex-end;
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+  .table-outer-wrapper {
+    border-radius: 0;
+    border-left: none;
+    border-right: none;
+  }
+  
+  .bulk-actions-bar {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
+  }
+}
+
+/* Enhanced Text Overflow Handling for All Table Content */
+[data-slot="table-cell"] * {
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  box-sizing: border-box;
+}
+
+/* Ensure all text content within cells is properly constrained */
+.contact-name,
+.email-link,
+.phone-link,
+.address-text,
+.status-badge,
+.contact-type-badge,
+[data-slot="table-cell"] span,
+[data-slot="table-cell"] a,
+[data-slot="table-cell"] div {
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  display: inline-block;
+  vertical-align: top;
+}
+
+/* Special handling for flex-based table rows */
+.virtual-row > div,
+.table-row > div {
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  white-space: nowrap !important;
+  min-width: 0 !important;
+}
+
+/* Ensure cell content doesn't overflow its container */
+.virtual-row > div > div,
+.table-row > div > div {
+  width: 100% !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  white-space: nowrap !important;
+  max-width: 100% !important;
+}
+
+/* Special handling for the name cell container */
+.contact-name-cell .name-cell {
+  overflow: hidden;
+  min-width: 0;
+}
+
+/* Ensure the view button doesn't interfere with text overflow */
+.view-contact-btn {
+  flex-shrink: 0 !important;
+  white-space: nowrap !important;
+}
+
+/* For editable cells, make sure the content wrapper respects overflow */
+.editing input,
+.editing select {
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Make sure action cells don't have overflow issues */
+.actions-cell {
+  overflow: visible !important;
+}
+
+.actions-cell * {
+  white-space: normal !important;
+  overflow: visible !important;
+  text-overflow: initial !important;
+}
+
+/* Force all flex items in table rows to respect overflow */
+[data-slot="table-row"] > * {
+  min-width: 0 !important;
+  overflow: hidden !important;
+}
+
+[data-slot="table-row"] > * > * {
+  max-width: 100% !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  white-space: nowrap !important;
+}
+
+/* Name cell with integrated view button */
+.name-cell-container {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  height: 100%;
+  position: relative;
+  overflow: hidden;
+  min-height: 32px;
+}
+
+.name-cell-text {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+  display: block;
+  font-size: 0.875rem; /* text-sm equivalent */
+  /* Don't truncate by default */
+  flex: 1;
+  min-width: 0;
+}
+
+.name-cell-input {
+  width: 100%;
+  background: transparent;
+  border: none;
+  outline: none;
+  font-size: 0.875rem; /* text-sm equivalent */
+  font-family: inherit;
+  padding: 0;
+  color: inherit;
+}
+
+.name-cell-view-button {
+  flex-shrink: 0;
+  transition: opacity 0.2s ease-in-out, border-color 0.2s;
+  font-size: 0.75rem !important;
+  padding: 0.25rem 0.5rem !important;
+  height: auto !important;
+  min-height: unset !important;
+  opacity: 0;
+  pointer-events: auto;
+  position: absolute;
+  right: 0.5rem;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 10;
+  background-color: transparent !important;
+  border: 1px solid transparent !important;
+  color: var(--color-primary-text) !important;
+}
+
+.name-cell-container:hover .name-cell-view-button {
+  opacity: 1;
+  border-color: var(--color-secondary-border) !important;
+}
+
+/* Keep existing selectors for table-row hover for compatibility */
+[data-slot="table-row"]:hover .name-cell-view-button,
+[data-slot="table-row"].hover .name-cell-view-button {
+  opacity: 1;
+  border-color: var(--color-secondary-border) !important;
+}
+
+[data-slot="table-row"]:hover .name-cell-view-button:hover,
+[data-slot="table-row"].hover .name-cell-view-button:hover {
+  background-color: var(--color-table-row-hover) !important;
+  border-color: var(--color-secondary-border) !important;
+}
+
+/* Specific ellipsis styles for EditableCell content */
+[data-slot="table-cell"] .w-full.h-full.flex.items-center span {
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  max-width: 100% !important;
+  display: block !important;
+}
+
+/* Target the exact Tailwind classes used in EditableCell */
+[data-slot="table-cell"] span.whitespace-nowrap.overflow-hidden.text-ellipsis.max-w-full.block.text-sm {
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  max-width: 100% !important;
+  display: block !important;
+  min-width: 0 !important;
+}
+
+/* Alternative selector for any span in table cells */
+[data-slot="table-cell"] span {
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  max-width: 100% !important;
+  display: block !important;
+  min-width: 0 !important;
+}
+
+/* Ensure the parent container allows for ellipsis */
+[data-slot="table-cell"] .w-full.h-full.flex.items-center {
+  overflow: hidden !important;
+  min-width: 0 !important;
+}
+
+/* Force all table cell text content to respect ellipsis */
+[data-slot="table-cell"] {
+  min-width: 0 !important;
+}
+
+[data-slot="table-cell"] * {
+  min-width: 0 !important;
+}
+
+input[type="checkbox"].h-4.w-4 {
+  background-color: var(--color-secondary-bg);
+  border: 1px solid var(--color-primary-border);
+  transition: background-color 0.15s;
+}
+input[type="checkbox"].h-4.w-4:checked {
+  background-color: var(--color-accent);
+  border-color: var(--color-accent);
+}
+
+/* Ensure all cell content wrappers fill the cell and center content */
+.cell-content,
+.editable-cell-display,
+.name-cell-content,
+.name-cell-container {
+  display: flex !important;
+  align-items: center !important;
+  height: 100% !important;
+  width: 100% !important;
+  min-height: unset !important;
+  padding: 0 8px;
+}
+
+/* Ensure text inside cell wrappers fills width and is block */
+.name-cell-text,
+.cell-content span,
+.editable-cell-display span,
+.name-cell-content span {
+  display: block !important;
+  width: 100% !important;
+  min-height: unset !important;
+  line-height: normal !important;
+}
+
+/* Remove line-height from table cell text */
+[data-slot="table-cell"] span,
+[data-slot="table-cell"] div,
+[data-slot="table-cell"] a {
+  line-height: normal !important;
+}
+
+/* Ensure all cell content wrappers in table cells are vertically centered */
+[data-slot="table-cell"] .cell-content,
+[data-slot="table-cell"] .editable-cell-display,
+[data-slot="table-cell"] .name-cell-content {
+  align-items: center !important;
+  display: flex !important;
+  height: 100% !important;
+  width: 100% !important;
+  min-height: unset !important;
+  padding: 0 8px;
+}
+
+/* Vertically center all direct children of table cells except action cells */
+[data-slot="table-cell"] > :not(.actions-cell) {
+  display: flex !important;
+  align-items: center !important;
+  height: 100% !important;
+  width: 100% !important;
+  min-height: unset !important;
+  padding: 0 8px;
+}

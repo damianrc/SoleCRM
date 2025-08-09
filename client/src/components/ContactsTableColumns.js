@@ -80,8 +80,8 @@ const NameCell = React.memo(({ getValue, row, onViewContact }) => {
           fontSize: '14px',
           marginLeft: '8px',
           padding: '12px 20px',
-          backgroundColor: '#f8f9fa',
-          border: '1px solid #dee2e6',
+          backgroundColor: 'var(--color-bg-button)',
+          border: '1px solid var(--color-border)',
           borderRadius: '4px',
           cursor: 'pointer',
           flexShrink: 0,
@@ -89,17 +89,17 @@ const NameCell = React.memo(({ getValue, row, onViewContact }) => {
           whiteSpace: 'nowrap',
           minWidth: '120px',
           textAlign: 'center',
-          color: '#000000'
+          color: 'var(--color-text)'
         }}
         onMouseEnter={(e) => {
-          e.target.style.backgroundColor = '#e9ecef';
-          e.target.style.borderColor = '#6c757d';
-          e.target.style.color = '#000000';
+          e.target.style.backgroundColor = 'var(--color-bg-button-hover)';
+          e.target.style.borderColor = 'var(--color-border-hover)';
+          e.target.style.color = 'var(--color-text-hover)';
         }}
         onMouseLeave={(e) => {
-          e.target.style.backgroundColor = '#f8f9fa';
-          e.target.style.borderColor = '#dee2e6';
-          e.target.style.color = '#000000';
+          e.target.style.backgroundColor = 'var(--color-bg-button)';
+          e.target.style.borderColor = 'var(--color-border)';
+          e.target.style.color = 'var(--color-text)';
         }}
       >
         View Contact

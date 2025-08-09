@@ -5,7 +5,8 @@ import ReactDOM from 'react-dom/client';
 // These styles apply to your entire application.
 import './index.css';
 import 'bootstrap/dist/css/bootstrap.min.css';
-import './styles/column-borders.css'; // Import column border styling
+import './styles/tables/column-borders.css'; // Import column border styling
+import './styles/themes.css'; // Import themes for global variables
 
 // --- Root Application Component ---
 import App from './App';

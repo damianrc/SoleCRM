@@ -19,7 +19,8 @@ router.get('/profile', authenticateToken, async (req, res) => {
         id: true,
         email: true,
         displayName: true,
-        profileImage: true
+        profileImage: true,
+        jobTitle: true
       }
     });
 
@@ -226,11 +227,11 @@ router.put('/password', authenticateToken, userUpdateLimiter, validateBody(passw
   }
 });
 
-// Update user display name
+// Update user display name and job title
 router.put('/display-name', authenticateToken, userUpdateLimiter, async (req, res) => {
   try {
     const userId = req.user.id;
-    const { displayName } = req.body;
+    const { displayName, jobTitle } = req.body;
 
     // Input validation
     if (displayName !== null && displayName !== undefined && displayName.trim() === '') {
@@ -239,32 +240,43 @@ router.put('/display-name', authenticateToken, userUpdateLimiter, async (req, re
         code: 'INVALID_DISPLAY_NAME'
       });
     }
+    if (jobTitle !== undefined && jobTitle !== null && jobTitle.trim() === '') {
+      return res.status(400).json({
+        error: 'Job title cannot be empty. Use null to remove job title.',
+        code: 'INVALID_JOB_TITLE'
+      });
+    }
 
-    // Trim display name if provided, or set to null
+    // Trim display name and job title if provided, or set to null
     const normalizedDisplayName = displayName && displayName.trim() ? displayName.trim() : null;
+    const normalizedJobTitle = jobTitle && jobTitle.trim() ? jobTitle.trim() : null;
 
-    // Update display name
+    // Update display name and job title
     const updatedUser = await prisma.user.update({
       where: { id: userId },
-      data: { displayName: normalizedDisplayName },
+      data: {
+        displayName: normalizedDisplayName,
+        jobTitle: normalizedJobTitle
+      },
       select: {
         id: true,
         email: true,
-        displayName: true
+        displayName: true,
+        jobTitle: true
       }
     });
 
-    console.log(`User ${userId} updated display name to: ${normalizedDisplayName || 'null'}`);
+    console.log(`User ${userId} updated display name to: ${normalizedDisplayName || 'null'}, job title to: ${normalizedJobTitle || 'null'}`);
 
     res.json({
-      message: 'Display name updated successfully',
+      message: 'Display name and job title updated successfully',
       user: updatedUser
     });
 
   } catch (error) {
-    console.error('Error updating user display name:', error);
+    console.error('Error updating user display name or job title:', error);
     res.status(500).json({
-      error: 'Failed to update display name',
+      error: 'Failed to update display name or job title',
       code: 'INTERNAL_ERROR'
     });
   }
@@ -321,6 +333,42 @@ router.put('/profile-image', authenticateToken, userUpdateLimiter, async (req, r
       error: 'Failed to update profile image',
       code: 'INTERNAL_ERROR'
     });
+  }
+});
+
+// Get current user's theme
+router.get('/theme', authenticateToken, async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      select: { activeTheme: true }
+    });
+    if (!user) {
+      return res.status(404).json({ error: 'User not found', code: 'USER_NOT_FOUND' });
+    }
+    res.json({ theme: user.activeTheme });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to fetch theme', code: 'INTERNAL_ERROR' });
+  }
+});
+
+// Update current user's theme
+router.put('/theme', authenticateToken, async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const { theme } = req.body;
+    if (!theme || !['light', 'dark'].includes(theme)) {
+      return res.status(400).json({ error: 'Invalid theme', code: 'INVALID_THEME' });
+    }
+    const updatedUser = await prisma.user.update({
+      where: { id: userId },
+      data: { activeTheme: theme },
+      select: { id: true, activeTheme: true }
+    });
+    res.json({ message: 'Theme updated successfully', theme: updatedUser.activeTheme });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to update theme', code: 'INTERNAL_ERROR' });
   }
 });
 

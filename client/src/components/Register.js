@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { register, isAuthenticated, validateEmail, validatePassword, getUserId } from '../utils/auth';
-import './Register.css';
+import '../styles/pages/Register.css';
 
 const Register = () => {
   const [formData, setFormData] = useState({
@@ -9,7 +9,8 @@ const Register = () => {
     email: '',
     password: '',
     confirmPassword: '',
-    displayName: '' // for backend compatibility
+    displayName: '', // for backend compatibility
+    jobTitle: '' // new field
   });
   const [errors, setErrors] = useState({});
   const [isLoading, setIsLoading] = useState(false);
@@ -58,6 +59,11 @@ const Register = () => {
       newErrors.confirmPassword = 'Passwords do not match';
     }
 
+    // Job title validation (optional, but max length)
+    if (formData.jobTitle && formData.jobTitle.length > 50) {
+      newErrors.jobTitle = 'Job title must be 50 characters or less';
+    }
+
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -101,7 +107,8 @@ const Register = () => {
       const result = await register(
         formData.email.trim(), 
         formData.password, 
-        formData.displayName.trim() || null
+        formData.displayName.trim() || null,
+        formData.jobTitle.trim() || null // pass jobTitle
       );
 
       if (result.success) {
@@ -255,6 +262,24 @@ const Register = () => {
                 placeholder="Confirm your password"
               />
               {errors.confirmPassword && <span className="error-text">{errors.confirmPassword}</span>}
+            </div>
+
+            <div className="form-group">
+              <label htmlFor="jobTitle" style={{ fontFamily: 'var(--font-family-base)', fontSize: 'var(--font-size-sm)', color: 'var(--color-secondary-text)' }}>Job Title (optional)</label>
+              <input
+                type="text"
+                id="jobTitle"
+                name="jobTitle"
+                value={formData.jobTitle}
+                onChange={handleInputChange}
+                className={errors.jobTitle ? 'error' : ''}
+                disabled={isLoading}
+                autoComplete="organization-title"
+                placeholder="e.g. Sales Manager"
+                style={{ fontFamily: 'var(--font-family-base)', fontSize: 'var(--font-size-base)', color: 'var(--color-primary-text)', borderColor: 'var(--color-primary-border)' }}
+                maxLength={50}
+              />
+              {errors.jobTitle && <span className="error-text">{errors.jobTitle}</span>}
             </div>
 
             <button 

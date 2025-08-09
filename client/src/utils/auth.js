@@ -382,3 +382,27 @@ export const logout = async () => {
     console.warn('Backend logout call failed (non-critical):', error);
   }
 };
+
+// Update user theme
+export const updateUserTheme = async (theme) => {
+  const token = getAuthToken();
+  const response = await fetch(`${API_BASE_URL}/api/users/theme`, {
+    method: 'PUT',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${token}`,
+    },
+    body: JSON.stringify({ theme }),
+  });
+  const data = await response.json();
+  if (!response.ok) {
+    throw new Error(data.error || 'Failed to update theme');
+  }
+  // Optionally update user data in localStorage
+  const user = getUserData();
+  if (user) {
+    user.activeTheme = data.theme;
+    setUserData(user);
+  }
+  return data.theme;
+};

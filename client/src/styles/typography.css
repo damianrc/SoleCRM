@@ -1,0 +1,27 @@
+/* Typography */
+:root {
+  --font-family-base: 'Lexend Deca', Helvetica, Arial, sans-serif;
+  --font-size-xs: 0.8em;
+  --font-size-sm: 0.85em;
+  --font-size-base: 1em;
+  --font-size-lg: 1.1em;
+  --font-size-xl: 1.4em;
+  --font-size-2xl: 1.8em;
+  --font-size-3xl: 2.5em;
+  --font-weight-normal: 400;
+  --font-weight-medium: 500;
+  --font-weight-semibold: 600;
+  --font-weight-bold: 700;
+}
+
+body {
+  font-family: var(--font-family-base);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+code {
+  font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New', monospace;
+}
+
+/* Typography styles will be added here in Phase 2 */

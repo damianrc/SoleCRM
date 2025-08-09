@@ -37,6 +37,7 @@ export function DraggableHeader({ header, columnId }) {
         ...style,
         width: header.column.getSize(),
         flex: `0 0 ${header.column.getSize()}px`,
+        color: 'var(--color-primary-text)',
       }}
       key={header.column.id}
       colSpan={header.colSpan}

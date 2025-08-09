@@ -3,6 +3,7 @@ import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
 import './App.css';
+import './styles/themes.css';
 import Home from './components/Home';
 import Login from './components/Login';
 import Register from './components/Register.js';
@@ -13,6 +14,7 @@ import ContactDetailPage from './components/ContactDetailPage';
 import UserSettings from './components/UserSettings';
 import Sidebar from './components/Sidebar';
 import TopBar from './components/TopBar';
+import { ThemeProvider, useTheme } from './ThemeContext';
 
 // Optimized QueryClient configuration for TanStack Query v5
 const queryClient = new QueryClient({
@@ -40,7 +42,7 @@ const queryClient = new QueryClient({
 // Make queryClient globally accessible for logout function
 window.queryClient = queryClient;
 
-const App = () => {
+const AppContent = () => {
   const [isSidebarCollapsed, setIsSidebarCollapsed] = React.useState(() => {
     const saved = localStorage.getItem('sidebarCollapsed');
     return saved ? JSON.parse(saved) : false;
@@ -50,6 +52,11 @@ const App = () => {
   React.useEffect(() => {
     localStorage.setItem('sidebarCollapsed', JSON.stringify(isSidebarCollapsed));
   }, [isSidebarCollapsed]);
+
+  const { loading } = useTheme();
+  if (loading) {
+    return <div style={{height: '100vh', background: 'var(--background-color)'}}></div>;
+  }
 
   return (
     <QueryClientProvider client={queryClient}>
@@ -66,14 +73,14 @@ const App = () => {
                   isCollapsed={isSidebarCollapsed} 
                   onToggleCollapse={() => setIsSidebarCollapsed(prev => !prev)}
                 />
-                                <div 
+                <div 
                   className={`main-content${isSidebarCollapsed ? ' sidebar-collapsed' : ''}`}
                   style={{
                     marginLeft: isSidebarCollapsed ? '64px' : '260px',
-                    marginTop: '50px', // Account for top bar height
-                    height: 'calc(100vh - 50px)', // Fixed height
-                    overflowY: 'auto', // Allow vertical scrolling
-                    overflowX: 'hidden', // Prevent horizontal scroll
+                    marginTop: '50px',
+                    height: 'calc(100vh - 50px)',
+                    overflowY: 'auto',
+                    overflowX: 'hidden',
                     transition: 'margin-left 0.3s ease'
                   }}
                 >
@@ -82,12 +89,12 @@ const App = () => {
                     <Route path="/contacts" element={<ContactsPage />} />
                     <Route path="/contacts/:id" element={<ContactDetailPage />} />
                     <Route path="/tasks" element={<TasksPage />} />
-                    <Route path="/settings" element={<UserSettings />} />
+                    <Route path="/settings/*" element={<UserSettings />} />
                   </Routes>
                 </div>
               </>
             } />
-            <Route path="/protected/*" element={<Protected />} /> {/* Legacy route for compatibility */}
+            <Route path="/protected/*" element={<Protected />} />
           </Routes>
         </div>
       </Router>
@@ -96,5 +103,11 @@ const App = () => {
     </QueryClientProvider>
   );
 };
+
+const App = () => (
+  <ThemeProvider>
+    <AppContent />
+  </ThemeProvider>
+);
 
 export default App;

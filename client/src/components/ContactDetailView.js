@@ -721,24 +721,6 @@ const ContactDetailView = ({
             <h2>Contact Overview</h2>
             <p>Contact details and information are displayed in the sidebar. Use the add button to create new items for this contact.</p>
             
-            {/* Quick Stats */}
-            <div className="quick-stats">
-              <div className="stat-card">
-                <div className="stat-number">
-                  {contact.tasks?.filter(task => task.status === 'COMPLETED').length || 0} / {contact.tasks?.length || 0}
-                </div>
-                <div className="stat-label">Tasks Completed</div>
-              </div>
-              <div className="stat-card">
-                <div className="stat-number">{contact.notes?.length || 0}</div>
-                <div className="stat-label">Notes</div>
-              </div>
-              <div className="stat-card">
-                <div className="stat-number">{contact.activities?.length || 0}</div>
-                <div className="stat-label">Activities</div>
-              </div>
-            </div>
-
             {/* Tabbed Items Section */}
             <div className="items-section">
               {/* Tab Navigation */}

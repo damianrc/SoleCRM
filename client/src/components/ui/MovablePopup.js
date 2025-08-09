@@ -4,7 +4,7 @@ import TaskForm from './TaskForm';
 import NoteForm from './NoteForm';
 import ActivityForm from './ActivityForm';
 import EnlargeIcon from './EnlargeIcon';
-import './MovablePopup.css';
+import '../../styles/forms/Popupform.css';
 
 const MovablePopup = ({ 
   isOpen, 

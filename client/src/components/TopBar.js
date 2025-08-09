@@ -1,9 +1,9 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Settings, ChevronDown, LogOut } from 'lucide-react';
-import { getUserData, getUserId, getAuthHeaders, logout } from '../utils/auth';
+import { getUserData, getUserId, getAuthHeaders, logout, authenticatedFetch } from '../utils/auth';
 import { generateInitials, getDisplayName } from '../utils/userUtils';
-import './TopBar.css';
+import '../styles/layout/TopBar.css';
 
 /**
  * TopBar Component
@@ -24,10 +24,7 @@ const TopBar = ({ isCollapsed }) => {
   useEffect(() => {
     const fetchUserData = async () => {
       try {
-        const response = await fetch('http://localhost:4000/api/users/profile', {
-          headers: getAuthHeaders()
-        });
-
+        const response = await authenticatedFetch('/api/users/profile');
         if (response.ok) {
           const data = await response.json();
           console.log('TopBar - Fetched user data from server:', data.user);
@@ -92,16 +89,15 @@ const TopBar = ({ isCollapsed }) => {
 
   const initials = generateInitials(userData);
   const displayName = getDisplayName(userData);
+  const jobTitle = userData.jobTitle;
 
   return (
     <div className={`topbar${isCollapsed ? ' sidebar-collapsed' : ''}`}>
       <div className="topbar-content">
         <div className="topbar-spacer"></div>
-        
         <div className="topbar-user-section" ref={dropdownRef}>
-          <div className="user-info" onClick={toggleDropdown}>
-            <span className="user-name">{displayName}</span>
-            <div className="user-avatar">
+          <div className="user-info" onClick={toggleDropdown} style={{ display: 'flex', alignItems: 'center', cursor: 'pointer' }}>
+            <div className="user-avatar" style={{ marginRight: '10px' }}>
               {userData.profileImage ? (
                 <img 
                   src={userData.profileImage} 
@@ -109,12 +105,31 @@ const TopBar = ({ isCollapsed }) => {
                   className="profile-image"
                 />
               ) : (
-                initials
+                <span className="user-avatar-initials">{initials}</span>
+              )}
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+              <span className="user-name" style={{ fontFamily: 'var(--font-family-base)', fontSize: 'var(--font-size-base)', color: 'var(--color-primary-text)', fontWeight: 'var(--font-weight-medium)', lineHeight: 1 }}>{displayName}</span>
+              {jobTitle && (
+                <span
+                  className="user-job-title"
+                  style={{
+                    fontFamily: 'var(--font-family-base)',
+                    fontSize: 'var(--font-size-xs)',
+                    color: 'var(--color-secondary-text)',
+                    fontWeight: 'var(--font-weight-normal)',
+                    marginTop: '2px',
+                    lineHeight: 1
+                  }}
+                >
+                  {jobTitle}
+                </span>
               )}
             </div>
             <ChevronDown 
               className={`dropdown-arrow ${isDropdownOpen ? 'open' : ''}`} 
               size={16} 
+              style={{ marginLeft: 8 }}
             />
           </div>
           

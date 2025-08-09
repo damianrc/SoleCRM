@@ -1,6 +1,6 @@
 import React, { useState, useRef } from 'react';
 import { authenticatedFetch } from '../../utils/auth';
-import './PopupForms.css';
+import '../../styles/forms/Popupform.css';
 
 const NoteForm = ({ contactId, onSubmit, onCancel, onDelete, initialData = null, isEditing = false }) => {
   const [formData, setFormData] = useState({

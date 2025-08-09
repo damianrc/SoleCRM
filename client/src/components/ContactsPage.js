@@ -50,6 +50,7 @@ const ContactsPage = () => {
   }, [selectedView, views, searchTerm]);
 
   // Fetch contacts from the database with pagination
+  console.log('Current pageLimit:', pageLimit);
   const { data: contactsData, isLoading, error, refetch, isFetching } = useContacts(queryFilters, currentPage, pageLimit);
   
   // Extract contacts and pagination info
@@ -177,7 +178,7 @@ const ContactsPage = () => {
         paddingLeft: '2rem',
         paddingRight: '2rem',
         paddingBottom: '0',
-        backgroundColor: 'white',
+        backgroundColor: 'var(--color-primary-bg)',
         flexShrink: 0
       }}>
         {/* Header with title */}
@@ -188,13 +189,13 @@ const ContactsPage = () => {
           marginBottom: '0.5rem'
         }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-          <h1 style={{ fontSize: '2rem', fontWeight: 'bold', margin: 0 }}>
+          <h1 style={{ fontSize: '2rem', fontWeight: 'bold', margin: 0, color: 'var(--color-primary-text)' }}>
             Contacts
           </h1>
           <span style={{
             fontSize: '0.875rem',
-            color: '#64748b',
-            backgroundColor: '#f1f5f9',
+            color: 'var(--color-secondary-text)',
+            backgroundColor: 'var(--color-table-row-hover)',
             padding: '0.25rem 0.5rem',
             borderRadius: '0.375rem'
           }}>
@@ -206,9 +207,8 @@ const ContactsPage = () => {
       {/* Controls section directly above table */}
       <div style={{ 
         padding: '20px 2rem 20px 2rem', // 20px top and bottom padding
-        backgroundColor: 'white',
-        flexShrink: 0,
-        borderBottom: '1px solid #e5e7eb'
+        backgroundColor: 'var(--color-primary-bg)',
+        flexShrink: 0
       }}>
         <div style={{ 
           display: 'flex', 
@@ -227,9 +227,11 @@ const ContactsPage = () => {
                 style={{
                   width: '100%',
                   padding: '0.5rem',
-                  border: '1px solid #d1d5db',
+                  border: '1px solid var(--color-primary-border)',
                   borderRadius: '0.375rem',
-                  fontSize: '0.875rem'
+                  fontSize: '0.875rem',
+                  color: 'var(--color-primary-text)',
+                  backgroundColor: 'var(--color-primary-bg)'
                 }}
               />
               {searchTerm && (
@@ -244,7 +246,7 @@ const ContactsPage = () => {
                     backgroundColor: 'transparent',
                     fontSize: '1.25rem',
                     cursor: 'pointer',
-                    color: '#6b7280'
+                    color: 'var(--color-disabled-text)'
                   }}
                 >
                   ×
@@ -253,7 +255,7 @@ const ContactsPage = () => {
             </div>
 
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-              <label style={{ fontSize: '0.875rem', fontWeight: '500', color: '#374151' }}>
+              <label style={{ fontSize: '0.875rem', fontWeight: '500', color: 'var(--color-primary-text)' }}>
                 View:
               </label>
               <select
@@ -261,10 +263,11 @@ const ContactsPage = () => {
                 onChange={(e) => setSelectedView(e.target.value)}
                 style={{
                   padding: '0.5rem',
-                  border: '1px solid #d1d5db',
+                  border: '1px solid var(--color-primary-border)',
                   borderRadius: '0.375rem',
                   fontSize: '0.875rem',
-                  backgroundColor: 'white'
+                  backgroundColor: 'var(--color-primary-bg)',
+                  color: 'var(--color-primary-text)'
                 }}
               >
                 {views.map(view => (
@@ -281,8 +284,8 @@ const ContactsPage = () => {
                   padding: '0.5rem 0.75rem',
                   border: 'none',
                   borderRadius: '0.375rem',
-                  backgroundColor: '#dc2626',
-                  color: 'white',
+                  backgroundColor: 'var(--color-error)',
+                  color: 'var(--color-button-primary-text)',
                   cursor: 'pointer',
                   fontSize: '0.875rem',
                   fontWeight: '500',
@@ -304,10 +307,10 @@ const ContactsPage = () => {
               onClick={handleCSVImport}
               style={{
                 padding: '0.5rem 1rem',
-                border: '1px solid #d1d5db',
+                border: '1px solid var(--color-primary-border)',
                 borderRadius: '0.375rem',
-                backgroundColor: 'white',
-                color: '#374151',
+                backgroundColor: 'var(--color-button-secondary-bg)',
+                color: 'var(--color-button-secondary-text)',
                 cursor: 'pointer',
                 fontSize: '0.875rem',
                 fontWeight: '500'
@@ -322,8 +325,8 @@ const ContactsPage = () => {
                 padding: '0.5rem 1rem',
                 border: 'none',
                 borderRadius: '0.375rem',
-                backgroundColor: '#3b82f6',
-                color: 'white',
+                backgroundColor: 'var(--color-button-primary-bg)',
+                color: 'var(--color-button-primary-text)',
                 cursor: 'pointer',
                 fontSize: '0.875rem',
                 fontWeight: '500'
@@ -351,12 +354,12 @@ const ContactsPage = () => {
             alignItems: 'center', 
             justifyContent: 'center', 
             height: '100%',
-            color: '#64748b'
+            color: 'var(--color-secondary-text)'
           }}>
             <div style={{ textAlign: 'center' }}>
               <div>Loading contacts from database...</div>
               {isFetching && !isLoading && (
-                <div style={{ fontSize: '0.75rem', marginTop: '0.5rem', color: '#9ca3af' }}>
+                <div style={{ fontSize: '0.75rem', marginTop: '0.5rem', color: 'var(--color-disabled-text)' }}>
                   Updating...
                 </div>
               )}
@@ -386,7 +389,7 @@ const ContactsPage = () => {
             alignItems: 'center', 
             justifyContent: 'center', 
             height: '100%',
-            color: '#64748b',
+            color: 'var(--color-secondary-text)',
             textAlign: 'center'
           }}>
             <div>
@@ -406,8 +409,8 @@ const ContactsPage = () => {
           right: 0,
           height: '80px', // Fixed height to match the marginBottom above
           padding: '1rem 2rem',
-          borderTop: '1px solid #e2e8f0',
-          backgroundColor: '#f8fafc',
+          borderTop: '1px solid var(--color-secondary-border)',
+          backgroundColor: 'var(--color-table-header-bg)',
           display: 'flex',
           justifyContent: 'center',
           alignItems: 'center',
@@ -420,10 +423,10 @@ const ContactsPage = () => {
             disabled={currentPage <= 1}
             style={{
               padding: '0.5rem 0.75rem',
-              border: '1px solid #d1d5db',
+              border: '1px solid var(--color-primary-border)',
               borderRadius: '0.375rem',
-              backgroundColor: currentPage <= 1 ? '#f3f4f6' : 'white',
-              color: currentPage <= 1 ? '#9ca3af' : '#374151',
+              backgroundColor: currentPage <= 1 ? 'var(--color-disabled-bg)' : 'var(--color-primary-bg)',
+              color: currentPage <= 1 ? 'var(--color-disabled-text)' : 'var(--color-primary-text)',
               cursor: currentPage <= 1 ? 'not-allowed' : 'pointer',
               fontSize: '0.875rem',
               fontWeight: '500',
@@ -480,7 +483,7 @@ const ContactsPage = () => {
                       key={`ellipsis-${index}`}
                       style={{
                         padding: '0.5rem 0.75rem',
-                        color: '#9ca3af',
+                        color: 'var(--color-disabled-text)',
                         fontSize: '0.875rem'
                       }}
                     >
@@ -496,10 +499,10 @@ const ContactsPage = () => {
                     onClick={() => handlePageChange(pageNum)}
                     style={{
                       padding: '0.5rem 0.75rem',
-                      border: '1px solid #d1d5db',
+                      border: '1px solid var(--color-primary-border)',
                       borderRadius: '0.375rem',
-                      backgroundColor: isActive ? '#3b82f6' : 'white',
-                      color: isActive ? 'white' : '#374151',
+                      backgroundColor: isActive ? 'var(--color-button-primary-bg)' : 'var(--color-primary-bg)',
+                      color: isActive ? 'var(--color-button-primary-text)' : 'var(--color-primary-text)',
                       cursor: 'pointer',
                       fontSize: '0.875rem',
                       fontWeight: isActive ? '600' : '500',
@@ -519,10 +522,10 @@ const ContactsPage = () => {
             disabled={currentPage >= Math.max(pagination.totalPages || 1, 1)}
             style={{
               padding: '0.5rem 0.75rem',
-              border: '1px solid #d1d5db',
+              border: '1px solid var(--color-primary-border)',
               borderRadius: '0.375rem',
-              backgroundColor: currentPage >= Math.max(pagination.totalPages || 1, 1) ? '#f3f4f6' : 'white',
-              color: currentPage >= Math.max(pagination.totalPages || 1, 1) ? '#9ca3af' : '#374151',
+              backgroundColor: currentPage >= Math.max(pagination.totalPages || 1, 1) ? 'var(--color-disabled-bg)' : 'var(--color-primary-bg)',
+              color: currentPage >= Math.max(pagination.totalPages || 1, 1) ? 'var(--color-disabled-text)' : 'var(--color-primary-text)',
               cursor: currentPage >= Math.max(pagination.totalPages || 1, 1) ? 'not-allowed' : 'pointer',
               fontSize: '0.875rem',
               fontWeight: '500',
@@ -541,18 +544,19 @@ const ContactsPage = () => {
             gap: '0.5rem',
             marginLeft: '2rem',
             paddingLeft: '2rem',
-            borderLeft: '1px solid #e2e8f0'
+            borderLeft: '1px solid var(--color-secondary-border)'
           }}>
             <select
               value={pageLimit}
               onChange={(e) => handlePageLimitChange(Number(e.target.value))}
               style={{
                 padding: '0.5rem',
-                border: '1px solid #d1d5db',
+                border: '1px solid var(--color-primary-border)',
                 borderRadius: '0.375rem',
-                backgroundColor: 'white',
+                backgroundColor: 'var(--color-primary-bg)',
                 fontSize: '0.875rem',
-                fontWeight: '500'
+                fontWeight: '500',
+                color: 'var(--color-primary-text)'
               }}
             >
               <option value={20}>20 per page</option>
