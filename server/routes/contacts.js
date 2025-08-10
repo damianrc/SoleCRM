@@ -60,12 +60,11 @@ router.get('/', validateQuery(paginationSchema.merge(contactFilterSchema)), asyn
         const limit = typeof req.query.limit === 'string' ? req.query.limit : '100';
         // Build where clause
         const where = { userId };
-        if (status) {
-            where.status = status.toUpperCase();
-        }
-        if (contactType) {
-            where.contactType = contactType.toUpperCase();
-        }
+        
+        // For now, we'll handle custom field filtering in the application layer
+        // since Prisma doesn't easily support filtering on nested custom field values
+        // TODO: Implement custom field filtering with more complex queries if needed
+        
         if (search) {
             where.OR = [
                 { name: { contains: search, mode: 'insensitive' } },
@@ -88,12 +87,20 @@ router.get('/', validateQuery(paginationSchema.merge(contactFilterSchema)), asyn
                     email: true,
                     phone: true,
                     address: true,
-                    suburb: true,
-                    contactType: true,
-                    leadSource: true,
-                    status: true,
                     createdAt: true,
                     updatedAt: true,
+                    customFieldValues: {
+                        select: {
+                            value: true,
+                            property: {
+                                select: {
+                                    fieldKey: true,
+                                    fieldType: true,
+                                    name: true
+                                }
+                            }
+                        }
+                    },
                     tasks: {
                         select: {
                             id: true,
@@ -111,8 +118,47 @@ router.get('/', validateQuery(paginationSchema.merge(contactFilterSchema)), asyn
             }),
             prisma.contact.count({ where })
         ]);
+        // Format contacts with custom fields
+        const formattedContacts = contacts.map(contact => {
+            const customFields = {};
+            contact.customFieldValues.forEach(fieldValue => {
+                const property = fieldValue.property;
+                let value = fieldValue.value;
+                
+                // Parse value based on field type
+                switch (property.fieldType) {
+                    case 'NUMBER':
+                        value = parseFloat(value) || 0;
+                        break;
+                    case 'BOOLEAN':
+                        value = value === 'true';
+                        break;
+                    case 'DATE':
+                    case 'DATETIME':
+                        value = value ? new Date(value) : null;
+                        break;
+                    case 'MULTISELECT':
+                        try {
+                            value = JSON.parse(value);
+                        } catch {
+                            value = [];
+                        }
+                        break;
+                }
+                
+                customFields[property.fieldKey] = value;
+            });
+            
+            return {
+                ...contact,
+                customFields,
+                // Remove the raw customFieldValues from response
+                customFieldValues: undefined
+            };
+        });
+
         res.json({
-            contacts,
+            contacts: formattedContacts,
             pagination: {
                 page: parseInt(page),
                 limit: parseInt(limit),
@@ -147,12 +193,20 @@ router.get('/:id', validateResourceOwnership('contact'), async (req, res) => {
                 email: true,
                 phone: true,
                 address: true,
-                suburb: true,
-                contactType: true,
-                leadSource: true,
-                status: true,
                 createdAt: true,
                 updatedAt: true,
+                customFieldValues: {
+                    select: {
+                        value: true,
+                        property: {
+                            select: {
+                                fieldKey: true,
+                                fieldType: true,
+                                name: true
+                            }
+                        }
+                    }
+                },
                 tasks: {
                     select: {
                         id: true,
@@ -201,7 +255,44 @@ router.get('/:id', validateResourceOwnership('contact'), async (req, res) => {
             });
         }
 
-        res.json(contact);
+        // Format contact with custom fields
+        const customFields = {};
+        contact.customFieldValues.forEach(fieldValue => {
+            const property = fieldValue.property;
+            let value = fieldValue.value;
+            
+            // Parse value based on field type
+            switch (property.fieldType) {
+                case 'NUMBER':
+                    value = parseFloat(value) || 0;
+                    break;
+                case 'BOOLEAN':
+                    value = value === 'true';
+                    break;
+                case 'DATE':
+                case 'DATETIME':
+                    value = value ? new Date(value) : null;
+                    break;
+                case 'MULTISELECT':
+                    try {
+                        value = JSON.parse(value);
+                    } catch {
+                        value = [];
+                    }
+                    break;
+            }
+            
+            customFields[property.fieldKey] = value;
+        });
+
+        const formattedContact = {
+            ...contact,
+            customFields,
+            // Remove the raw customFieldValues from response
+            customFieldValues: undefined
+        };
+
+        res.json(formattedContact);
     } catch (error) {
         console.error('Error fetching contact:', error);
         res.status(500).json({ 
@@ -212,9 +303,29 @@ router.get('/:id', validateResourceOwnership('contact'), async (req, res) => {
 });
 
 // POST a new contact with validation
-router.post('/', validateBody(contactSchema), async (req, res) => {
+router.post('/', async (req, res) => {
     try {
-        const { name, email, phone, address, suburb, contactType, leadSource, status } = req.body;
+        const { name, email, phone, address, customFields = {}, contactType, leadSource, status, suburb } = req.body;
+        
+        // Handle backward compatibility - convert old field names to custom fields
+        const legacyFieldMapping = {
+            'contactType': 'contact_type',
+            'leadSource': 'lead_source', 
+            'status': 'status',
+            'suburb': 'suburb'
+        };
+
+        const customFieldsFromLegacy = {};
+        if (contactType) customFieldsFromLegacy['contact_type'] = contactType;
+        if (leadSource) customFieldsFromLegacy['lead_source'] = leadSource;
+        if (status) customFieldsFromLegacy['status'] = status;
+        if (suburb) customFieldsFromLegacy['suburb'] = suburb;
+
+        // Merge legacy fields with explicit customFields
+        const allCustomFields = {
+            ...customFieldsFromLegacy,
+            ...customFields
+        };
         const userId = req.user.id;
         
         // Generate a unique 7-digit contact ID
@@ -254,24 +365,7 @@ router.post('/', validateBody(contactSchema), async (req, res) => {
             }
         }
 
-        // Validate enums
-        const validStatuses = ['NEW', 'CONTACTED', 'QUALIFIED', 'PROPOSAL', 'NEGOTIATION', 'CLOSED_WON', 'CLOSED_LOST'];
-        const validContactTypes = ['BUYER', 'SELLER', 'PAST_CLIENT', 'LEAD'];
-
-        if (status && !validStatuses.includes(status.toUpperCase())) {
-            return res.status(400).json({
-                error: `Invalid status. Must be one of: ${validStatuses.join(', ')}`,
-                code: 'INVALID_STATUS'
-            });
-        }
-
-        if (contactType && !validContactTypes.includes(contactType.toUpperCase())) {
-            return res.status(400).json({
-                error: `Invalid contact type. Must be one of: ${validContactTypes.join(', ')}`,
-                code: 'INVALID_CONTACT_TYPE'
-            });
-        }
-
+        // Create the contact first
         const newContact = await prisma.contact.create({
             data: {
                 id: contactId,
@@ -279,13 +373,72 @@ router.post('/', validateBody(contactSchema), async (req, res) => {
                 email: email ? email.trim().toLowerCase() : null,
                 phone: phone ? phone.trim() : null,
                 address: address ? address.trim() : null,
-                suburb: suburb ? suburb.trim() : null,
-                contactType: contactType ? contactType.toUpperCase() : 'LEAD',
-                leadSource: leadSource ? leadSource.trim() : null,
-                status: status ? status.toUpperCase() : 'NEW',
                 userId,
             },
         });
+
+        // Handle custom fields if provided (including legacy field conversions)
+        if (Object.keys(allCustomFields).length > 0) {
+            // Get custom property definitions for this user
+            const customProperties = await prisma.customPropertyDefinition.findMany({
+                where: {
+                    userId,
+                    isActive: true,
+                },
+            });
+
+            const propertyMap = new Map(customProperties.map(p => [p.fieldKey, p]));
+
+            // Create custom field values
+            const customFieldValues = [];
+            for (const [fieldKey, value] of Object.entries(allCustomFields)) {
+                const property = propertyMap.get(fieldKey);
+                if (property && value !== null && value !== undefined && value !== '') {
+                    let formattedValue = String(value);
+                    
+                    // Format value based on field type
+                    switch (property.fieldType) {
+                        case 'NUMBER':
+                            const num = parseFloat(value);
+                            formattedValue = isNaN(num) ? '0' : num.toString();
+                            break;
+                        case 'BOOLEAN':
+                            formattedValue = value === true || value === 'true' ? 'true' : 'false';
+                            break;
+                        case 'DATE':
+                        case 'DATETIME':
+                            if (value instanceof Date) {
+                                formattedValue = value.toISOString();
+                            } else if (typeof value === 'string') {
+                                const date = new Date(value);
+                                formattedValue = isNaN(date.getTime()) ? '' : date.toISOString();
+                            }
+                            break;
+                        case 'MULTISELECT':
+                            if (Array.isArray(value)) {
+                                formattedValue = JSON.stringify(value);
+                            } else {
+                                formattedValue = JSON.stringify([]);
+                            }
+                            break;
+                    }
+
+                    if (formattedValue !== '') {
+                        customFieldValues.push({
+                            contactId: newContact.id,
+                            propertyId: property.id,
+                            value: formattedValue,
+                        });
+                    }
+                }
+            }
+
+            if (customFieldValues.length > 0) {
+                await prisma.contactCustomFieldValue.createMany({
+                    data: customFieldValues,
+                });
+            }
+        }
 
         console.log('Contact created successfully:', newContact.id);
         res.status(201).json(newContact);
@@ -306,7 +459,7 @@ router.post('/', validateBody(contactSchema), async (req, res) => {
 });
 
 // PUT update contact with validation
-router.put('/:id', validateResourceOwnership('contact'), validateBody(contactUpdateSchema), async (req, res) => {
+router.put('/:id', validateResourceOwnership('contact'), async (req, res) => {
     try {
         const userId = req.user.id;
         const contactId = req.params.id;
@@ -361,12 +514,8 @@ router.put('/:id', validateResourceOwnership('contact'), validateBody(contactUpd
             }
         }
 
-        // Process updates for each field that was provided
+        // Process core field updates
         const processedUpdates = {};
-        
-        // Process each field if it exists in the updates object
-        // Use Object.hasOwnProperty to check if the field is explicitly provided
-        // This ensures we handle null values and empty strings correctly
         
         if ('name' in updates) {
             processedUpdates.name = updates.name ? updates.name.trim() : null;
@@ -383,34 +532,199 @@ router.put('/:id', validateResourceOwnership('contact'), validateBody(contactUpd
         if ('address' in updates) {
             processedUpdates.address = updates.address ? updates.address.trim() : null;
         }
-        
-        if ('suburb' in updates) {
-            processedUpdates.suburb = updates.suburb ? updates.suburb.trim() : null;
+
+        // Handle backward compatibility - convert old field names to custom fields
+        const legacyFieldMapping = {
+            'contactType': 'contact_type',
+            'leadSource': 'lead_source',
+            'status': 'status',
+            'suburb': 'suburb'
+        };
+
+        const customFieldsFromLegacy = {};
+        for (const [oldField, newField] of Object.entries(legacyFieldMapping)) {
+            if (oldField in updates) {
+                customFieldsFromLegacy[newField] = updates[oldField];
+            }
         }
-        
-        if ('contactType' in updates) {
-            processedUpdates.contactType = updates.contactType ? updates.contactType.toUpperCase() : 'LEAD';
-        }
-        
-        if ('leadSource' in updates) {
-            processedUpdates.leadSource = updates.leadSource ? updates.leadSource.trim() : null;
-        }
-        
-        if ('status' in updates) {
-            processedUpdates.status = updates.status ? updates.status.toUpperCase() : 'NEW';
-        }
+
+        // Merge legacy fields with explicit customFields
+        const allCustomFields = {
+            ...customFieldsFromLegacy,
+            ...(updates.customFields || {})
+        };
 
         console.log('Received updates:', updates);
         console.log('Processing updates for contact:', contactId);
         console.log('Updating contact with data:', processedUpdates);
+        console.log('All custom fields to process:', allCustomFields);
         
+        // Update core contact fields
         const updatedContact = await prisma.contact.update({
             where: { id: contactId },
             data: processedUpdates,
         });
 
-        console.log('Contact updated successfully:', updatedContact.id);
-        res.json(updatedContact);
+        // Handle custom fields if provided (including legacy field conversions)
+        if (Object.keys(allCustomFields).length > 0) {
+            console.log('Processing custom fields for contact:', contactId);
+            
+            // Get custom property definitions for this user
+            const customProperties = await prisma.customPropertyDefinition.findMany({
+                where: {
+                    userId,
+                    isActive: true,
+                },
+            });
+
+            console.log('Found custom properties:', customProperties.map(p => ({ id: p.id, fieldKey: p.fieldKey, fieldType: p.fieldType })));
+
+            const propertyMap = new Map(customProperties.map(p => [p.fieldKey, p]));
+
+            // Delete existing custom field values for fields being updated
+            const fieldKeysToUpdate = Object.keys(allCustomFields);
+            const propertiesToUpdate = fieldKeysToUpdate
+                .map(key => propertyMap.get(key))
+                .filter(Boolean);
+
+            console.log('Properties to update:', propertiesToUpdate.map(p => ({ id: p.id, fieldKey: p.fieldKey })));
+
+            if (propertiesToUpdate.length > 0) {
+                await prisma.contactCustomFieldValue.deleteMany({
+                    where: {
+                        contactId,
+                        propertyId: {
+                            in: propertiesToUpdate.map(p => p.id)
+                        }
+                    }
+                });
+
+                // Create new custom field values
+                const customFieldValues = [];
+                console.log('Creating custom field values for:', allCustomFields);
+                
+                for (const [fieldKey, value] of Object.entries(allCustomFields)) {
+                    const property = propertyMap.get(fieldKey);
+                    console.log(`Processing field ${fieldKey} with value ${value}, property found:`, !!property);
+                    
+                    if (property && value !== null && value !== undefined && value !== '') {
+                        let formattedValue = String(value);
+                        
+                        // Format value based on field type
+                        switch (property.fieldType) {
+                            case 'NUMBER':
+                                const num = parseFloat(value);
+                                formattedValue = isNaN(num) ? '0' : num.toString();
+                                break;
+                            case 'BOOLEAN':
+                                formattedValue = value === true || value === 'true' ? 'true' : 'false';
+                                break;
+                            case 'DATE':
+                            case 'DATETIME':
+                                if (value instanceof Date) {
+                                    formattedValue = value.toISOString();
+                                } else if (typeof value === 'string') {
+                                    const date = new Date(value);
+                                    formattedValue = isNaN(date.getTime()) ? '' : date.toISOString();
+                                }
+                                break;
+                            case 'MULTISELECT':
+                                if (Array.isArray(value)) {
+                                    formattedValue = JSON.stringify(value);
+                                } else {
+                                    formattedValue = JSON.stringify([]);
+                                }
+                                break;
+                        }
+
+                        if (formattedValue !== '') {
+                            customFieldValues.push({
+                                contactId,
+                                propertyId: property.id,
+                                value: formattedValue,
+                            });
+                        }
+                    }
+                }
+
+                console.log('Custom field values to create:', customFieldValues);
+                
+                if (customFieldValues.length > 0) {
+                    await prisma.contactCustomFieldValue.createMany({
+                        data: customFieldValues,
+                    });
+                    console.log('Successfully created custom field values');
+                } else {
+                    console.log('No custom field values to create');
+                }
+            }
+        }
+
+        // Fetch the complete updated contact with custom fields
+        const completeUpdatedContact = await prisma.contact.findFirst({
+            where: { id: contactId, userId },
+            select: {
+                id: true,
+                name: true,
+                email: true,
+                phone: true,
+                address: true,
+                createdAt: true,
+                updatedAt: true,
+                customFieldValues: {
+                    select: {
+                        value: true,
+                        property: {
+                            select: {
+                                fieldKey: true,
+                                fieldType: true,
+                                name: true
+                            }
+                        }
+                    }
+                }
+            }
+        });
+
+        // Format contact with custom fields
+        const customFields = {};
+        completeUpdatedContact.customFieldValues.forEach(fieldValue => {
+            const property = fieldValue.property;
+            let value = fieldValue.value;
+            
+            // Parse value based on field type
+            switch (property.fieldType) {
+                case 'NUMBER':
+                    value = parseFloat(value) || 0;
+                    break;
+                case 'BOOLEAN':
+                    value = value === 'true';
+                    break;
+                case 'DATE':
+                case 'DATETIME':
+                    value = value ? new Date(value) : null;
+                    break;
+                case 'MULTISELECT':
+                    try {
+                        value = JSON.parse(value);
+                    } catch {
+                        value = [];
+                    }
+                    break;
+            }
+            
+            customFields[property.fieldKey] = value;
+        });
+
+        const formattedContact = {
+            ...completeUpdatedContact,
+            customFields,
+            // Remove the raw customFieldValues from response
+            customFieldValues: undefined
+        };
+
+        console.log('Contact updated successfully:', formattedContact.id);
+        res.json(formattedContact);
     } catch (error) {
         console.error('Error updating contact:', error);
         res.status(500).json({ 

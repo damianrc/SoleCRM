@@ -1,4 +1,5 @@
 import React from 'react';
+import { useContactPropertyOptions } from '../hooks/useContactPropertyOptions';
 import { createColumnHelper } from '@tanstack/react-table';
 import { Eye, Edit, Trash2, Phone, Mail, MapPin } from 'lucide-react';
 
@@ -268,6 +269,7 @@ export const createContactsColumns = ({
   onDeleteContact,
   visibleColumns = {}
 }) => {
+  const { typeOptions, sourceOptions, statusOptions } = useContactPropertyOptions();
   const columns = [
     // Selection column - not movable, not resizable
     {
@@ -318,6 +320,7 @@ export const createContactsColumns = ({
       filterFn: 'equals',
       meta: {
         filterVariant: 'select',
+        selectOptions: statusOptions,
       },
     }),
     
@@ -335,6 +338,7 @@ export const createContactsColumns = ({
       filterFn: 'equals',
       meta: {
         filterVariant: 'select',
+        selectOptions: typeOptions,
       },
     }),
     
@@ -396,7 +400,11 @@ export const createContactsColumns = ({
       enableSorting: true,
       enableResizing: true,
       enableReordering: true, // Can be moved
-      filterFn: 'includesString',
+      filterFn: 'equals',
+      meta: {
+        filterVariant: 'select',
+        selectOptions: sourceOptions,
+      },
     }),
     
     // Created Date column - movable and resizable

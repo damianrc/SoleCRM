@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useContactPropertyOptions } from '../hooks/useContactPropertyOptions';
 import { Save, X } from 'lucide-react';
 import '../styles/forms/sideform.css';
 
@@ -15,15 +16,16 @@ import '../styles/forms/sideform.css';
  */
 const AddContactModal = ({ isOpen, onClose, onAddContact }) => {
   // Form data state - holds all the input values
+  const { typeOptions, sourceOptions, statusOptions, isLoading: optionsLoading } = useContactPropertyOptions();
   const [formData, setFormData] = useState({
     name: '',
     email: '',
     phone: '',
     address: '',
     suburb: '',
-    contactType: 'LEAD',
+    contactType: '',
     leadSource: '',
-    status: 'NEW' // Default status for new contacts
+    status: ''
   });
 
   // Form validation state
@@ -183,9 +185,9 @@ const AddContactModal = ({ isOpen, onClose, onAddContact }) => {
       phone: '',
       address: '',
       suburb: '',
-      contactType: 'LEAD',
-      leadSource: '',
-      status: 'NEW'
+      contactType: typeOptions[0] || '',
+      leadSource: sourceOptions[0] || '',
+      status: statusOptions[0] || ''
     });
     setErrors({});
   };
@@ -217,6 +219,7 @@ const AddContactModal = ({ isOpen, onClose, onAddContact }) => {
 
   // Don't render anything if modal should not be rendered
   if (!shouldRender && !isOpen) return null;
+  if (optionsLoading) return <div>Loading options...</div>;
 
   return (
     <div className={`modal-overlay ${animationState}`} onClick={handleOverlayClick}>
@@ -314,7 +317,7 @@ const AddContactModal = ({ isOpen, onClose, onAddContact }) => {
             />
           </div>
 
-          {/* Contact Type Field - Required with default */}
+          {/* Contact Type Field - Required with default, supports multi-select if needed */}
           <div className="form-group">
             <label htmlFor="contactType">Contact Type</label>
             <select
@@ -323,27 +326,29 @@ const AddContactModal = ({ isOpen, onClose, onAddContact }) => {
               value={formData.contactType}
               onChange={handleInputChange}
             >
-              <option value="LEAD">Lead</option>
-              <option value="BUYER">Buyer</option>
-              <option value="SELLER">Seller</option>
-              <option value="PAST_CLIENT">Past Client</option>
+              {typeOptions.map(opt => (
+                <option key={opt} value={opt}>{opt}</option>
+              ))}
             </select>
           </div>
 
-          {/* Lead Source Field - Optional */}
+          {/* Lead Source Field - Optional, dropdown */}
           <div className="form-group">
             <label htmlFor="leadSource">Lead Source</label>
-            <input
+            <select
               id="leadSource"
               name="leadSource"
-              type="text"
               value={formData.leadSource}
               onChange={handleInputChange}
-              placeholder="Enter lead source (e.g., Website, Referral, Advertisement)"
-            />
+            >
+              {sourceOptions.map(opt => (
+                <option key={opt} value={opt}>{opt}</option>
+              ))}
+              <option value="">Other</option>
+            </select>
           </div>
 
-          {/* Status Field - Required with default */}
+          {/* Status Field - Required, dropdown */}
           <div className="form-group">
             <label htmlFor="status">Status</label>
             <select
@@ -352,13 +357,9 @@ const AddContactModal = ({ isOpen, onClose, onAddContact }) => {
               value={formData.status}
               onChange={handleInputChange}
             >
-              <option value="NEW">New</option>
-              <option value="CONTACTED">Contacted</option>
-              <option value="QUALIFIED">Qualified</option>
-              <option value="PROPOSAL">Proposal</option>
-              <option value="NEGOTIATION">Negotiation</option>
-              <option value="CLOSED_WON">Closed Won</option>
-              <option value="CLOSED_LOST">Closed Lost</option>
+              {statusOptions.map(opt => (
+                <option key={opt} value={opt}>{opt}</option>
+              ))}
             </select>
           </div>
 

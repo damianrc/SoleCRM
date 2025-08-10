@@ -5,6 +5,9 @@ import { PrismaClient } from '@prisma/client';
 import authRouter from './routes/auth.js';
 import contactsRouter from './routes/contacts.js';
 import usersRouter from './routes/users.js';
+import userContactPropertiesRouter from './routes/userContactProperties.js';
+import customPropertiesRouter from './routes/custom-properties.js';
+import contactCustomFieldsRouter from './routes/contact-custom-fields.js';
 import { authenticateToken } from './middleware/auth.js';
 import { generalLimiter, progressiveLimiter } from './middleware/rateLimiting.js';
 import { cleanupExpiredTokens } from './utils/tokenUtils.js';
@@ -108,8 +111,13 @@ app.use('/api/', progressiveLimiter);
 app.use('/api/auth', authRouter);
 
 // Mount protected routes (authentication required)
-app.use('/api/contacts', contactsRouter);
+
 app.use('/api/users', usersRouter);
+app.use('/api/contacts', contactsRouter);
+
+app.use('/api/user-contact-properties', userContactPropertiesRouter);
+app.use('/api/custom-properties', customPropertiesRouter);
+app.use('/api/contacts', contactCustomFieldsRouter);
 
 // Tasks endpoints
 app.get('/api/leads/:leadId/tasks', authenticateToken, async (req, res) => {

@@ -8,7 +8,8 @@ export function EditableCell({
   row, 
   column, 
   table,
-  onUpdate 
+  onUpdate,
+  options // <-- new prop
 }) {
   const initialValue = getValue();
   const [value, setValue] = useState(initialValue);
@@ -113,6 +114,24 @@ export function EditableCell({
   };
 
   const renderInput = () => {
+    // Use dynamic options if provided
+    if (options && Array.isArray(options)) {
+      return (
+        <select
+          ref={inputRef}
+          value={value || ''}
+          onChange={(e) => setValue(e.target.value)}
+          onBlur={handleBlur}
+          onKeyDown={handleKeyDown}
+          className="cell-input"
+        >
+          <option value="">-- Select --</option>
+          {options.map(opt => (
+            <option key={opt} value={opt}>{opt}</option>
+          ))}
+        </select>
+      );
+    }
     if (column.id === 'contactType') {
       return (
         <select
@@ -160,13 +179,9 @@ export function EditableCell({
           className="editable-cell-display"
           onClick={handleClick}
         >
-          {value === null || value === undefined || value === '' ? (
-            <span className="cell-empty-placeholder">Click to add {column.id}</span>
-          ) : (
-            <span className="cell-content">
-              {formatDisplayValue(value)}
-            </span>
-          )}
+          <span className="cell-content">
+            {value === null || value === undefined || value === '' ? '' : formatDisplayValue(value)}
+          </span>
         </div>
       )}
     </div>

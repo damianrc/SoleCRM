@@ -2,8 +2,10 @@ import React, { useState } from 'react';
 import { Mail, Lock, Eye, EyeOff, CheckCircle, AlertCircle, Shield } from 'lucide-react';
 import { useUpdateEmail, useUpdatePassword } from '../hooks/useUserSettings';
 
+
 const AccountSettings = ({ user }) => {
-  const [email, setEmail] = useState(user.email);
+  // Always call hooks first
+  const [email, setEmail] = useState(user?.email || '');
   const [password, setPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -12,9 +14,15 @@ const AccountSettings = ({ user }) => {
   const [successMessage, setSuccessMessage] = useState('');
   const [errorMessage, setErrorMessage] = useState('');
   const [showPassword, setShowPassword] = useState(false);
+  const [currentPassword, setCurrentPassword] = useState('');
 
   const updateEmailMutation = useUpdateEmail();
   const updatePasswordMutation = useUpdatePassword();
+
+  // Show loading or fallback if user is not loaded yet
+  if (!user) {
+    return <div>Loading account settings...</div>;
+  }
 
   const handleEmailChange = (e) => {
     setEmail(e.target.value);
@@ -40,10 +48,15 @@ const AccountSettings = ({ user }) => {
       setEmailError('Invalid email address');
       return;
     }
+    if (!currentPassword) {
+      setEmailError('Current password is required');
+      return;
+    }
     setEmailError('');
     try {
-      await updateEmailMutation.mutateAsync(email);
+      await updateEmailMutation.mutateAsync({ email, currentPassword });
       setSuccessMessage('Email updated successfully');
+      setCurrentPassword('');
     } catch (error) {
       setErrorMessage('Failed to update email');
     }
@@ -91,6 +104,19 @@ const AccountSettings = ({ user }) => {
                 required
               />
               {emailError && <div className="text-danger">{emailError}</div>}
+            </div>
+            <div className="mb-3">
+              <label htmlFor="current-password" className="form-label">
+                Current Password
+              </label>
+              <input
+                type="password"
+                className="form-control"
+                id="current-password"
+                value={currentPassword}
+                onChange={e => setCurrentPassword(e.target.value)}
+                required
+              />
             </div>
             <button type="submit" className="btn btn-primary">
               Update Email

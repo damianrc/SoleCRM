@@ -8,6 +8,12 @@ import { validateBody, userUpdateSchema, passwordChangeSchema } from '../middlew
 const router = express.Router();
 const prisma = new PrismaClient();
 
+// Simple email validation function
+function validateEmail(email) {
+  // Basic regex for email validation
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+}
+
 // Get current user profile
 router.get('/profile', authenticateToken, async (req, res) => {
   try {

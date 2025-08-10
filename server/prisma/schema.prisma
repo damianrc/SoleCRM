@@ -8,60 +8,109 @@ datasource db {
 }
 
 model User {
-  id            String    @id
-  email         String    @unique
-  displayName   String?
-  profileImage  String?   // Base64 encoded image data
-  passwordHash  String
-  contacts      Contact[]
-  tasks         Task[]
-  activeTheme   String    @default("light")
-  jobTitle      String?   // User's job title (nullable)
+  id               String    @id
+  email            String    @unique
+  displayName      String?
+  profileImage     String?   // Base64 encoded image data
+  passwordHash     String
+  contacts         Contact[]
+  tasks            Task[]
+  activeTheme      String    @default("light")
+  jobTitle         String?   // User's job title (nullable)
+  
+  // Custom property definitions for this user
+  customProperties CustomPropertyDefinition[]
 
   @@map("users")
 }
 
 model Contact {
-  id            String         @id
-  name          String
-  email         String?
-  phone         String?
-  address       String?
-  suburb        String?
-  contactType   ContactType    @default(LEAD)
-  leadSource    String?
-  status        ContactStatus  @default(NEW)
-  createdAt     DateTime       @default(now())
-  updatedAt     DateTime       @updatedAt
+  id        String   @id
+  // Hard-coded core properties (always present)
+  name      String
+  email     String?
+  phone     String?
+  address   String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
   
-  userId        String
-  user          User?          @relation(fields: [userId], references: [id])
+  userId    String
+  user      User?    @relation(fields: [userId], references: [id])
 
+  // Dynamic custom field values
+  customFieldValues ContactCustomFieldValue[]
+  
   // Relations
-  customFields  ContactCustomField[]
-  tasks         Task[]
-  notes         Note[]
-  activities    Activity[]
+  tasks      Task[]
+  notes      Note[]
+  activities Activity[]
   
   // Add indexes for better query performance
   @@index([userId])
   @@index([userId, createdAt])
-  @@index([userId, contactType])
-  @@index([userId, status])
   @@index([name])
   @@index([email])
   @@map("contacts")
 }
 
-model ContactCustomField {
-  id            String          @id @default(cuid())
-  contactId     String
-  fieldName     String
-  fieldValue    String
-  fieldType     CustomFieldType @default(TEXT)
-  contact       Contact         @relation(fields: [contactId], references: [id], onDelete: Cascade)
+// Define what custom properties are available for a user
+model CustomPropertyDefinition {
+  id           String                     @id @default(cuid())
+  userId       String
+  name         String                     // Display name (e.g., "Lead Source")
+  fieldKey     String                     // Internal key (e.g., "lead_source")
+  fieldType    CustomFieldType
+  isRequired   Boolean                    @default(false)
+  defaultValue String?
+  options      CustomPropertyOption[]     // For dropdown/multiselect
+  sortOrder    Int                        @default(0)
+  isActive     Boolean                    @default(true)
+  createdAt    DateTime                   @default(now())
+  updatedAt    DateTime                   @updatedAt
   
-  @@map("contact_custom_fields")
+  user         User                       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  fieldValues  ContactCustomFieldValue[]
+  
+  // Ensure unique field keys per user
+  @@unique([userId, fieldKey])
+  @@index([userId, isActive])
+  @@index([userId, sortOrder])
+  @@map("custom_property_definitions")
+}
+
+// Options for dropdown/multiselect custom properties
+model CustomPropertyOption {
+  id         String                   @id @default(cuid())
+  propertyId String
+  label      String                   // Display text
+  value      String                   // Internal value
+  sortOrder  Int                      @default(0)
+  isActive   Boolean                  @default(true)
+  createdAt  DateTime                 @default(now())
+  
+  property   CustomPropertyDefinition @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  
+  @@index([propertyId, sortOrder])
+  @@map("custom_property_options")
+}
+
+// Store actual custom field values for contacts
+model ContactCustomFieldValue {
+  id         String                   @id @default(cuid())
+  contactId  String
+  propertyId String
+  value      String                   // JSON string for complex types
+  createdAt  DateTime                 @default(now())
+  updatedAt  DateTime                 @updatedAt
+  
+  contact    Contact                  @relation(fields: [contactId], references: [id], onDelete: Cascade)
+  property   CustomPropertyDefinition @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  
+  // Ensure one value per property per contact
+  @@unique([contactId, propertyId])
+  @@index([contactId])
+  @@index([propertyId])
+  @@map("contact_custom_field_values")
 }
 
 model Task {
@@ -108,23 +157,6 @@ model Activity {
   @@map("activities")
 }
 
-enum ContactStatus {
-  NEW
-  CONTACTED
-  QUALIFIED
-  PROPOSAL
-  NEGOTIATION
-  CLOSED_WON
-  CLOSED_LOST
-}
-
-enum ContactType {
-  BUYER
-  SELLER
-  PAST_CLIENT
-  LEAD
-}
-
 enum TaskStatus {
   PENDING
   IN_PROGRESS
@@ -156,5 +188,10 @@ enum CustomFieldType {
   EMAIL
   PHONE
   DATE
+  DATETIME
   BOOLEAN
+  DROPDOWN
+  MULTISELECT
+  URL
+  TEXTAREA
 }

@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useContactPropertyOptions } from '../hooks/useContactPropertyOptions';
 import { Save, X } from 'lucide-react';
 
 /**
@@ -21,10 +22,13 @@ const EditContactModal = ({ isOpen, contact, onClose, onUpdateContact }) => {
     phone: '',
     address: '',
     suburb: '',
-    contactType: 'LEAD',
+    contactType: '',
     leadSource: '',
-    status: 'NEW'
+    status: ''
   });
+
+  // Get user property options
+  const { typeOptions, sourceOptions, statusOptions, isLoading: optionsLoading } = useContactPropertyOptions();
 
   // Form validation state
   const [errors, setErrors] = useState({});
@@ -42,14 +46,13 @@ const EditContactModal = ({ isOpen, contact, onClose, onUpdateContact }) => {
         phone: contact.phone || '',
         address: contact.address || '',
         suburb: contact.suburb || '',
-        contactType: contact.contactType || 'LEAD',
-        leadSource: contact.leadSource || '',
-        status: contact.status || 'NEW'
+        contactType: contact.contactType || (typeOptions[0] || ''),
+        leadSource: contact.leadSource || (sourceOptions[0] || ''),
+        status: contact.status || (statusOptions[0] || '')
       });
-      // Clear any existing errors when loading new contact
       setErrors({});
     }
-  }, [contact]);
+  }, [contact, typeOptions, sourceOptions, statusOptions]);
 
   /**
    * Handle input field changes
@@ -244,6 +247,7 @@ const EditContactModal = ({ isOpen, contact, onClose, onUpdateContact }) => {
 
   // Don't render anything if modal is not open or no contact selected
   if (!isOpen || !contact) return null;
+  if (optionsLoading) return <div>Loading options...</div>;
 
   return (
     <div className="modal-overlay" onClick={handleOverlayClick}>
@@ -341,7 +345,7 @@ const EditContactModal = ({ isOpen, contact, onClose, onUpdateContact }) => {
             />
           </div>
 
-          {/* Contact Type Field - Required with default */}
+          {/* Contact Type Field - Required with default, supports multi-select if needed */}
           <div className="form-group">
             <label htmlFor="edit-contactType">Contact Type</label>
             <select
@@ -350,27 +354,29 @@ const EditContactModal = ({ isOpen, contact, onClose, onUpdateContact }) => {
               value={formData.contactType}
               onChange={handleInputChange}
             >
-              <option value="LEAD">Lead</option>
-              <option value="BUYER">Buyer</option>
-              <option value="SELLER">Seller</option>
-              <option value="PAST_CLIENT">Past Client</option>
+              {typeOptions.map(opt => (
+                <option key={opt} value={opt}>{opt}</option>
+              ))}
             </select>
           </div>
 
-          {/* Lead Source Field - Optional */}
+          {/* Lead Source Field - Optional, dropdown */}
           <div className="form-group">
             <label htmlFor="edit-leadSource">Lead Source</label>
-            <input
+            <select
               id="edit-leadSource"
               name="leadSource"
-              type="text"
               value={formData.leadSource}
               onChange={handleInputChange}
-              placeholder="Enter lead source (e.g., Website, Referral, Advertisement)"
-            />
+            >
+              {sourceOptions.map(opt => (
+                <option key={opt} value={opt}>{opt}</option>
+              ))}
+              <option value="">Other</option>
+            </select>
           </div>
 
-          {/* Status Field - Required */}
+          {/* Status Field - Required, dropdown */}
           <div className="form-group">
             <label htmlFor="edit-status">Status</label>
             <select
@@ -379,13 +385,9 @@ const EditContactModal = ({ isOpen, contact, onClose, onUpdateContact }) => {
               value={formData.status}
               onChange={handleInputChange}
             >
-              <option value="NEW">New</option>
-              <option value="CONTACTED">Contacted</option>
-              <option value="QUALIFIED">Qualified</option>
-              <option value="PROPOSAL">Proposal</option>
-              <option value="NEGOTIATION">Negotiation</option>
-              <option value="CLOSED_WON">Closed Won</option>
-              <option value="CLOSED_LOST">Closed Lost</option>
+              {statusOptions.map(opt => (
+                <option key={opt} value={opt}>{opt}</option>
+              ))}
             </select>
           </div>
 

@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { useContactPropertyOptions } from '../hooks/useContactPropertyOptions';
 import { createPortal } from 'react-dom';
 import {
   ChevronLeft,
@@ -67,16 +68,7 @@ const ContactDetailView = ({
     }
   }, [isDropdownOpen]);
 
-  // Status mapping for clean display
-  const statusMapping = {
-    'NEW': 'new',
-    'CONTACTED': 'contacted',
-    'QUALIFIED': 'qualified',
-    'PROPOSAL': 'proposal',
-    'NEGOTIATION': 'negotiation',
-    'CLOSED_WON': 'closed_won',
-    'CLOSED_LOST': 'closed_lost'
-  };
+  // Status mapping for clean display is now handled by user options below
 
   const priorityMapping = {
     'LOW': 'low',
@@ -446,9 +438,11 @@ const ContactDetailView = ({
     );
   };
 
+  const { typeOptions, sourceOptions, statusOptions, isLoading: optionsLoading } = useContactPropertyOptions();
+  const statusMapping = Object.fromEntries((statusOptions || []).map(opt => [opt, opt.toLowerCase().replace(/\s/g, '_')]));
   const renderStatusBadge = () => {
     const statusClass = statusMapping[contact.status] || 'new';
-    const statusText = contact.status?.toLowerCase().replace('_', ' ') || 'New';
+    const statusText = contact.status || (statusOptions[0] || 'New');
 
     if (editingField === 'status') {
       return (
@@ -459,13 +453,9 @@ const ContactDetailView = ({
           className="edit-input"
           autoFocus
         >
-          <option value="NEW">New</option>
-          <option value="CONTACTED">Contacted</option>
-          <option value="QUALIFIED">Qualified</option>
-          <option value="PROPOSAL">Proposal</option>
-          <option value="NEGOTIATION">Negotiation</option>
-          <option value="CLOSED_WON">Closed Won</option>
-          <option value="CLOSED_LOST">Closed Lost</option>
+          {statusOptions.map(opt => (
+            <option key={opt} value={opt}>{opt}</option>
+          ))}
         </select>
       );
     }
@@ -481,19 +471,12 @@ const ContactDetailView = ({
   };
 
   const renderContactTypeField = () => {
-    const contactTypeMap = {
-      'BUYER': 'Buyer',
-      'SELLER': 'Seller',
-      'PAST_CLIENT': 'Past Client',
-      'LEAD': 'Lead'
-    };
-    const displayValue = contactTypeMap[contact.contactType] || 'Lead';
-
+    const displayValue = contact.customFields?.contact_type || (typeOptions[0] || '');
     if (editingField === 'contactType') {
       return (
         <select
-          value={contact.contactType || 'LEAD'}
-          onChange={(e) => {
+          value={contact.customFields?.contact_type || (typeOptions[0] || '')}
+          onChange={e => {
             onContactUpdate(contact.id, 'contactType', e.target.value);
             setEditingField(null);
           }}
@@ -501,17 +484,15 @@ const ContactDetailView = ({
           className="edit-input"
           autoFocus
         >
-          <option value="LEAD">Lead</option>
-          <option value="BUYER">Buyer</option>
-          <option value="SELLER">Seller</option>
-          <option value="PAST_CLIENT">Past Client</option>
+          {typeOptions.map(opt => (
+            <option key={opt} value={opt}>{opt}</option>
+          ))}
         </select>
       );
     }
-
     return (
       <div
-        className={`field-value ${!contact.contactType ? 'empty' : ''}`}
+        className={`field-value ${!contact.customFields?.contact_type ? 'empty' : ''}`}
         onClick={() => setEditingField('contactType')}
       >
         {displayValue}
@@ -678,7 +659,23 @@ const ContactDetailView = ({
                 <Building className="field-icon" size={16} />
                 <div className="field-content">
                   <div className="field-label">Lead Source</div>
-                  {renderEditableField('leadSource', contact.leadSource, 'Click to add lead source')}
+                  {editingField === 'leadSource' ? (
+                    <select
+                      value={contact.leadSource || (sourceOptions[0] || '')}
+                      onChange={e => {
+                        onContactUpdate(contact.id, 'leadSource', e.target.value);
+                        setEditingField(null);
+                      }}
+                      onBlur={() => setEditingField(null)}
+                      className="edit-input"
+                      autoFocus
+                    >
+                      {sourceOptions.map(opt => (
+                        <option key={opt} value={opt}>{opt}</option>
+                      ))}
+                      <option value="">Other</option>
+                    </select>
+                  ) : renderEditableField('leadSource', contact.leadSource, 'Click to add lead source')}
                 </div>
               </div>
             </div>

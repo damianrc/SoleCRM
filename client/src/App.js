@@ -5,6 +5,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
 import './App.css';
 import './styles/themes.css';
+import './styles/typography.css';
 import Home from './components/Home';
 import Login from './components/Login';
 import Register from './components/Register.js';

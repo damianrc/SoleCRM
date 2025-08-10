@@ -28,6 +28,7 @@ import { EditableCell } from './EditableCell.js';
 import { Checkbox } from './ui/Checkbox.js';
 import { Button } from './ui/Button.js';
 import { BulkDeleteModal } from './ui/BulkDeleteModal.js';
+import { useContactPropertyOptions } from '../hooks/useContactPropertyOptions';
 import '../styles/tables/table.css';
 
 // Create column helper
@@ -132,7 +133,7 @@ const NameCell = ({ info, onContactUpdate, onViewContact }) => {
 };
 
 // Generic custom cell component (same behavior as name but without view button)
-const CustomCell = ({ info, onContactUpdate }) => {
+const CustomCell = ({ info, onContactUpdate, options }) => {
   const [isEditing, setIsEditing] = useState(false);
   const [value, setValue] = useState(info.getValue());
   const inputRef = useRef(null);
@@ -196,15 +197,31 @@ const CustomCell = ({ info, onContactUpdate }) => {
     <div className={`custom-cell-container ${isEditing ? 'editing' : ''}`} ref={cellRef}>
       {isEditing ? (
         <div className="cell-input-container">
-          <input
-            ref={inputRef}
-            value={value || ''}
-            onChange={(e) => setValue(e.target.value)}
-            onBlur={handleBlur}
-            onKeyDown={handleKeyDown}
-            className="cell-input"
-            placeholder={`Enter ${info.column.id}`}
-          />
+          {options ? (
+            <select
+              ref={inputRef}
+              value={value || ''}
+              onChange={e => setValue(e.target.value)}
+              onBlur={handleBlur}
+              onKeyDown={handleKeyDown}
+              className="cell-input"
+            >
+              <option value="">-- Select --</option>
+              {options.map(opt => (
+                <option key={opt} value={opt}>{opt}</option>
+              ))}
+            </select>
+          ) : (
+            <input
+              ref={inputRef}
+              value={value || ''}
+              onChange={e => setValue(e.target.value)}
+              onBlur={handleBlur}
+              onKeyDown={handleKeyDown}
+              className="cell-input"
+              placeholder={`Enter ${info.column.id}`}
+            />
+          )}
         </div>
       ) : (
         <div 
@@ -229,6 +246,7 @@ const ContactsList = ({
   onSelectionChange,
   onBulkDeleteClick,
 }) => {
+  const { typeOptions, sourceOptions, statusOptions } = useContactPropertyOptions();
   const [rowSelection, setRowSelection] = useState({});
   const [sorting, setSorting] = useState([]);
   const [showBulkDeleteModal, setShowBulkDeleteModal] = useState(false);
@@ -276,10 +294,10 @@ const ContactsList = ({
       email: contact.email || '',
       phone: contact.phone || '',
       address: contact.address || '',
-      suburb: contact.suburb || '',
-      contactType: contact.contactType || '',
-      leadSource: contact.leadSource || '',
-      status: contact.status || '',
+      suburb: contact.customFields?.suburb || '',
+      contactType: contact.customFields?.contact_type || '',
+      leadSource: contact.customFields?.lead_source || '',
+      status: contact.customFields?.status || '',
       createdAt: contact.createdAt,
       updatedAt: contact.updatedAt
     }));
@@ -421,6 +439,7 @@ const ContactsList = ({
           column={cellInfo.column}
           table={cellInfo.table}
           onUpdate={onContactUpdate}
+          options={typeOptions}
         />
       ),
       size: 150,
@@ -434,6 +453,7 @@ const ContactsList = ({
         <CustomCell
           info={info}
           onContactUpdate={onContactUpdate}
+          options={sourceOptions}
         />
       ),
       size: 150,
@@ -458,6 +478,7 @@ const ContactsList = ({
           column={cellInfo.column}
           table={cellInfo.table}
           onUpdate={onContactUpdate}
+          options={statusOptions}
         />
       ),
       size: 150,
@@ -487,7 +508,7 @@ const ContactsList = ({
       enableSorting: true,
       enableReordering: true,
     }),
-  ], [onViewContact, onContactUpdate]);
+  ], [onViewContact, onContactUpdate, typeOptions, sourceOptions, statusOptions]);
 
   // Create table instance with enhanced settings
   const table = useReactTable({

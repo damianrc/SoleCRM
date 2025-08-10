@@ -1,273 +1,300 @@
-/* Theme styles will be added here in Phase 3 */
+/* Light Minimal + Soft Accent Theme System */
 
 :root {
-  /* Light Theme Colors */
-  --color-primary-bg: #ffffff;
-  --color-secondary-bg: #f0f2f5;
-  --color-primary-text: #222222;
-  --color-secondary-text: #555555;
-  --color-reverse-text: #ffffff;
-  --color-primary-border: #d4d4d4; /* Black border for primary */
-  --color-secondary-border: #b0b3b8; /* Dark grey border for secondary */
-  --color-hover-bg: #f8fafc84; /* Very light grey for hover in light mode */
+  /* Core Brand Colors - Soft Pastel System */
+  --brand-primary: #a8c8ec;
+  --brand-secondary: #c8a8ec;
+  --brand-tertiary: #a8ecb4;
 
-  /* Extended Color Palette for Light Theme */
-  --color-accent: #2C4386; /* Primary accent (blue) */
-  --color-accent-hover: #1d4ed8;
-  --color-accent-active: #1e40af;
-  --color-success: #22c55e;
-  --color-success-bg: #e7f9ef;
-  --color-warning: #facc15;
-  --color-warning-bg: #fffbe6;
-  --color-error: #ef4444;
-  --color-error-bg: #ffeaea;
-  --color-info: #0ea5e9;
-  --color-info-bg: #e0f2fe;
-  --color-disabled-bg: #e5e7eb;
-  --color-disabled-text: #9ca3af;
-  --color-overlay: rgba(0,0,0,0.3);
+  /* Light Theme Colors - Ultra Clean Minimal */
+  --color-primary-bg: #ffffff;
+  --color-secondary-bg: #fafbfc;
+  --color-primary-text: #3c4043;
+  --color-secondary-text: #70757a;
+  --color-reverse-text: #ffffff;
+  --color-primary-border: #e8eaed;
+  --color-secondary-border: #dadce0;
+  --color-hover-bg: #f8f9fa;
+
+  /* Extended Color Palette for Light Theme - Soft Pastels */
+  --color-accent: #a8c8ec;
+  --color-accent-hover: #96b8e0;
+  --color-accent-active: #84a8d4;
+  --color-success: #a8d8a8;
+  --color-success-bg: #f6fbf6;
+  --color-warning: #f4d1a7;
+  --color-warning-bg: #fdf9f4;
+  --color-error: #f2b4b4;
+  --color-error-bg: #fdf6f6;
+  --color-info: #a8c8ec;
+  --color-info-bg: #f6f9fd;
+  --color-disabled-bg: #f9f9fa;
+  --color-disabled-text: #9aa0a6;
+  --color-overlay: rgba(60, 64, 67, 0.15);
   --color-modal-bg: #ffffff;
-  --color-card-bg: #f9fafb;
-  --color-sidebar-bg: #d1d5db; /* More distinct sidebar background for light mode */
-  --color-table-header-bg: #f3f4f6;
-  --color-table-row-hover: #f1f5f9;
+  --color-card-bg: #ffffff;
+  --color-sidebar-bg: #fafbfc;
+  --color-table-header-bg: #fafbfc;
+  --color-table-row-hover: #f8f9fa;
   --color-button-primary-bg: var(--color-accent);
   --color-button-primary-text: #ffffff;
-  --color-button-secondary-bg: var(--color-secondary-bg);
-  --color-button-secondary-text: var(--color-primary-text);
-  --color-link: #2563eb;
-  --color-link-hover: #1d4ed8;
-  --color-shadow: rgba(0,0,0,0.08);
-  --color-sidebar: #848484;
+  --color-button-secondary-bg: #f8f9fa;
+  --color-button-secondary-text: #3c4043;
+  --color-link: #a8c8ec;
+  --color-link-hover: #96b8e0;
+  --color-shadow: rgba(60, 64, 67, 0.04);
+  --color-sidebar: #70757a;
 
   /* Bootstrap variable overrides for light mode */
   --bs-body-bg: #ffffff;
-  --bs-body-color: #222222;
-  --bs-card-bg: #f9fafb;
-  --bs-card-border-color: #d4d4d4;
+  --bs-body-color: #3c4043;
+  --bs-card-bg: #ffffff;
+  --bs-card-border-color: #e8eaed;
 
   /* Modal and Overlay Styles */
-  --color-modal-overlay: rgba(0, 0, 0, 0.5); /* Modal overlay background */
-  --color-modal-shadow: rgba(0,0,0,0.15); /* Modal shadow */
-  --color-modal-header-border: #e5e7eb;
-  --color-modal-footer-bg: #f9fafb;
-  --color-modal-footer-border: #e5e7eb;
+  --color-modal-overlay: rgba(60, 64, 67, 0.2);
+  --color-modal-shadow: rgba(60, 64, 67, 0.06);
+  --color-modal-header-border: #e8eaed;
+  --color-modal-footer-bg: #fafbfc;
+  --color-modal-footer-border: #e8eaed;
 
   /* Progress and Upload Styles */
-  --color-progress-bg: #f9fafb;
-  --color-progress-step-bg: #e5e7eb;
-  --color-progress-step-active-bg: #3b82f6;
+  --color-progress-bg: #fafbfc;
+  --color-progress-step-bg: #e8eaed;
+  --color-progress-step-active-bg: #a8c8ec;
   --color-progress-step-active-text: #ffffff;
-  --color-upload-area-border: #d1d5db;
-  --color-upload-area-bg: #fafafa;
-  --color-upload-area-hover-border: #3b82f6;
-  --color-upload-area-hover-bg: #f0f9ff;
+  --color-upload-area-border: #dadce0;
+  --color-upload-area-bg: #fafbfc;
+  --color-upload-area-hover-border: #a8c8ec;
+  --color-upload-area-hover-bg: #f6f9fd;
 
   /* File and Mapping Table Styles */
-  --color-file-info-bg: #f3f4f6;
-  --color-mapping-table-border: #e5e7eb;
-  --color-mapping-header-bg: #f9fafb;
-  --color-mapping-header-text: #374151;
-  --color-mapping-row-border: #f3f4f6;
-  --color-column-name: #374151;
-  --color-sample-data: #6b7280;
-  --color-field-select-border: #d1d5db;
-  --color-field-select-focus: #3b82f6;
-  --color-mapping-info-bg: #f0f9ff;
-  --color-mapping-info-border: #bae6fd;
-  --color-mapping-info-text: #0369a1;
+  --color-file-info-bg: #fafbfc;
+  --color-mapping-table-border: #e8eaed;
+  --color-mapping-header-bg: #fafbfc;
+  --color-mapping-header-text: #3c4043;
+  --color-mapping-row-border: #f8f9fa;
+  --color-column-name: #3c4043;
+  --color-sample-data: #70757a;
+  --color-field-select-border: #dadce0;
+  --color-field-select-focus: #a8c8ec;
+  --color-mapping-info-bg: #f6f9fd;
+  --color-mapping-info-border: #c8d8f0;
+  --color-mapping-info-text: #6b7db8;
 
   /* Preview Table Styles */
-  --color-preview-table-border: #e5e7eb;
-  --color-preview-header-bg: #f9fafb;
-  --color-preview-header-text: #374151;
-  --color-preview-row-border: #f3f4f6;
-  --color-preview-more-bg: #f9fafb;
-  --color-preview-more-text: #6b7280;
+  --color-preview-table-border: #e8eaed;
+  --color-preview-header-bg: #fafbfc;
+  --color-preview-header-text: #3c4043;
+  --color-preview-row-border: #f8f9fa;
+  --color-preview-more-bg: #fafbfc;
+  --color-preview-more-text: #70757a;
   --color-preview-more-italic: italic;
 
   /* Error Styles */
-  --color-errors-bg: #fef2f2;
-  --color-errors-border: #fca5a5;
-  --color-errors-icon: #dc2626;
-  --color-errors-header: #dc2626;
-  --color-errors-list: #991b1b;
+  --color-errors-bg: #fdf6f6;
+  --color-errors-border: #e6c4c4;
+  --color-errors-icon: #d57373;
+  --color-errors-header: #d57373;
+  --color-errors-list: #c54a4a;
 
   /* Loading and Spinner Styles */
-  --color-loading-text: #6b7280;
-  --color-spinner-bg: #e5e7eb;
-  --color-spinner-fg: #3b82f6;
+  --color-loading-text: #70757a;
+  --color-spinner-bg: #e8eaed;
+  --color-spinner-fg: #a8c8ec;
 
   /* Button and Border Styles */
-  --color-button-secondary-border: #d1d5db;
-  --color-button-secondary-hover-bg: #f9fafb;
-  --color-button-primary-hover-bg: #2563eb;
-  --color-button-success-bg: #10b981;
-  --color-button-success-hover-bg: #059669;
-  --color-select-arrow: #6b7280;
+  --color-button-secondary-border: #dadce0;
+  --color-button-secondary-hover-bg: #f6f8fa;
+  --color-button-primary-hover-bg: #96b8e0;
+  --color-button-success-bg: #a8d8a8;
+  --color-button-success-hover-bg: #96cc96;
+  --color-select-arrow: #70757a;
 
-  /* Gradients for backgrounds and buttons */
-  --gradient-primary: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  --gradient-accent: linear-gradient(135deg, #4299e1 0%, #3182ce 100%);
-  --gradient-accent-hover: linear-gradient(135deg, #3182ce 0%, #2c5aa0 100%);
-  --color-accent-outline: #4299e1;
-  --color-accent-outline-hover: #3182ce;
-  --color-outline-bg-hover: #4299e1;
-  --color-outline-shadow: rgba(66, 153, 225, 0.3);
-  --color-feature-bg: rgba(255, 255, 255, 0.6);
-  --color-feature-bg-hover: rgba(255, 255, 255, 0.8);
-  --color-feature-border: rgba(255, 255, 255, 0.3);
-  --color-feature-border-solid: #e2e8f0;
-  --color-feature-text: #2d3748;
-  --color-disabled-btn-bg: #cbd5e0;
-  --color-disabled-btn-text: #a0aec0;
-  --color-success-outline: #2f855a;
-  --color-success-bg: #c6f6d5;
-  --color-success-border: #9ae6b4;
-  --color-error-outline: #c53030;
-  --color-error-bg: #fed7d7;
-  --color-error-border: #feb2b2;
-  --color-error-shadow: rgba(245, 101, 101, 0.1);
-  --color-placeholder: #a0aec0;
-  --color-password-req: #4a5568;
-  --color-password-req-li: #718096;
-  --color-password-req-li-valid: #38a169;
-  --color-password-req-li-invalid: #f56565;
+  /* Gradients for backgrounds and buttons - Soft Pastels */
+  --gradient-primary: linear-gradient(135deg, #a8c8ec 0%, #c8a8ec 100%);
+  --gradient-accent: linear-gradient(135deg, #a8c8ec 0%, #a8ecb4 100%);
+  --gradient-accent-hover: linear-gradient(135deg, #96b8e0 0%, #96e0a2 100%);
+  --color-accent-outline: #a8c8ec;
+  --color-accent-outline-hover: #96b8e0;
+  --color-outline-bg-hover: #f6f9fd;
+  --color-outline-shadow: rgba(168, 200, 236, 0.15);
+  --color-feature-bg: rgba(255, 255, 255, 0.8);
+  --color-feature-bg-hover: rgba(250, 251, 252, 0.9);
+  --color-feature-border: rgba(232, 234, 237, 0.5);
+  --color-feature-border-solid: #e8eaed;
+  --color-feature-text: #3c4043;
+  --color-disabled-btn-bg: #f9f9fa;
+  --color-disabled-btn-text: #9aa0a6;
+  --color-success-outline: #a8d8a8;
+  --color-success-bg: #f6fbf6;
+  --color-success-border: #c8e6c8;
+  --color-error-outline: #f2b4b4;
+  --color-error-bg: #fdf6f6;
+  --color-error-border: #e6c4c4;
+  --color-error-shadow: rgba(242, 180, 180, 0.06);
+  --color-placeholder: #9aa0a6;
+  --color-password-req: #3c4043;
+  --color-password-req-li: #70757a;
+  --color-password-req-li-valid: #7cb87c;
+  --color-password-req-li-invalid: #d57373;
+
+  /* New Enhanced Variables for Better Consistency */
+  --color-surface-1: #ffffff;
+  --color-surface-2: #fafbfc;
+  --color-surface-3: #f8f9fa;
+  --color-text-1: #3c4043;
+  --color-text-2: #5f6368;
+  --color-text-3: #70757a;
+  --color-border-1: #e8eaed;
+  --color-border-2: #dadce0;
+  --color-focus-ring: rgba(168, 200, 236, 0.2);
 }
 
 [data-theme="dark"] {
-  /* Dark Theme Colors */
-  --color-primary-bg: #181a1b;
-  --color-secondary-bg: #23272a;
-  --color-primary-text: #f5f6fa;
-  --color-secondary-text: #b0b3b8;
-  --color-reverse-text: #000000;
-  --color-primary-border: #000000; /* Black border for primary */
-  --color-secondary-border: #444950; /* Darker grey for secondary in dark mode */
-  --color-hover-bg: #23272a83; /* Grey for hover in dark mode */
+  /* Dark Theme Colors - Gentle Dark with Soft Glows */
+  --color-primary-bg: #1f1f23;
+  --color-secondary-bg: #2a2a2e;
+  --color-primary-text: #f0f0f4;
+  --color-secondary-text: #cfcfd4;
+  --color-reverse-text: #1f1f23;
+  --color-primary-border: #42424a;
+  --color-secondary-border: #4a4a54;
+  --color-hover-bg: #35353a;
 
-  /* Extended Color Palette for Dark Theme */
-  --color-accent: #2C4386;
-  --color-accent-hover: #3b82f6;
-  --color-accent-active: #1e40af;
-  --color-success: #4ade80;
-  --color-success-bg: #1e293b;
-  --color-warning: #fde047;
-  --color-warning-bg: #3b3b1f;
-  --color-error: #f87171;
-  --color-error-bg: #3b1f1f;
-  --color-info: #38bdf8;
-  --color-info-bg: #1e293b;
-  --color-disabled-bg: #23272a;
-  --color-disabled-text: #6b7280;
-  --color-overlay: rgba(0,0,0,0.7);
-  --color-modal-bg: #23272a;
-  --color-card-bg: #181a1b;
-  --color-sidebar-bg: #181f2a; /* More distinct sidebar background for dark mode */
-  --color-table-header-bg: #23272a;
-  --color-table-row-hover: #23272a;
+  /* Extended Color Palette for Dark Theme - Muted Soft Accents */
+  --color-accent: #94b3d9;
+  --color-accent-hover: #a3c1e0;
+  --color-accent-active: #85a4cc;
+  --color-success: #94d194;
+  --color-success-bg: #252b25;
+  --color-warning: #d9bc94;
+  --color-warning-bg: #2b2a25;
+  --color-error: #d9a494;
+  --color-error-bg: #2b2525;
+  --color-info: #94b3d9;
+  --color-info-bg: #252a2b;
+  --color-disabled-bg: #2a2a2e;
+  --color-disabled-text: #737380;
+  --color-overlay: rgba(31, 31, 35, 0.7);
+  --color-modal-bg: #2a2a2e;
+  --color-card-bg: #2a2a2e;
+  --color-sidebar-bg: #1f1f23;
+  --color-table-header-bg: #2a2a2e;
+  --color-table-row-hover: #35353a;
   --color-button-primary-bg: var(--color-accent);
-  --color-button-primary-text: #181a1b;
-  --color-button-secondary-bg: var(--color-secondary-bg);
-  --color-button-secondary-text: var(--color-primary-text);
-  --color-link: #60a5fa;
-  --color-link-hover: #3b82f6;
-  --color-shadow: rgba(0,0,0,0.32);
-  --color-sidebar: #292929;
+  --color-button-primary-text: #1f1f23;
+  --color-button-secondary-bg: #42424a;
+  --color-button-secondary-text: #f0f0f4;
+  --color-link: #94b3d9;
+  --color-link-hover: #a3c1e0;
+  --color-shadow: rgba(0, 0, 0, 0.2);
+  --color-sidebar: #9b9ba8;
 
   /* Bootstrap variable overrides for dark mode */
-  --bs-body-bg: #181a1b;
-  --bs-body-color: #f5f6fa;
-  --bs-card-bg: #23272a;
-  --bs-card-border-color: #444950;
+  --bs-body-bg: #1f1f23;
+  --bs-body-color: #f0f0f4;
+  --bs-card-bg: #2a2a2e;
+  --bs-card-border-color: #42424a;
 
   /* Modal and Overlay Styles */
-  --color-modal-overlay: rgba(0, 0, 0, 0.7);
-  --color-modal-shadow: rgba(0,0,0,0.32);
-  --color-modal-header-border: #23272a;
-  --color-modal-footer-bg: #23272a;
-  --color-modal-footer-border: #23272a;
+  --color-modal-overlay: rgba(31, 31, 35, 0.8);
+  --color-modal-shadow: rgba(0, 0, 0, 0.25);
+  --color-modal-header-border: #42424a;
+  --color-modal-footer-bg: #2a2a2e;
+  --color-modal-footer-border: #42424a;
 
   /* Progress and Upload Styles */
-  --color-progress-bg: #23272a;
-  --color-progress-step-bg: #444950;
-  --color-progress-step-active-bg: #3b82f6;
-  --color-progress-step-active-text: #ffffff;
-  --color-upload-area-border: #444950;
-  --color-upload-area-bg: #23272a;
-  --color-upload-area-hover-border: #3b82f6;
-  --color-upload-area-hover-bg: #1e293b;
+  --color-progress-bg: #2a2a2e;
+  --color-progress-step-bg: #4a4a54;
+  --color-progress-step-active-bg: #94b3d9;
+  --color-progress-step-active-text: #1f1f23;
+  --color-upload-area-border: #4a4a54;
+  --color-upload-area-bg: #2a2a2e;
+  --color-upload-area-hover-border: #94b3d9;
+  --color-upload-area-hover-bg: #252a2b;
 
   /* File and Mapping Table Styles */
-  --color-file-info-bg: #181a1b;
-  --color-mapping-table-border: #444950;
-  --color-mapping-header-bg: #23272a;
-  --color-mapping-header-text: #f5f6fa;
-  --color-mapping-row-border: #23272a;
-  --color-column-name: #f5f6fa;
-  --color-sample-data: #b0b3b8;
-  --color-field-select-border: #444950;
-  --color-field-select-focus: #3b82f6;
-  --color-mapping-info-bg: #1e293b;
-  --color-mapping-info-border: #38bdf8;
-  --color-mapping-info-text: #38bdf8;
+  --color-file-info-bg: #2a2a2e;
+  --color-mapping-table-border: #42424a;
+  --color-mapping-header-bg: #2a2a2e;
+  --color-mapping-header-text: #f0f0f4;
+  --color-mapping-row-border: #35353a;
+  --color-column-name: #f0f0f4;
+  --color-sample-data: #cfcfd4;
+  --color-field-select-border: #4a4a54;
+  --color-field-select-focus: #94b3d9;
+  --color-mapping-info-bg: #252a2b;
+  --color-mapping-info-border: #94b3d9;
+  --color-mapping-info-text: #a3c1e0;
 
   /* Preview Table Styles */
-  --color-preview-table-border: #444950;
-  --color-preview-header-bg: #23272a;
-  --color-preview-header-text: #f5f6fa;
-  --color-preview-row-border: #23272a;
-  --color-preview-more-bg: #23272a;
-  --color-preview-more-text: #b0b3b8;
+  --color-preview-table-border: #42424a;
+  --color-preview-header-bg: #2a2a2e;
+  --color-preview-header-text: #f0f0f4;
+  --color-preview-row-border: #35353a;
+  --color-preview-more-bg: #2a2a2e;
+  --color-preview-more-text: #cfcfd4;
   --color-preview-more-italic: italic;
 
   /* Error Styles */
-  --color-errors-bg: #3b1f1f;
-  --color-errors-border: #f87171;
-  --color-errors-icon: #f87171;
-  --color-errors-header: #f87171;
-  --color-errors-list: #f87171;
+  --color-errors-bg: #2b2525;
+  --color-errors-border: #d9a494;
+  --color-errors-icon: #e0b5a5;
+  --color-errors-header: #e0b5a5;
+  --color-errors-list: #e6c6b6;
 
   /* Loading and Spinner Styles */
-  --color-loading-text: #b0b3b8;
-  --color-spinner-bg: #444950;
-  --color-spinner-fg: #3b82f6;
+  --color-loading-text: #cfcfd4;
+  --color-spinner-bg: #4a4a54;
+  --color-spinner-fg: #94b3d9;
 
   /* Button and Border Styles */
-  --color-button-secondary-border: #444950;
-  --color-button-secondary-hover-bg: #23272a;
-  --color-button-primary-hover-bg: #1e40af;
-  --color-button-success-bg: #4ade80;
-  --color-button-success-hover-bg: #059669;
-  --color-select-arrow: #b0b3b8;
+  --color-button-secondary-border: #4a4a54;
+  --color-button-secondary-hover-bg: #35353a;
+  --color-button-primary-hover-bg: #a3c1e0;
+  --color-button-success-bg: #94d194;
+  --color-button-success-hover-bg: #a3d9a3;
+  --color-select-arrow: #cfcfd4;
 
-  /* Gradients for backgrounds and buttons */
-  --gradient-primary: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  --gradient-accent: linear-gradient(135deg, #4299e1 0%, #3182ce 100%);
-  --gradient-accent-hover: linear-gradient(135deg, #3182ce 0%, #2c5aa0 100%);
-  --color-accent-outline: #60a5fa;
-  --color-accent-outline-hover: #3b82f6;
-  --color-outline-bg-hover: #60a5fa;
-  --color-outline-shadow: rgba(66, 153, 225, 0.3);
-  --color-feature-bg: rgba(36, 41, 46, 0.6);
-  --color-feature-bg-hover: rgba(36, 41, 46, 0.8);
-  --color-feature-border: rgba(255, 255, 255, 0.1);
-  --color-feature-border-solid: #444950;
-  --color-feature-text: #f5f6fa;
-  --color-disabled-btn-bg: #23272a;
-  --color-disabled-btn-text: #6b7280;
-  --color-success-outline: #4ade80;
-  --color-success-bg: #1e293b;
-  --color-success-border: #38bdf8;
-  --color-error-outline: #f87171;
-  --color-error-bg: #3b1f1f;
-  --color-error-border: #f87171;
-  --color-error-shadow: rgba(248, 113, 113, 0.1);
-  --color-placeholder: #b0b3b8;
-  --color-password-req: #b0b3b8;
-  --color-password-req-li: #b0b3b8;
-  --color-password-req-li-valid: #38a169;
-  --color-password-req-li-invalid: #f87171;
+  /* Gradients for backgrounds and buttons - Soft Dark System */
+  --gradient-primary: linear-gradient(135deg, #94b3d9 0%, #b894d9 100%);
+  --gradient-accent: linear-gradient(135deg, #94b3d9 0%, #94d9a0 100%);
+  --gradient-accent-hover: linear-gradient(135deg, #a3c1e0 0%, #a3e0af 100%);
+  --color-accent-outline: #94b3d9;
+  --color-accent-outline-hover: #a3c1e0;
+  --color-outline-bg-hover: #252a2b;
+  --color-outline-shadow: rgba(148, 179, 217, 0.2);
+  --color-feature-bg: rgba(42, 42, 46, 0.7);
+  --color-feature-bg-hover: rgba(53, 53, 58, 0.8);
+  --color-feature-border: rgba(66, 66, 74, 0.5);
+  --color-feature-border-solid: #42424a;
+  --color-feature-text: #f0f0f4;
+  --color-disabled-btn-bg: #2a2a2e;
+  --color-disabled-btn-text: #737380;
+  --color-success-outline: #94d194;
+  --color-success-bg: #252b25;
+  --color-success-border: #6bb36b;
+  --color-error-outline: #d9a494;
+  --color-error-bg: #2b2525;
+  --color-error-border: #b88f7f;
+  --color-error-shadow: rgba(217, 164, 148, 0.1);
+  --color-placeholder: #9b9ba8;
+  --color-password-req: #cfcfd4;
+  --color-password-req-li: #9b9ba8;
+  --color-password-req-li-valid: #94d194;
+  --color-password-req-li-invalid: #e0b5a5;
+
+  /* New Enhanced Variables for Better Consistency - Dark Mode */
+  --color-surface-1: #1f1f23;
+  --color-surface-2: #2a2a2e;
+  --color-surface-3: #35353a;
+  --color-text-1: #f0f0f4;
+  --color-text-2: #e0e0e6;
+  --color-text-3: #cfcfd4;
+  --color-border-1: #42424a;
+  --color-border-2: #4a4a54;
+  --color-focus-ring: rgba(148, 179, 217, 0.3);
 }
 
 /* Example usage:
@@ -279,5 +306,28 @@ body {
 .header {
   background-color: var(--color-secondary-bg);
   color: var(--color-secondary-text);
+}
+
+.card {
+  background: var(--color-surface-1);
+  border: 1px solid var(--color-border-1);
+  box-shadow: 0 1px 3px var(--color-shadow);
+}
+
+.btn-primary {
+  background: var(--gradient-primary);
+  border: none;
+  box-shadow: 0 2px 8px var(--color-outline-shadow);
+}
+
+.soft-accent {
+  background: linear-gradient(45deg, #a8c8ec, #c8a8ec);
+  color: white;
+  border-radius: 8px;
+  padding: 12px 24px;
+}
+
+.focus-ring:focus {
+  box-shadow: 0 0 0 3px var(--color-focus-ring);
 }
 */
