@@ -1,3 +1,17 @@
+.sidebar-logo-img {
+  width: 40px;
+  height: 40px;
+  max-width: 40px;
+  max-height: 40px;
+  object-fit: contain;
+  display: block;
+  margin: 0;
+  transition: none;
+  position: fixed;
+  top: 10px;
+  left: 12px;
+  z-index: var(--z-sidebar, 10000);
+}
 @import '../typography.css';
 
 /* Sidebar main container */
@@ -7,8 +21,8 @@
   left: 0;
   width: 260px;
   height: 100vh;
-  background-color: var(--color-sidebar);
-  color: white;
+  background-color: var(--color-sidebar-bg);
+  color: var(--color-primary-text);
   display: flex;
   flex-direction: column;
   z-index: var(--z-sidebar, 10000);
@@ -19,15 +33,29 @@
   width: 64px;
 }
 
+
 .sidebar-header {
   padding: 20px;
-  border-bottom: 1px solid rgba(255,255,255,0.1);
+  display: flex;
+  align-items: flex-start;
+  justify-content: flex-start;
 }
 
+/* Logo position is now fixed and doesn't change when collapsed */
+
+
 .sidebar-logo {
-  color: white;
-  text-align: center;
+  color: var(--color-accent);
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  width: 64px;
+  height: 64px;
+  margin: 0;
+  position: relative;
 }
+
+/* Logo img styles are now handled by .sidebar-logo-img class */
 
 .sidebar-nav {
   flex: 1;
@@ -45,6 +73,7 @@
   padding: 0 12px;
 }
 
+
 .nav-item {
   display: flex;
   align-items: center;
@@ -53,7 +82,7 @@
   width: 100%;
   background: none;
   border: none;
-  color: rgba(255,255,255,0.8);
+  color: var(--color-primary-text);
   cursor: pointer;
   border-radius: 8px;
   transition: all 0.2s ease;
@@ -65,14 +94,15 @@
   justify-content: center;
 }
 
+
 .nav-item.active {
-  background: rgba(255,255,255,0.15);
-  color: white;
+  background: var(--color-accent);
+  color: var(--color-primary-text);
 }
 
+
 .nav-item:hover:not(.active) {
-  background: rgba(255,255,255,0.1);
-  color: white;
+  background: var(--color-hover-bg);
 }
 
 .sidebar-icon {
@@ -81,9 +111,29 @@
   flex-shrink: 0;
 }
 
+.sidebar-icon svg {
+  width: 20px;
+  height: 20px;
+}
+
+.sidebar.collapsed .sidebar-icon {
+  width: 20px !important;
+  height: 20px !important;
+  min-width: 20px;
+  min-height: 20px;
+  max-width: 20px;
+  max-height: 20px;
+  flex-shrink: 0;
+}
+
+.sidebar.collapsed .sidebar-icon svg {
+  width: 20px !important;
+  height: 20px !important;
+}
+
+
 .sidebar-footer {
   padding: 20px 12px;
-  border-top: 1px solid rgba(255,255,255,0.1);
 }
 
 .sidebar-footer-content {
@@ -91,6 +141,7 @@
   align-items: center;
   justify-content: center;
 }
+
 
 .collapse-toggle-button {
   display: flex;
@@ -101,13 +152,12 @@
   padding: 8px;
   background: none;
   border: none;
-  color: rgba(255,255,255,0.8);
+  color: var(--color-accent);
   cursor: pointer;
   border-radius: 8px;
   transition: all 0.2s ease;
 }
 
 .collapse-toggle-button:hover {
-  background: rgba(255,255,255,0.1);
-  color: white;
+  background: var(--color-hover-bg);
 }

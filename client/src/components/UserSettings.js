@@ -1,9 +1,10 @@
 import React from 'react';
 import { NavLink, Routes, Route, useLocation, useNavigate, Navigate, useMatch } from 'react-router-dom';
-import { User, Lock, Mail, Moon, ChevronRight } from 'lucide-react';
+import { User, Lock, Mail, Moon, ChevronRight, Columns3Cog } from 'lucide-react';
 import ProfileSettings from './ProfileSettings';
 import AccountSettings from './AccountSettings';
 import ThemeSettings from './ThemeSettings';
+import CustomProperties from './CustomProperties';
 import { useUserProfile } from '../hooks/useUserSettings';
 import { useTheme } from '../ThemeContext';
 import './UserSettings.css';
@@ -23,6 +24,7 @@ const UserSettings = () => {
     { label: 'Profile', icon: <User size={18} />, path: `${basePath}/profile` },
     { label: 'Account Settings', icon: <Lock size={18} />, path: `${basePath}/account-settings` },
     { label: 'Theme', icon: <Moon size={18} />, path: `${basePath}/theme` },
+  { label: 'Custom Properties', icon: <Columns3Cog size={18} />, path: `${basePath}/custom-properties` },
   ];
 
   React.useEffect(() => {
@@ -62,6 +64,7 @@ const UserSettings = () => {
             <Route path="profile" element={<ProfileSettings user={user} />} />
             <Route path="account-settings" element={<AccountSettings user={user} />} />
             <Route path="theme" element={<ThemeSettings theme={theme} setTheme={setTheme} themeLoading={themeLoading} />} />
+            <Route path="custom-properties" element={<CustomProperties />} />
           </Routes>
         </div>
       </main>

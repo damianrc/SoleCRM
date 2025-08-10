@@ -9,10 +9,10 @@
   --color-reverse-text: #ffffff;
   --color-primary-border: #d4d4d4; /* Black border for primary */
   --color-secondary-border: #b0b3b8; /* Dark grey border for secondary */
-  --color-hover-bg: #f8fafc; /* Very light grey for hover in light mode */
+  --color-hover-bg: #f8fafc84; /* Very light grey for hover in light mode */
 
   /* Extended Color Palette for Light Theme */
-  --color-accent: #2563eb; /* Primary accent (blue) */
+  --color-accent: #2C4386; /* Primary accent (blue) */
   --color-accent-hover: #1d4ed8;
   --color-accent-active: #1e40af;
   --color-success: #22c55e;
@@ -28,6 +28,7 @@
   --color-overlay: rgba(0,0,0,0.3);
   --color-modal-bg: #ffffff;
   --color-card-bg: #f9fafb;
+  --color-sidebar-bg: #d1d5db; /* More distinct sidebar background for light mode */
   --color-table-header-bg: #f3f4f6;
   --color-table-row-hover: #f1f5f9;
   --color-button-primary-bg: var(--color-accent);
@@ -37,7 +38,7 @@
   --color-link: #2563eb;
   --color-link-hover: #1d4ed8;
   --color-shadow: rgba(0,0,0,0.08);
-  --color-sidebar: #2e475e;
+  --color-sidebar: #848484;
 
   /* Bootstrap variable overrides for light mode */
   --bs-body-bg: #ffffff;
@@ -143,10 +144,10 @@
   --color-reverse-text: #000000;
   --color-primary-border: #000000; /* Black border for primary */
   --color-secondary-border: #444950; /* Darker grey for secondary in dark mode */
-  --color-hover-bg: #23272a; /* Grey for hover in dark mode */
+  --color-hover-bg: #23272a83; /* Grey for hover in dark mode */
 
   /* Extended Color Palette for Dark Theme */
-  --color-accent: #60a5fa;
+  --color-accent: #2C4386;
   --color-accent-hover: #3b82f6;
   --color-accent-active: #1e40af;
   --color-success: #4ade80;
@@ -162,6 +163,7 @@
   --color-overlay: rgba(0,0,0,0.7);
   --color-modal-bg: #23272a;
   --color-card-bg: #181a1b;
+  --color-sidebar-bg: #181f2a; /* More distinct sidebar background for dark mode */
   --color-table-header-bg: #23272a;
   --color-table-row-hover: #23272a;
   --color-button-primary-bg: var(--color-accent);
@@ -171,7 +173,7 @@
   --color-link: #60a5fa;
   --color-link-hover: #3b82f6;
   --color-shadow: rgba(0,0,0,0.32);
-  --color-sidebar: #152330;
+  --color-sidebar: #292929;
 
   /* Bootstrap variable overrides for dark mode */
   --bs-body-bg: #181a1b;

@@ -6,12 +6,13 @@
   position: relative;
 }
 
+/* Editing styles are now applied to the table cell via :has() selector in table.css */
 .editable-cell.editing {
-  background-color: var(--color-info-bg) !important; /* Light blue background */
-  border: 2px solid var(--color-accent-hover) !important; /* Solid blue border */
-  border-radius: 4px !important;
-  box-shadow: 0 0 0 1px var(--color-shadow) !important; /* Subtle glow */
-  z-index: 10;
+  background-color: transparent !important;
+  border: none !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  z-index: auto;
 }
 
 .cell-empty-placeholder {
@@ -27,7 +28,7 @@
 .cell-input {
   width: 100%;
   height: 100%;
-  background-color: var(--color-table-header-bg);
+  background-color: transparent;
   border: none;
   border-radius: 2px;
   padding: 4px 6px;
@@ -49,10 +50,11 @@
   cursor: pointer;
 }
 
-.editable-cell-display:hover {
+/* Removed individual cell hover effects to prevent duplicate hover with row hover */
+/* .editable-cell-display:hover {
   background-color: var(--color-table-row-hover);
   border-radius: 3px;
-}
+} */
 
 /* Specific styling for empty cells to make them more prominent */
 .cell-is-empty.editable-cell-display {

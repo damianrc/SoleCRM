@@ -1,8 +1,10 @@
 import React from 'react';
-import { Users, CheckCircle, PanelLeftOpen, PanelLeftClose } from 'lucide-react';
+import { Users, CheckCircle, PanelLeftOpen, PanelLeftClose, Home, Store, Banknote, Binoculars } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { getUserId } from '../utils/auth.js';
+
 import '../styles/layout/Sidebar.css';
+import logosmall from '../assets/logosmall.png';
 
 /**
  * Sidebar Component
@@ -22,10 +24,11 @@ const Sidebar = ({ isCollapsed, onToggleCollapse }) => {
     <div 
       className={`sidebar${isCollapsed ? ' collapsed' : ''}`}
     >
-      {/* Header with SoleCRM branding */}
+
+      {/* Header with SoleCRM branding (logo) */}
       <div className="sidebar-header">
         <div className="sidebar-logo">
-          {isCollapsed ? 'S' : 'SoleCRM'}
+          <img src={logosmall} alt="SoleCRM Logo" className="sidebar-logo-img" />
         </div>
       </div>
 
@@ -42,6 +45,7 @@ const Sidebar = ({ isCollapsed, onToggleCollapse }) => {
               {!isCollapsed && <span>Contacts</span>}
             </button>
           </li>
+          {/* Tasks page is intentionally blank for now, but navigation is kept for consistency */}
           <li>
             <button 
               className={`nav-item${location.pathname.includes('/tasks') ? ' active' : ''}`}
@@ -52,6 +56,36 @@ const Sidebar = ({ isCollapsed, onToggleCollapse }) => {
               {!isCollapsed && <span>Tasks</span>}
             </button>
           </li>
+            <li>
+              <button
+                className={`nav-item${location.pathname.includes('/listings') ? ' active' : ''}`}
+                onClick={() => navigate(`/dashboard/${userId}/listings`)}
+                title={isCollapsed ? 'Listings' : ''}
+              >
+                <Home className="sidebar-icon" size={20} />
+                {!isCollapsed && <span>Listings</span>}
+              </button>
+            </li>
+            <li>
+              <button
+                className={`nav-item${location.pathname.includes('/deals') ? ' active' : ''}`}
+                onClick={() => navigate(`/dashboard/${userId}/deals`)}
+                title={isCollapsed ? 'Deals' : ''}
+              >
+                <Banknote className="sidebar-icon" size={20} />
+                {!isCollapsed && <span>Deals</span>}
+              </button>
+            </li>
+            <li>
+              <button
+                className={`nav-item${location.pathname.includes('/market-stock') ? ' active' : ''}`}
+                onClick={() => navigate(`/dashboard/${userId}/market-stock`)}
+                title={isCollapsed ? 'Market Stock' : ''}
+              >
+                <Binoculars className="sidebar-icon" size={20} />
+                {!isCollapsed && <span>Market Stock</span>}
+              </button>
+            </li>
         </ul>
       </nav>
 

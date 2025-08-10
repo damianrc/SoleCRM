@@ -36,6 +36,23 @@
   background-color: rgba(var(--color-accent-rgb), 0.1);
 }
 
+/* Drag Handle Styles */
+.drag-handle {
+  transition: opacity 0.2s ease;
+  opacity: 0.6;
+  padding: 2px;
+  border-radius: 2px;
+}
+
+.drag-handle:hover {
+  opacity: 1;
+  background-color: rgba(var(--color-accent-rgb), 0.1);
+}
+
+.drag-handle:active {
+  background-color: rgba(var(--color-accent-rgb), 0.2);
+}
+
 /* Drag overlay styles */
 .sortable-ghost {
   opacity: 0.5;
@@ -114,6 +131,8 @@
   /* Ensure header content doesn't extend beyond boundaries */
   position: relative;
   z-index: 10;
+  /* Add border to separate header from body */
+  border-bottom: 1px solid var(--color-primary-border);
 }
 
 .table-body-wrapper {
@@ -263,12 +282,12 @@
 
 /* Header Styles */
 [data-slot="table-header"] tr {
-  border-bottom: 1px solid var(--color-primary-border);
+  border-bottom: none !important;
 }
 
 [data-slot="table-head"] {
   color: var(--color-primary-text);
-  height: 2.5rem;
+  height: 42px !important;
   padding: 0.5rem;
   text-align: left;
   vertical-align: middle;
@@ -277,18 +296,20 @@
   position: relative;
   background-color: var(--color-table-header-bg) !important;
   text-transform: uppercase;
+  box-sizing: border-box !important;
 }
 
+/* Override text-align for checkbox header cells */
 [data-slot="table-head"]:has([role="checkbox"]) {
   display: flex !important;
   align-items: center !important;
   justify-content: center !important;
   text-align: center !important;
-  padding-right: 0;
+  padding: 0 !important;
 }
 
 [data-slot="table-head"] [role="checkbox"] {
-  transform: translateY(0.125rem);
+  /* Remove the translateY to center properly */
 }
 
 /* More specific header styling to override any conflicting styles */
@@ -306,11 +327,22 @@
 [data-slot="table-cell"] {
   padding: 0.5rem;
   display: table-cell !important;
-  height: 40px !important;
+  height: 42px !important;
   min-height: unset !important;
   padding-top: 0 !important;
   padding-bottom: 0 !important;
+  box-sizing: border-box !important;
   /* Remove vertical-align: middle to avoid 1-2px offset */
+}
+
+/* Override display for checkbox cells specifically */
+[data-slot="table-cell"]:has([role="checkbox"]) {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  text-align: center !important;
+  padding: 0 !important;
+  vertical-align: middle !important;
 }
 
 /* Remove vertical padding from table cells to avoid offset */
@@ -326,21 +358,52 @@
   line-height: 1.25 !important;
 }
 
-[data-slot="table-cell"]:has([role="checkbox"]) {
-  text-align: center !important;
-  padding-right: 0;
-}
+
 
 [data-slot="table-cell"] [role="checkbox"] {
-  transform: translateY(0.125rem);
+  /* Remove the translateY to center properly */
 }
 
 /* Row Styles */
 [data-slot="table-row"] {
-  border-bottom: 1px solid var(--color-primary-border);
+  position: relative;
   transition: background-color 0.15s cubic-bezier(0.4, 0, 0.2, 1);
-  height: 40px !important;
-  min-height: 40px !important;
+  height: 42px !important;
+  min-height: 42px !important;
+  max-height: 42px !important;
+  box-sizing: border-box !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  border: none !important;
+  outline: none !important;
+  /* Use box-shadow instead of border to avoid height calculation issues */
+  box-shadow: inset 0 -1px 0 0 var(--color-primary-border);
+}
+
+/* Remove box-shadow from last row */
+[data-slot="table-body"] [data-slot="table-row"]:last-child {
+  box-shadow: none;
+}
+
+/* Ensure first body row aligns properly with header */
+[data-slot="table-body"] [data-slot="table-row"]:first-child {
+  margin-top: 0 !important;
+  border-top: none !important;
+}
+
+/* Specific styles for virtual rows to ensure perfect alignment */
+[data-slot="table-body"] [data-slot="table-row"] {
+  position: absolute !important;
+  height: 42px !important;
+  min-height: 42px !important;
+  max-height: 42px !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  border: none !important;
+  box-sizing: border-box !important;
+  display: flex !important;
+  align-items: center !important;
+  width: 100% !important;
 }
 
 /* Ensure first row doesn't create visual artifacts above header */
@@ -406,16 +469,30 @@
   background-color: rgba(var(--color-accent-rgb), 0.5) !important;
 }
 
-/* Editable Cell Styles */
-.custom-cell-container.editing,
-.editable-cell.editing,
-.editing {
-  background-color: var(--color-info-bg) !important;
-  border: 2px solid var(--color-accent-hover) !important;
-  border-radius: 4px !important;
-  box-shadow: 0 0 0 2px var(--color-accent) !important;
+/* Editable Cell Styles - Apply to the actual table cell */
+[data-slot="table-cell"]:has(.custom-cell-container.editing),
+[data-slot="table-cell"]:has(.editable-cell.editing),
+[data-slot="table-cell"]:has(.name-cell-container.editing),
+[data-slot="table-cell"]:has(.editing) {
+  background-color: var(--color-primary-bg) !important;
+  border: 2px solid var(--color-accent) !important;
+  border-radius: 0 !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15), 0 2px 4px rgba(0, 0, 0, 0.1) !important;
   z-index: 100 !important;
   position: relative !important;
+}
+
+/* Remove border and shadow from inner containers when editing */
+.custom-cell-container.editing,
+.editable-cell.editing,
+.name-cell-container.editing,
+.editing {
+  background-color: transparent !important;
+  border: none !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  z-index: auto !important;
+  position: static !important;
 }
 
 .cell-input-container {
@@ -431,7 +508,7 @@
   padding: 4px 6px;
   font-size: 0.875rem;
   line-height: 1.25rem;
-  background-color: var(--color-info-bg);
+  background-color: transparent;
   border: none;
   outline: none;
   color: var(--color-primary-text);
@@ -457,11 +534,12 @@
   cursor: pointer;
 }
 
-.editable-cell-display:hover,
+/* Removed individual cell hover effects to prevent duplicate hover with row hover */
+/* .editable-cell-display:hover,
 .name-cell-content:hover {
   background-color: var(--color-table-row-hover);
   border-radius: 3px;
-}
+} */
 
 /* Name cell container */
 .name-cell-container {
@@ -475,29 +553,18 @@
   min-height: 32px;
 }
 
-/* Make sure all cells including the name cell use the same editing style */
-.custom-cell-container.editing,
-.editable-cell.editing,
-.name-cell-container.editing,
-.editing {
-  background-color: var(--color-info-bg) !important;
-  border: 2px solid var(--color-accent-hover) !important;
-  border-radius: 4px !important;
-  box-shadow: 0 0 0 2px var(--color-accent) !important;
-  z-index: 100 !important;
-  position: relative !important;
-}
+/* This rule is now handled above with the :has() selector */
 
 /* Hide view button when editing */
 .name-cell-container.editing .name-cell-view-button {
   display: none;
 }
 
-/* Hover effect for editable cells */
-[role="cell"]:not(.editing) > div:hover {
+/* Removed individual cell hover effects to prevent duplicate hover with row hover */
+/* [role="cell"]:not(.editing) > div:hover {
   background-color: var(--color-table-row-hover) !important;
   transition: background-color 0.1s ease;
-}
+} */
 
 /* Special style for editable cells with empty content */
 .editable-cell-content {
@@ -868,10 +935,119 @@ input[type="checkbox"].h-4.w-4 {
   background-color: var(--color-secondary-bg);
   border: 1px solid var(--color-primary-border);
   transition: background-color 0.15s;
+  box-shadow: none !important; /* Remove any shadow */
+  margin: 0 !important; /* Remove any margin that might affect centering */
 }
 input[type="checkbox"].h-4.w-4:checked {
   background-color: var(--color-accent);
   border-color: var(--color-accent);
+  box-shadow: none !important; /* Remove any shadow */
+}
+
+/* Remove any transform or positioning that might offset checkboxes */
+[data-slot="table-head"] [role="checkbox"],
+[data-slot="table-cell"] [role="checkbox"] {
+  transform: none !important;
+  position: static !important;
+  margin: 0 !important;
+  box-shadow: none !important;
+}
+
+/* Ensure checkbox container divs are properly centered */
+[data-slot="table-head"] .h-full.flex.items-center,
+[data-slot="table-cell"] .h-full.flex.items-center {
+  height: 100% !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  width: 100% !important;
+}
+
+/* Force checkbox cells to use flexbox layout and center content */
+[data-slot="table"] [data-slot="table-head"]:has([role="checkbox"]),
+[data-slot="table"] [data-slot="table-cell"]:has([role="checkbox"]) {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  padding: 0 !important;
+  vertical-align: middle !important;
+}
+
+/* Additional specificity for checkbox cells */
+table [data-slot="table-head"]:has(input[type="checkbox"]),
+table [data-slot="table-cell"]:has(input[type="checkbox"]) {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  padding: 0 !important;
+  vertical-align: middle !important;
+}
+
+/* Maximum specificity for checkbox cells - override everything */
+[data-slot="table"] thead [data-slot="table-head"]:has(input[type="checkbox"]),
+[data-slot="table"] tbody [data-slot="table-cell"]:has(input[type="checkbox"]) {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  padding: 0 !important;
+  vertical-align: middle !important;
+  height: 42px !important;
+  min-height: 42px !important;
+}
+
+/* Ensure the checkbox wrapper divs are also centered */
+[data-slot="table"] thead [data-slot="table-head"] .h-full.flex.items-center,
+[data-slot="table"] tbody [data-slot="table-cell"] .h-full.flex.items-center {
+  height: 100% !important;
+  width: 100% !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
+/* Extra specific rule for header checkbox - override any text-align or justify-content */
+[data-slot="table"] thead tr [data-slot="table-head"]:has(input[type="checkbox"]) {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  text-align: center !important;
+  padding: 0 !important;
+  margin: 0 !important;
+}
+
+/* Ensure header checkbox wrapper is centered */
+[data-slot="table"] thead tr [data-slot="table-head"] .h-full.flex.items-center {
+  width: 100% !important;
+  height: 100% !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
+/* Ultimate specificity for header checkbox centering */
+[data-slot="table-container"] [data-slot="table"] thead tr [data-slot="table-head"]:has(input[type="checkbox"]) {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  text-align: center !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  width: 50px !important;
+}
+
+/* Force header checkbox wrapper to be centered */
+[data-slot="table-container"] [data-slot="table"] thead tr [data-slot="table-head"] div.h-full.flex.items-center {
+  width: 100% !important;
+  height: 100% !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  margin: 0 !important;
+  padding: 0 !important;
 }
 
 /* Ensure all cell content wrappers fill the cell and center content */

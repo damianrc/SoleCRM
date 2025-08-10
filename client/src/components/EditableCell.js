@@ -131,30 +131,6 @@ export function EditableCell({
         </select>
       );
     }
-
-    if (column.id === 'status') {
-      return (
-        <select
-          ref={inputRef}
-          value={value || ''}
-          onChange={(e) => setValue(e.target.value)}
-          onBlur={handleBlur}
-          onKeyDown={handleKeyDown}
-          className="cell-input"
-        >
-          <option value="">-- Select Status --</option>
-          <option value="NEW">New</option>
-          <option value="CONTACTED">Contacted</option>
-          <option value="QUALIFIED">Qualified</option>
-          <option value="PROPOSAL">Proposal</option>
-          <option value="NEGOTIATION">Negotiation</option>
-          <option value="CLOSED_WON">Closed Won</option>
-          <option value="CLOSED_LOST">Closed Lost</option>
-        </select>
-      );
-    }
-
-    // For email, phone, and other text fields
     return (
       <input
         ref={inputRef}
@@ -170,12 +146,9 @@ export function EditableCell({
   };
 
   return (
-    <TableCell
+    <div
       ref={cellRef}
-      style={{
-        width: cell.column.getSize(),
-        flex: `0 0 ${cell.column.getSize()}px`,
-      }}
+      style={{ width: cell.column.getSize(), flex: `0 0 ${cell.column.getSize()}px` }}
       className={`editable-cell ${isEditing ? 'editing' : ''}`}
     >
       {isEditing ? (
@@ -196,6 +169,6 @@ export function EditableCell({
           )}
         </div>
       )}
-    </TableCell>
+    </div>
   );
 }

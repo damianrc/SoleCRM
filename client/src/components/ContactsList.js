@@ -290,7 +290,16 @@ const ContactsList = ({
     columnHelper.display({
       id: 'select',
       header: ({ table }) => (
-        <div className="h-full flex items-center">
+        <div style={{ 
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center'
+        }}>
           <Checkbox
             checked={
               table.getIsAllRowsSelected() ||
@@ -304,7 +313,16 @@ const ContactsList = ({
         </div>
       ),
       cell: ({ row }) => (
-        <div className="h-full flex items-center">
+        <div style={{ 
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center'
+        }}>
           <Checkbox
             checked={row.getIsSelected()}
             onCheckedChange={(value) => {
@@ -317,7 +335,7 @@ const ContactsList = ({
       enableSorting: false,
       enableHiding: false,
       enableResizing: false,
-      enableReordering: false, // Prevent dragging
+      enableReordering: false,
       size: 50,
     }),
     columnHelper.accessor('name', {
@@ -332,6 +350,7 @@ const ContactsList = ({
       size: 200,
       enableResizing: true,
       enableReordering: false, // Prevent dragging
+      enableSorting: true,
     }),
     columnHelper.accessor('email', {
       header: 'Email',
@@ -343,6 +362,8 @@ const ContactsList = ({
       ),
       size: 250,
       enableResizing: true,
+      enableSorting: true,
+      enableReordering: true,
     }),
     columnHelper.accessor('phone', {
       header: 'Phone',
@@ -354,6 +375,8 @@ const ContactsList = ({
       ),
       size: 150,
       enableResizing: true,
+      enableSorting: true,
+      enableReordering: true,
     }),
     columnHelper.accessor('address', {
       header: 'Address',
@@ -365,6 +388,8 @@ const ContactsList = ({
       ),
       size: 300,
       enableResizing: true,
+      enableSorting: true,
+      enableReordering: true,
     }),
     columnHelper.accessor('suburb', {
       header: 'Suburb',
@@ -376,6 +401,8 @@ const ContactsList = ({
       ),
       size: 150,
       enableResizing: true,
+      enableSorting: true,
+      enableReordering: true,
     }),
     columnHelper.accessor('contactType', {
       header: 'Type',
@@ -398,6 +425,8 @@ const ContactsList = ({
       ),
       size: 150,
       enableResizing: true,
+      enableSorting: true,
+      enableReordering: true,
     }),
     columnHelper.accessor('leadSource', {
       header: 'Source',
@@ -409,6 +438,8 @@ const ContactsList = ({
       ),
       size: 150,
       enableResizing: true,
+      enableSorting: true,
+      enableReordering: true,
     }),
     columnHelper.accessor('status', {
       header: 'Status',
@@ -431,6 +462,8 @@ const ContactsList = ({
       ),
       size: 150,
       enableResizing: true,
+      enableSorting: true,
+      enableReordering: true,
     }),
     columnHelper.accessor('createdAt', {
       header: 'Created',
@@ -440,6 +473,8 @@ const ContactsList = ({
       },
       size: 120,
       enableResizing: true,
+      enableSorting: true,
+      enableReordering: true,
     }),
     columnHelper.accessor('updatedAt', {
       header: 'Updated',
@@ -449,6 +484,8 @@ const ContactsList = ({
       },
       size: 120,
       enableResizing: true,
+      enableSorting: true,
+      enableReordering: true,
     }),
   ], [onViewContact, onContactUpdate]);
 
@@ -486,7 +523,7 @@ const ContactsList = ({
   const rowVirtualizer = useVirtualizer({
     count: rows.length,
     getScrollElement: () => tableContainerRef.current,
-    estimateSize: () => 42, // Increased from 35 to 42 for slightly taller rows
+    estimateSize: () => 42, // Try slightly larger to see if it closes the gap
     overscan: 10,
   });
 
@@ -623,10 +660,14 @@ const ContactsList = ({
                     return (
                       <TableRow
                         key={virtualItem.key}
-                        className="absolute top-0 left-0 flex w-full items-center"
+                        className="flex w-full items-center"
                         style={{
+                          position: 'absolute',
+                          top: 0,
+                          left: 0,
                           height: `${virtualItem.size}px`,
                           transform: `translateY(${virtualItem.start}px)`,
+                          width: '100%',
                         }}
                         data-state={row.getIsSelected() && "selected"}
                       >
@@ -636,7 +677,7 @@ const ContactsList = ({
                               cell.column.id === 'createdAt' || cell.column.id === 'updatedAt') {
                             return <DefaultCell key={cell.id} cell={cell} />;
                           }
-                          // For editable columns, the EditableCell is already defined in the column definition
+                          // Always render a single TableCell, and let the cell renderer return only content (no <td> inside)
                           return (
                             <TableCell
                               key={cell.id}

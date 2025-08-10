@@ -10,6 +10,8 @@ import { generalLimiter, progressiveLimiter } from './middleware/rateLimiting.js
 import { cleanupExpiredTokens } from './utils/tokenUtils.js';
 
 const app = express();
+// Trust the first proxy (needed for correct client IP detection behind proxies)
+app.set('trust proxy', 1);
 const prisma = new PrismaClient();
 const PORT = process.env.PORT || 4000;
 
