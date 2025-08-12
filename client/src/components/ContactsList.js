@@ -29,6 +29,7 @@ import { Checkbox } from './ui/Checkbox.js';
 import { Button } from './ui/Button.js';
 import { BulkDeleteModal } from './ui/BulkDeleteModal.js';
 import { useContactPropertyOptions } from '../hooks/useContactPropertyOptions';
+import { getAuthHeaders } from '../utils/auth';
 import '../styles/tables/table.css';
 
 // Create column helper
@@ -250,6 +251,8 @@ const ContactsList = ({
   const [rowSelection, setRowSelection] = useState({});
   const [sorting, setSorting] = useState([]);
   const [showBulkDeleteModal, setShowBulkDeleteModal] = useState(false);
+  const [customProperties, setCustomProperties] = useState([]);
+  const [loadingProperties, setLoadingProperties] = useState(true);
   const [columnOrder, setColumnOrder] = useState([
     'select', 'name', 'email', 'phone', 'address', 'suburb', 
     'contactType', 'leadSource', 'status', 'createdAt', 'updatedAt'
@@ -278,6 +281,38 @@ const ContactsList = ({
     return () => window.removeEventListener('resize', calculateHeight);
   }, []);
 
+  // Fetch custom properties
+  useEffect(() => {
+    const fetchCustomProperties = async () => {
+      setLoadingProperties(true);
+      try {
+        const res = await fetch('/api/custom-properties', { 
+          headers: getAuthHeaders() 
+        });
+        if (res.ok) {
+          const properties = await res.json();
+          setCustomProperties(properties);
+          
+          // Update column order to include new custom properties
+          const customColumnIds = properties.map(prop => prop.fieldKey);
+          setColumnOrder(prev => {
+            const baseColumns = prev.filter(col => !customColumnIds.includes(col));
+            // Insert custom columns before createdAt and updatedAt
+            const beforeTimestamps = baseColumns.filter(col => col !== 'createdAt' && col !== 'updatedAt');
+            const timestamps = baseColumns.filter(col => col === 'createdAt' || col === 'updatedAt');
+            return [...beforeTimestamps, ...customColumnIds, ...timestamps];
+          });
+        }
+      } catch (error) {
+        console.error('Failed to fetch custom properties:', error);
+      } finally {
+        setLoadingProperties(false);
+      }
+    };
+
+    fetchCustomProperties();
+  }, []);
+
   // Drag and drop sensors
   const sensors = useSensors(
     useSensor(PointerSensor),
@@ -286,229 +321,289 @@ const ContactsList = ({
     })
   );
 
-  // Create data with proper structure
+  // Create data with proper structure including custom fields
   const data = useMemo(() => {
-    return contacts.map(contact => ({
-      id: contact.id,
-      name: contact.name || '',
-      email: contact.email || '',
-      phone: contact.phone || '',
-      address: contact.address || '',
-      suburb: contact.customFields?.suburb || '',
-      contactType: contact.customFields?.contact_type || '',
-      leadSource: contact.customFields?.lead_source || '',
-      status: contact.customFields?.status || '',
-      createdAt: contact.createdAt,
-      updatedAt: contact.updatedAt
-    }));
-  }, [contacts]);
+    return contacts.map(contact => {
+      const baseData = {
+        id: contact.id,
+        name: contact.name || '',
+        email: contact.email || '',
+        phone: contact.phone || '',
+        address: contact.address || '',
+        suburb: contact.customFields?.suburb || '',
+        contactType: contact.customFields?.contact_type || '',
+        leadSource: contact.customFields?.lead_source || '',
+        status: contact.customFields?.status || '',
+        createdAt: contact.createdAt,
+        updatedAt: contact.updatedAt
+      };
 
-  // Enhanced column definitions with drag and resize functionality
-  const columns = useMemo(() => [
-    columnHelper.display({
-      id: 'select',
-      header: ({ table }) => (
-        <div style={{ 
-          position: 'absolute',
-          top: 0,
-          left: 0,
-          right: 0,
-          bottom: 0,
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center'
-        }}>
-          <Checkbox
-            checked={
-              table.getIsAllRowsSelected() ||
-              (table.getIsSomeRowsSelected() && "indeterminate")
-            }
-            onCheckedChange={(value) => {
-              table.toggleAllRowsSelected(!!value);
-            }}
-            aria-label="Select all"
+      // Add custom properties to the data
+      customProperties.forEach(prop => {
+        baseData[prop.fieldKey] = contact.customFields?.[prop.fieldKey] || '';
+      });
+
+      return baseData;
+    });
+  }, [contacts, customProperties]);
+
+  // Enhanced column definitions with dynamic custom properties
+  const columns = useMemo(() => {
+    const baseColumns = [
+      columnHelper.display({
+        id: 'select',
+        header: ({ table }) => (
+          <div style={{ 
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center'
+          }}>
+            <Checkbox
+              checked={
+                table.getIsAllRowsSelected() ||
+                (table.getIsSomeRowsSelected() && "indeterminate")
+              }
+              onCheckedChange={(value) => {
+                table.toggleAllRowsSelected(!!value);
+              }}
+              aria-label="Select all"
+            />
+          </div>
+        ),
+        cell: ({ row }) => (
+          <div style={{ 
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center'
+          }}>
+            <Checkbox
+              checked={row.getIsSelected()}
+              onCheckedChange={(value) => {
+                row.toggleSelected(!!value);
+              }}
+              aria-label="Select row"
+            />
+          </div>
+        ),
+        enableSorting: false,
+        enableHiding: false,
+        enableResizing: false,
+        enableReordering: false,
+        size: 50,
+      }),
+      columnHelper.accessor('name', {
+        header: 'Name',
+        cell: (info) => (
+          <NameCell 
+            info={info}
+            onContactUpdate={onContactUpdate}
+            onViewContact={onViewContact}
           />
-        </div>
-      ),
-      cell: ({ row }) => (
-        <div style={{ 
-          position: 'absolute',
-          top: 0,
-          left: 0,
-          right: 0,
-          bottom: 0,
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center'
-        }}>
-          <Checkbox
-            checked={row.getIsSelected()}
-            onCheckedChange={(value) => {
-              row.toggleSelected(!!value);
-            }}
-            aria-label="Select row"
+        ),
+        size: 200,
+        enableResizing: true,
+        enableReordering: false, // Prevent dragging
+        enableSorting: true,
+      }),
+      columnHelper.accessor('email', {
+        header: 'Email',
+        cell: (info) => (
+          <CustomCell
+            info={info}
+            onContactUpdate={onContactUpdate}
           />
-        </div>
-      ),
-      enableSorting: false,
-      enableHiding: false,
-      enableResizing: false,
-      enableReordering: false,
-      size: 50,
-    }),
-    columnHelper.accessor('name', {
-      header: 'Name',
-      cell: (info) => (
-        <NameCell 
-          info={info}
-          onContactUpdate={onContactUpdate}
-          onViewContact={onViewContact}
-        />
-      ),
-      size: 200,
-      enableResizing: true,
-      enableReordering: false, // Prevent dragging
-      enableSorting: true,
-    }),
-    columnHelper.accessor('email', {
-      header: 'Email',
-      cell: (info) => (
-        <CustomCell
-          info={info}
-          onContactUpdate={onContactUpdate}
-        />
-      ),
-      size: 250,
-      enableResizing: true,
-      enableSorting: true,
-      enableReordering: true,
-    }),
-    columnHelper.accessor('phone', {
-      header: 'Phone',
-      cell: (info) => (
-        <CustomCell
-          info={info}
-          onContactUpdate={onContactUpdate}
-        />
-      ),
-      size: 150,
-      enableResizing: true,
-      enableSorting: true,
-      enableReordering: true,
-    }),
-    columnHelper.accessor('address', {
-      header: 'Address',
-      cell: (info) => (
-        <CustomCell
-          info={info}
-          onContactUpdate={onContactUpdate}
-        />
-      ),
-      size: 300,
-      enableResizing: true,
-      enableSorting: true,
-      enableReordering: true,
-    }),
-    columnHelper.accessor('suburb', {
-      header: 'Suburb',
-      cell: (info) => (
-        <CustomCell
-          info={info}
-          onContactUpdate={onContactUpdate}
-        />
-      ),
-      size: 150,
-      enableResizing: true,
-      enableSorting: true,
-      enableReordering: true,
-    }),
-    columnHelper.accessor('contactType', {
-      header: 'Type',
-      cell: (cellInfo) => (
-        <EditableCell
-          cell={{
-            ...cellInfo,
-            column: {
-              ...cellInfo.column,
-              getSize: () => 150,
-              id: 'contactType'
-            }
-          }}
-          getValue={cellInfo.getValue}
-          row={cellInfo.row}
-          column={cellInfo.column}
-          table={cellInfo.table}
-          onUpdate={onContactUpdate}
-          options={typeOptions}
-        />
-      ),
-      size: 150,
-      enableResizing: true,
-      enableSorting: true,
-      enableReordering: true,
-    }),
-    columnHelper.accessor('leadSource', {
-      header: 'Source',
-      cell: (info) => (
-        <CustomCell
-          info={info}
-          onContactUpdate={onContactUpdate}
-          options={sourceOptions}
-        />
-      ),
-      size: 150,
-      enableResizing: true,
-      enableSorting: true,
-      enableReordering: true,
-    }),
-    columnHelper.accessor('status', {
-      header: 'Status',
-      cell: (cellInfo) => (
-        <EditableCell
-          cell={{
-            ...cellInfo,
-            column: {
-              ...cellInfo.column,
-              getSize: () => 150,
-              id: 'status'
-            }
-          }}
-          getValue={cellInfo.getValue}
-          row={cellInfo.row}
-          column={cellInfo.column}
-          table={cellInfo.table}
-          onUpdate={onContactUpdate}
-          options={statusOptions}
-        />
-      ),
-      size: 150,
-      enableResizing: true,
-      enableSorting: true,
-      enableReordering: true,
-    }),
-    columnHelper.accessor('createdAt', {
-      header: 'Created',
-      cell: ({ getValue }) => {
-        const value = getValue();
-        return value ? new Date(value).toLocaleDateString() : '';
-      },
-      size: 120,
-      enableResizing: true,
-      enableSorting: true,
-      enableReordering: true,
-    }),
-    columnHelper.accessor('updatedAt', {
-      header: 'Updated',
-      cell: ({ getValue }) => {
-        const value = getValue();
-        return value ? new Date(value).toLocaleDateString() : '';
-      },
-      size: 120,
-      enableResizing: true,
-      enableSorting: true,
-      enableReordering: true,
-    }),
-  ], [onViewContact, onContactUpdate, typeOptions, sourceOptions, statusOptions]);
+        ),
+        size: 250,
+        enableResizing: true,
+        enableSorting: true,
+        enableReordering: true,
+      }),
+      columnHelper.accessor('phone', {
+        header: 'Phone',
+        cell: (info) => (
+          <CustomCell
+            info={info}
+            onContactUpdate={onContactUpdate}
+          />
+        ),
+        size: 150,
+        enableResizing: true,
+        enableSorting: true,
+        enableReordering: true,
+      }),
+      columnHelper.accessor('address', {
+        header: 'Address',
+        cell: (info) => (
+          <CustomCell
+            info={info}
+            onContactUpdate={onContactUpdate}
+          />
+        ),
+        size: 300,
+        enableResizing: true,
+        enableSorting: true,
+        enableReordering: true,
+      }),
+      columnHelper.accessor('suburb', {
+        header: 'Suburb',
+        cell: (info) => (
+          <CustomCell
+            info={info}
+            onContactUpdate={onContactUpdate}
+          />
+        ),
+        size: 150,
+        enableResizing: true,
+        enableSorting: true,
+        enableReordering: true,
+      }),
+      columnHelper.accessor('contactType', {
+        header: 'Type',
+        cell: (cellInfo) => (
+          <EditableCell
+            cell={{
+              ...cellInfo,
+              column: {
+                ...cellInfo.column,
+                getSize: () => 150,
+                id: 'contactType'
+              }
+            }}
+            getValue={cellInfo.getValue}
+            row={cellInfo.row}
+            column={cellInfo.column}
+            table={cellInfo.table}
+            onUpdate={onContactUpdate}
+            options={typeOptions}
+          />
+        ),
+        size: 150,
+        enableResizing: true,
+        enableSorting: true,
+        enableReordering: true,
+      }),
+      columnHelper.accessor('leadSource', {
+        header: 'Source',
+        cell: (info) => (
+          <CustomCell
+            info={info}
+            onContactUpdate={onContactUpdate}
+            options={sourceOptions}
+          />
+        ),
+        size: 150,
+        enableResizing: true,
+        enableSorting: true,
+        enableReordering: true,
+      }),
+      columnHelper.accessor('status', {
+        header: 'Status',
+        cell: (cellInfo) => (
+          <EditableCell
+            cell={{
+              ...cellInfo,
+              column: {
+                ...cellInfo.column,
+                getSize: () => 150,
+                id: 'status'
+              }
+            }}
+            getValue={cellInfo.getValue}
+            row={cellInfo.row}
+            column={cellInfo.column}
+            table={cellInfo.table}
+            onUpdate={onContactUpdate}
+            options={statusOptions}
+          />
+        ),
+        size: 150,
+        enableResizing: true,
+        enableSorting: true,
+        enableReordering: true,
+      }),
+    ];
+
+    // Add dynamic custom property columns
+    const customColumns = customProperties.map(prop => {
+      const getOptionLabels = (property) => {
+        if (!property.options || !Array.isArray(property.options)) return [];
+        return property.options.map(opt => typeof opt === 'string' ? opt : opt.label || opt.value || opt);
+      };
+
+      const options = getOptionLabels(prop);
+
+      return columnHelper.accessor(prop.fieldKey, {
+        header: prop.name,
+        cell: (info) => {
+          if (prop.fieldType === 'DROPDOWN' || prop.fieldType === 'MULTISELECT') {
+            return (
+              <CustomCell
+                info={info}
+                onContactUpdate={onContactUpdate}
+                options={options}
+              />
+            );
+          } else if (prop.fieldType === 'DATE') {
+            return (
+              <CustomCell
+                info={info}
+                onContactUpdate={onContactUpdate}
+              />
+            );
+          } else {
+            // TEXT type
+            return (
+              <CustomCell
+                info={info}
+                onContactUpdate={onContactUpdate}
+              />
+            );
+          }
+        },
+        size: prop.fieldType === 'TEXT' ? 200 : 150,
+        enableResizing: true,
+        enableSorting: true,
+        enableReordering: true,
+      });
+    });
+
+    const timestampColumns = [
+      columnHelper.accessor('createdAt', {
+        header: 'Created',
+        cell: ({ getValue }) => {
+          const value = getValue();
+          return value ? new Date(value).toLocaleDateString() : '';
+        },
+        size: 120,
+        enableResizing: true,
+        enableSorting: true,
+        enableReordering: true,
+      }),
+      columnHelper.accessor('updatedAt', {
+        header: 'Updated',
+        cell: ({ getValue }) => {
+          const value = getValue();
+          return value ? new Date(value).toLocaleDateString() : '';
+        },
+        size: 120,
+        enableResizing: true,
+        enableSorting: true,
+        enableReordering: true,
+      }),
+    ];
+
+    return [...baseColumns, ...customColumns, ...timestampColumns];
+  }, [onViewContact, onContactUpdate, typeOptions, sourceOptions, statusOptions, customProperties]);
 
   // Create table instance with enhanced settings
   const table = useReactTable({
@@ -600,6 +695,23 @@ const ContactsList = ({
       tableLayout: "fixed",
     },
   };
+
+  // Show loading state while fetching custom properties
+  if (loadingProperties) {
+    return (
+      <div className="contacts-container" style={{ 
+        display: 'flex', 
+        alignItems: 'center', 
+        justifyContent: 'center', 
+        height: '400px',
+        color: 'var(--color-secondary-text)'
+      }}>
+        <div style={{ textAlign: 'center' }}>
+          <div>Loading custom properties...</div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="contacts-container">
@@ -733,4 +845,3 @@ const ContactsList = ({
 };
 
 export default ContactsList;
-// No hardcoded color values found. No changes needed.

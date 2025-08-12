@@ -1,5 +1,5 @@
 import React from 'react';
-import { Users, CheckCircle, PanelLeftOpen, PanelLeftClose, Home, Store, Banknote, Binoculars } from 'lucide-react';
+import { Users, CheckCircle, PanelLeftOpen, PanelLeftClose, Home, Store, Banknote, Binoculars, ChartPie } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { getUserId } from '../utils/auth.js';
 
@@ -86,6 +86,16 @@ const Sidebar = ({ isCollapsed, onToggleCollapse }) => {
                 {!isCollapsed && <span>Market Stock</span>}
               </button>
             </li>
+              <li>
+                <button
+                  className={`nav-item${location.pathname.includes('/market-insights') ? ' active' : ''}`}
+                  onClick={() => navigate(`/dashboard/${userId}/market-insights`)}
+                  title={isCollapsed ? 'Market Insights' : ''}
+                >
+                  <ChartPie className="sidebar-icon" size={20} />
+                  {!isCollapsed && <span>Market Insights</span>}
+                </button>
+              </li>
         </ul>
       </nav>
 
